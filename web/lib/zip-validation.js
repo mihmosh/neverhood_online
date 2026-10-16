@@ -73,8 +73,8 @@ async function readRange(file, start, length) {
   return bytes;
 }
 
-export async function inspectZip(file, { signal } = {}) {
-  if (!Number.isSafeInteger(file?.size) || file.size < 22 || file.size > ZIP_LIMITS.input) fail('archive must be between 22 bytes and 2 GiB.');
+export async function inspectZip(file, { signal, select, maxInputBytes = ZIP_LIMITS.input, maxEntryBytes, maxTotalBytes = ZIP_LIMITS.output, maxEntries = ZIP_LIMITS.entries } = {}) {
+  if (!Number.isSafeInteger(file?.size) || file.size < 22 || file.size > maxInputBytes) fail(maxInputBytes === ZIP_LIMITS.input ? 'archive must be between 22 bytes and 2 GiB.' : 'archive exceeds its input limit or is shorter than 22 bytes.');
   signal?.throwIfAborted();
   const tailStart = Math.max(0, file.size - 65557);
   const tail = await readRange(file, tailStart, file.size - tailStart);
@@ -90,7 +90,7 @@ export async function inspectZip(file, { signal } = {}) {
   const directoryOffset = end.getUint32(offset + 16, true);
   if (end.getUint16(offset + 4, true) || end.getUint16(offset + 6, true) || end.getUint16(offset + 8, true) !== count) fail('multi-volume archives are not supported.');
   if (count === 65535 || directoryBytes === 0xffffffff || directoryOffset === 0xffffffff || (offset >= 20 && end.getUint32(offset - 20, true) === 0x07064b50)) fail('ZIP64 archives are not supported.');
-  if (!count || count > ZIP_LIMITS.entries) fail('archive entry count exceeds the 10,000-entry limit or is empty.');
+  if (!count || count > maxEntries) fail(maxEntries === ZIP_LIMITS.entries ? 'archive entry count exceeds the 10,000-entry limit or is empty.' : 'archive entry count exceeds its limit or is empty.');
   if (directoryBytes > ZIP_LIMITS.directory || directoryOffset + directoryBytes !== endOffset) fail('invalid or oversized central directory (ZIP64 is not supported).');
   const bytes = await readRange(file, directoryOffset, directoryBytes);
   const data = view(bytes);
@@ -129,12 +129,13 @@ export async function inspectZip(file, { signal } = {}) {
       names.add(key);
     }
     const extension = /\.([^.\/]+)$/.exec(path)?.[1].toLowerCase();
-    const selected = ['blb', 'exe', 'bin'].includes(extension) && !path.endsWith('/');
+    const selected = select ? Boolean(select(path, { directory: path.endsWith('/') || (mode & 0xf000) === 0x4000 || Boolean(data.getUint32(cursor + 38, true) & 0x10) }))
+      : ['blb', 'exe', 'bin'].includes(extension) && !path.endsWith('/');
     if (method === 0 && compressed !== size) fail('stored entry sizes differ.');
     if (selected) {
-      if (!size || size > ZIP_LIMITS[extension]) fail(`${path}: selected entry exceeds its size limit or is empty.`);
+      if (!size || size > (maxEntryBytes ?? ZIP_LIMITS[extension] ?? ZIP_LIMITS.blb)) fail(`${path}: selected entry exceeds its size limit or is empty.`);
       total += size;
-      if (total > ZIP_LIMITS.output) fail('selected output exceeds 2 GiB.');
+      if (total > maxTotalBytes) fail(maxTotalBytes === ZIP_LIMITS.output ? 'selected output exceeds 2 GiB.' : 'selected output exceeds its limit.');
       if (size > Math.max(1024 * 1024, compressed * 1000)) fail('suspicious compression ratio.');
     }
     entries.push({ path, nameBytes, flags, method, crc, compressed, size, localOffset, selected });
@@ -170,7 +171,7 @@ export async function inspectZip(file, { signal } = {}) {
     if (previousEnd > directoryOffset) fail('entry overlaps the central directory.');
   }
   const selected = entries.filter(entry => entry.selected);
-  if (!selected.length) fail('archive contains no BLB game files or EXE/BIN installer files.');
+  if (!selected.length) fail(select ? 'archive contains no selected files.' : 'archive contains no BLB game files or EXE/BIN installer files.');
   return { entries: selected, total, inputBytes: file.size };
 }
 

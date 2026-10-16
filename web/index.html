@@ -39,6 +39,7 @@
         <p id="runtime-status" class="fine">Checking the game player...</p>
         <button id="play" disabled>Play</button>
         <p class="fine">Use a mouse and keyboard to play.</p>
+        </div>
         <details class="advanced">
           <summary>Storage &amp; more</summary>
           <dl id="library-details" hidden></dl>
@@ -46,10 +47,22 @@
           <div class="storage-row"><span>Browser storage</span><span id="storage-size">Checking...</span></div>
           <p id="persistence" class="fine">Your game and saves are stored in this browser. Clearing site data removes them. The browser may also remove them when space is low.</p>
           <div class="text-actions"><button id="persist" class="text-button">Keep files on this device</button></div>
-          <p class="fine">Preparing a game needs extra disk space. Playing loads the game into memory, so a computer works best. Saved games have no backup export yet. Keep another copy of important progress.</p>
+          <section class="save-controls" aria-labelledby="saves-title">
+            <h3 id="saves-title">Saved games</h3>
+            <p class="fine">Import ScummVM saves such as <code>neverhood.000</code>, or a ZIP exported here. Original Windows <code>.sav</code> files are not supported.</p>
+            <p id="save-status" class="fine" role="status" aria-live="polite">Checking saved games...</p>
+            <ul id="save-list" class="save-list" aria-label="Saved games"></ul>
+            <div class="file-picker"><label for="save-files">Choose save files or an exported ZIP</label><input type="file" id="save-files" multiple aria-describedby="save-selection"></div>
+            <p id="save-selection" class="selection">No save files selected.</p>
+            <div class="save-actions"><button id="import-saves" class="secondary" disabled>Import saves</button><button id="export-saves" class="secondary" disabled>Export saves</button></div>
+            <label class="backup-label" for="save-backups">Before-import backups</label>
+            <select id="save-backups" disabled><option value="">No backups yet</option></select>
+            <button id="export-save-backup" class="text-button" disabled>Download backup</button>
+            <p class="fine">Before an import changes your saves, a backup is kept in this browser. The latest three backups are retained. Download important backups to keep them elsewhere. To use an exported ZIP in native ScummVM, extract it into your ScummVM save folder. Back up that folder first and review any filename conflicts.</p>
+          </section>
+          <p class="fine">Preparing a game needs extra disk space. Playing loads the game into memory, so a computer works best. Keep another copy of important progress.</p>
           <p class="fine">No game files are included. The player needs a connection to load; offline play is not supported yet.</p>
         </details>
-        </div>
         <div id="remove-control" class="remove-control" hidden><span class="fine">Remove only the game data stored by this site.</span><button id="delete" class="text-button danger" disabled>Remove from this browser</button></div>
         <div id="message" class="message" role="status" aria-live="polite" hidden></div>
       </section>
@@ -75,5 +88,18 @@
   </section>
   <footer><span>Independent, unofficial browser client.</span><a href="https://github.com/mihmosh/neverhood_online">GitHub</a><a href="https://www.scummvm.org/">Powered by ScummVM</a><span>Local files. No uploads.</span></footer>
   <dialog id="delete-dialog"><h2>Remove the local game data?</h2><p>This removes the site's copy from this browser to free storage. Your original folders, archives and saved games will not change.</p><form method="dialog"><button value="cancel" class="secondary">Keep it</button><button value="delete" class="danger">Remove game</button></form></dialog>
+  <dialog id="save-import-dialog" aria-labelledby="save-import-title">
+    <h2 id="save-import-title">Review saved games</h2>
+    <p class="fine">These saves will be imported into this browser. Your selected files will not change.</p>
+    <ul id="save-import-files" class="save-list" aria-label="Incoming saves"></ul>
+    <div id="save-overwrite-review" hidden>
+      <h3>Slots that will be replaced</h3>
+      <ul id="save-import-conflicts" class="save-list" aria-label="Existing saves to replace"></ul>
+      <p class="fine">A backup of your current saves will be kept before replacing these slots.</p>
+      <label class="overwrite-confirmation"><input type="checkbox" id="allow-save-overwrite"> <span>I confirm that the existing saves listed above may be replaced.</span></label>
+    </div>
+    <p id="save-dialog-status" class="fine" role="status" aria-live="polite"></p>
+    <div class="save-dialog-actions"><button id="cancel-save-import" class="secondary">Cancel</button><button id="confirm-save-import">Import saves</button></div>
+  </dialog>
 </body>
 </html>

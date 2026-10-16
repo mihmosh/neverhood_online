@@ -6,6 +6,12 @@ denial of service, excessive memory/disk use or data loss. WebAssembly and brows
 isolation are not guarantees of safety. Keep your browser current and only
 import files from sources you trust.
 
+Saved-game imports have size, CRC and structural checks, but are still input to
+the original game engine. Prefer saves from your own trusted installations.
+Exports contain your progress and descriptions; do not attach them to public
+issues. Browser backup points share the same origin storage and can be lost when
+site data is cleared, so download important backups.
+
 ## Reporting A Vulnerability
 
 Do not post working exploits, sensitive reproduction details, private game files,
@@ -44,8 +50,10 @@ information is removed.
 
 Game imports are designed to stay local in OPFS; the runtime uses a separate
 IDBFS save directory. These are origin-scoped browser storage, not encrypted
-backups or a durability guarantee. Clearing site data can remove both. Save
-backup is not implemented and real in-game save/load is not fully verified.
+backups or a durability guarantee. Clearing site data can remove both, including
+the three local pre-import backup points. Downloaded ZIP exports provide an
+independent copy. One native migration and real in-game save/reload/load cycle
+were tested in Chromium; broader platforms and crash recovery remain unverified.
 
 Do not publish private game directories, installers, saves or secrets when
 self-hosting. Use the allowlisted `npm run build` output rather than the whole

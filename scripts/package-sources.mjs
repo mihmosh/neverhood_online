@@ -22,7 +22,7 @@ const json = value => `${JSON.stringify(value, null, 2)}\n`;
 const archives = [];
 const files = [];
 const inventory = [];
-const excluded = /(^|\/)(\.git|node_modules|__pycache__|\.DS_Store)(\/|$)|\.(o|a|wasm|pyc|blb|exe|dll)$/i;
+const excluded = /(^|\/)(\.git|node_modules|__pycache__|\.DS_Store)(\/|$)|\.(o|a|wasm|pyc|blb|exe|dll|sav|sve|\d{3})$/i;
 let previousManifest;
 let previousInventory;
 try {

@@ -18,8 +18,8 @@ body {
   background-image:radial-gradient(#69675a13 .7px,transparent .7px);
   background-size:5px 5px;
 }
-button,input { font:inherit; }
-button,a,input,summary { touch-action:manipulation; }
+button,input,select { font:inherit; }
+button,a,input,select,summary { touch-action:manipulation; }
 button {
   cursor:pointer;
   border:1px solid var(--ink);
@@ -40,7 +40,7 @@ button:disabled {
   border-color:#aaa595;
   box-shadow:none;
 }
-button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible {
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible {
   outline:3px solid #216b83;
   outline-offset:4px;
 }
@@ -134,6 +134,22 @@ dialog { max-width:480px; width:calc(100% - 32px); background:var(--sheet); colo
 dialog::backdrop { background:#24251c99; }
 dialog form { display:flex; justify-content:flex-end; gap:12px; margin-top:24px; }
 .secondary,dialog .danger { background:var(--paper); box-shadow:none; }
+.secondary { color:var(--ink); }
+.save-controls { border-top:1px solid var(--line); margin-top:18px; padding-top:6px; }
+.save-controls h3,dialog h3 { font-size:14px; margin:18px 0 10px; }
+.save-list { padding:0; margin:12px 0 18px; list-style:none; max-height:220px; overflow:auto; }
+.save-list li { padding:9px 0; border-bottom:1px solid var(--line); font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
+.save-list strong,.save-list span { display:block; }
+.save-list span { color:var(--muted); }
+.save-actions,.save-dialog-actions { display:flex; flex-wrap:wrap; gap:12px; }
+.save-actions button,.save-dialog-actions button { font-size:12px; padding:12px 14px; }
+.backup-label { display:block; font-size:12px; font-weight:bold; margin:24px 0 10px; }
+#save-backups { width:100%; min-width:0; padding:10px; border:1px solid var(--muted); background:var(--sheet); color:var(--ink); border-radius:3px; font-size:12px; }
+#save-status.error,#save-dialog-status.error { color:#792b20; }
+.overwrite-confirmation { display:flex; align-items:flex-start; gap:10px; font-size:12px; line-height:1.7; padding:12px; border:1px solid var(--clay); }
+.overwrite-confirmation input { flex-shrink:0; margin-top:5px; }
+.save-dialog-actions { justify-content:flex-end; margin-top:20px; }
+#save-import-dialog { max-height:calc(100dvh - 32px); overflow:auto; }
 body.playing { overflow:hidden; overscroll-behavior:none; }
 #game { position:fixed; inset:0; z-index:100; background:#000; color:var(--sheet); display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
 .game-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 16px; min-height:60px; flex-shrink:0; background:#191b16; border-bottom:1px solid #3e4437; }

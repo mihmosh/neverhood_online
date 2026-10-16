@@ -70,9 +70,12 @@ export async function getLibrary() {
   return { ...manifest, directory: pointer.directory };
 }
 
-export async function withStorageLock(callback, { signal } = {}) {
+export async function withStorageLock(callback, { signal, ifAvailable = false } = {}) {
   if (!navigator.locks?.request) throw new Error('This browser does not support Web Locks: safe library changes are unavailable.');
-  return navigator.locks.request(LOCK, { mode: 'exclusive', signal }, callback);
+  return navigator.locks.request(LOCK, { mode: 'exclusive', signal, ifAvailable }, lock => {
+    if (ifAvailable && lock === null) throw new Error('Close the game and finish any import in other tabs before managing saved games.');
+    return callback();
+  });
 }
 
 export async function importLibrary(files, onProgress = () => {}, { signal } = {}) {

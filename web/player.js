@@ -106,7 +106,7 @@ async function start(descriptor) {
   }
   signal.throwIfAborted();
   // Keep the session configuration separate from upstream's persisted HOME mount.
-  fs.writeFile('/tmp/neverhood.ini', '[scummvm]\ngui_return_to_launcher_at_exit=false\nconfirm_exit=false\nfiltering=true\n');
+  fs.writeFile('/tmp/neverhood.ini', '[scummvm]\ngui_return_to_launcher_at_exit=false\nconfirm_exit=false\nfiltering=true\noriginalsaveload=true\n');
   canvas.focus();
   status('Stepping into Neverhood...', 100);
   const [width, height] = windowSize();

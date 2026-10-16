@@ -9,6 +9,11 @@
 *.zip
 *.7z
 *.rar
+*.[0-9][0-9][0-9]
+*.sav
+*.sve
+/saves/
+/save-backups/
 
 # Local credentials and machine-specific files
 .env

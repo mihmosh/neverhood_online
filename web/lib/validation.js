@@ -54,6 +54,7 @@ export function editionWarning(hdSize) {
 }
 
 export function formatBytes(bytes) {
-  if (!Number.isFinite(bytes)) return 'unknown';
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(bytes / 1024 ** 2) + ' MiB';
+  if (!Number.isFinite(bytes) || bytes < 0) return 'unknown';
+  const unit = bytes >= 1024 ** 3 ? 3 : bytes >= 1024 ** 2 ? 2 : bytes >= 1024 ? 1 : 0;
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(bytes / 1024 ** unit) + ' ' + ['B', 'KiB', 'MiB', 'GiB'][unit];
 }

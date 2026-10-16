@@ -119,12 +119,14 @@ try {
       const box = await frame.locator('#canvas').boundingBox();
       await page.mouse.click(box.x + box.width * 95 / 640, box.y + box.height * 400 / 480);
       await page.locator('#game').waitFor({ state: 'hidden', timeout: 30000 });
+      await page.waitForFunction(() => !document.getElementById('play').disabled);
       assert.equal(await page.locator('#playframe').count(), 0);
       assert.equal(await page.locator('#play').isEnabled(), true);
       console.log('In-game Quit returned to the site without a launcher');
       await play();
       await page.locator('#stop-game').click();
       await page.locator('#game').waitFor({ state: 'hidden', timeout: 15000 });
+      await page.waitForFunction(() => !document.getElementById('play').disabled);
       assert.equal(await page.locator('#playframe').count(), 0);
       assert.equal(await page.locator('#play').isEnabled(), true);
       console.log('Replay and Return to site completed without page reload');

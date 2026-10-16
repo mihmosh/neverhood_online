@@ -47,8 +47,12 @@ test('validation reads only 16 bytes, warns about unknown edition', async () => 
   assert.match(result.warning, /compatibility is unconfirmed/);
 });
 
-test('formats unavailable quota honestly', () => {
+test('formats unavailable quota and small save files honestly', () => {
   assert.equal(formatBytes(undefined), 'unknown');
+  assert.equal(formatBytes(-1), 'unknown');
+  assert.equal(formatBytes(0), '0 B');
+  assert.equal(formatBytes(17580), '17.2 KiB');
+  assert.equal(formatBytes(1024 ** 3), '1 GiB');
   assert.match(formatBytes(1048576), /1 MiB/);
 });
 

@@ -3,6 +3,7 @@ import { storageSupported, getLibrary, deleteLibrary, withStorageLock, describeS
 import { discoverRuntime } from './lib/runtime.js';
 import { discoverExtractor } from './lib/installer.js';
 import { importGameSource } from './lib/source.js';
+import { createSaveControls } from './lib/save-controls.js';
 
 const $ = id => document.getElementById(id);
 let library = null;
@@ -10,6 +11,8 @@ let libraryError = false;
 let libraryChecked = false;
 let source = null;
 let busy = false;
+let saveBusy = false;
+let saveControls;
 let running = false;
 let runtime = { available: false };
 let extractor = { available: false };
@@ -26,19 +29,25 @@ function controls() {
   const supported = storageSupported();
   const state = !libraryChecked ? 'checking' : busy ? (importController ? 'preparing' : 'removing') : library ? 'ready' : libraryError ? 'error' : 'empty';
   $('library-panel').dataset.state = state;
-  $('library-panel').setAttribute('aria-busy', String(busy || !libraryChecked));
+  $('library-panel').setAttribute('aria-busy', String(busy || saveBusy || !libraryChecked));
   $('library-title').textContent = { checking: 'Checking this browser...', preparing: 'Getting your game ready', removing: 'Removing local game data', ready: 'Ready to play', error: "Let's fix your local copy", empty: 'Add your game' }[state];
   $('import-state').hidden = !libraryChecked || Boolean(library) || (busy && !importController);
   $('ready-state').hidden = !library || busy;
   $('remove-control').hidden = !libraryChecked || (!library && !libraryError);
-  for (const id of ['game-folder', 'game-archive']) $(id).disabled = busy || running || !supported;
-  $('prepare').disabled = busy || running || !source || !supported;
-  $('delete').disabled = busy || running || !supported || (!library && !libraryError);
-  $('persist').disabled = busy || running || !supported || !navigator.storage?.persist;
-  $('play').disabled = busy || running || !library || !runtime.available;
+  for (const id of ['game-folder', 'game-archive']) $(id).disabled = busy || saveBusy || running || !supported;
+  $('prepare').disabled = busy || saveBusy || running || !source || !supported;
+  $('delete').disabled = busy || saveBusy || running || !supported || (!library && !libraryError);
+  $('persist').disabled = busy || saveBusy || running || !supported || !navigator.storage?.persist;
+  $('play').disabled = busy || saveBusy || running || !library || !runtime.available;
   $('cancel-import').hidden = !importController;
   $('cancel-import').disabled = !importController || importController.signal.aborted;
+  saveControls?.update();
 }
+
+saveControls = createSaveControls({
+  onBusy(value) { saveBusy = value; controls(); },
+  isBlocked: () => busy || running || !libraryChecked,
+});
 
 async function storageInfo() {
   try {
@@ -98,7 +107,7 @@ for (const id of ['game-folder', 'game-archive']) {
 }
 
 $('prepare').addEventListener('click', async () => {
-  if (!source || busy || running) return;
+  if (!source || busy || saveBusy || running) return;
   busy = true;
   importController = new AbortController();
   controls();
@@ -138,6 +147,7 @@ $('cancel-import').addEventListener('click', () => {
 });
 
 $('persist').addEventListener('click', async () => {
+  if (busy || saveBusy || running) return;
   try {
     const granted = await navigator.storage.persist();
     message(granted ? 'The browser will keep your files unless you clear site data.' : 'Your game still works. The browser may remove its files if space runs low.');
@@ -146,12 +156,12 @@ $('persist').addEventListener('click', async () => {
 });
 
 $('delete').addEventListener('click', () => {
-  if (busy || running || (!library && !libraryError)) return;
+  if (busy || saveBusy || running || (!library && !libraryError)) return;
   $('delete-dialog').returnValue = '';
   $('delete-dialog').showModal();
 });
 $('delete-dialog').addEventListener('close', async () => {
-  if ($('delete-dialog').returnValue !== 'delete') return;
+  if ($('delete-dialog').returnValue !== 'delete' || busy || saveBusy || running) return;
   busy = true;
   controls();
   try {
@@ -167,7 +177,7 @@ $('delete-dialog').addEventListener('close', async () => {
 });
 
 $('play').addEventListener('click', async () => {
-  if (!library || !runtime.available || busy || running) return;
+  if (!library || !runtime.available || busy || saveBusy || running) return;
   running = true;
   gameController = new AbortController();
   controls();
@@ -208,6 +218,7 @@ $('play').addEventListener('click', async () => {
     running = false;
     controls();
     $('play').focus();
+    await saveControls.refresh();
   }
 });
 
@@ -226,12 +237,17 @@ $('fullscreen').addEventListener('click', async () => {
 });
 document.addEventListener('fullscreenchange', () => { $('fullscreen').textContent = document.fullscreenElement ? 'Leave full screen' : 'Full screen'; });
 window.addEventListener('beforeunload', event => {
-  if (busy || running) { event.preventDefault(); event.returnValue = ''; }
+  if (busy || saveBusy || running) { event.preventDefault(); event.returnValue = ''; }
 });
-window.addEventListener('focus', () => { if (!busy && !running) refreshLibrary(); });
+window.addEventListener('focus', async () => {
+  if (busy || saveBusy || running) return;
+  await refreshLibrary();
+  await saveControls.refresh();
+});
 
 controls();
 await refreshLibrary();
+await saveControls.refresh();
 [runtime, extractor] = await Promise.all([discoverRuntime(), discoverExtractor()]);
 $('runtime-status').textContent = runtime.available ? 'The player is ready.' : 'The game player is unavailable right now.';
 $('extractor-status').textContent = extractor.available ? 'Game folders and supported installers can be read on this device.' : 'Installer extraction is unavailable. A folder with already unpacked game files will still work.';

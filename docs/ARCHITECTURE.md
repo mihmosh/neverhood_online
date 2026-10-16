@@ -52,12 +52,36 @@ RAM, with possible extra copies. It is not a mobile streaming implementation.
 
 ## Saved Games
 
-Engine saves should use a persistent filesystem separate from game resources.
-They require loading before launch, flushing after saves and normal exit, and
-backup export/import. A tab-close handler alone is not reliable persistence.
-Deleting the library must not silently delete progress.
-The current adapter mounts IDBFS at `/saves`; a probe survived reload, but a full
-in-game save/load cycle and backup export/import still need verification.
+The player mounts persistent IDBFS at `/saves`, separate from OPFS game resources.
+Save management uses the same IndexedDB database `/saves`, version 21 and `FILE_DATA`
+store as the pinned Emscripten 4.0.10 runtime. Records retain its timestamp, mode
+and Uint8Array schema. Changing SDK/schema requires an interoperability review;
+the save manager must not independently bump the database version.
+
+All reads, exports and imports use the same Web Lock as the whole player session.
+Management fails promptly if a player/import in another tab holds it. Reviewed
+imports carry a content fingerprint, rechecked after acquiring the lock, so an
+older confirmation cannot replace newer progress. Files are revalidated at commit.
+
+Save validation bounds file/batch sizes, checks raw/gzip version-0 Neverhood data,
+thumbnail structure, variable references/cycles and gzip/ZIP CRCs. Original byte
+streams remain unchanged. ZIP exports contain only flat canonical save filenames.
+Limits are 4 MiB per save and 32 MiB per collection; compressed input gets a bounded
+ZIP-header overhead allowance. No save data is sent to the server.
+
+Before modifying existing saves, a single IndexedDB transaction writes a ZIP of
+the old collection and all imported records. Backups live in the hidden IDBFS
+directory `.neverhood-web-backups`; the latest three are retained and downloadable.
+The game ignores these as save slots. Backup and replacement writes roll back
+together on failure. Unaffected slots and unrelated metadata are preserved.
+
+Storage & more remains accessible without game resources. Removing the OPFS
+library does not delete IDBFS progress or disable backup export. Clearing browser
+site data or eviction can still remove both; downloaded copies are essential.
+The player uses the original game save/load menus, rather than the generic GUI.
+Real native imports, byte-exact ZIP roundtrips, quota rollback, stale-plan rejection,
+cross-tab locking and one in-game save/exit/reload/load cycle passed Chromium checks.
+This is not a complete playthrough or a cross-platform durability guarantee.
 
 ## Installer And ZIP Import
 

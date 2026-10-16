@@ -15,12 +15,14 @@ neither an official release nor a remaster.
   and prominently credit the upstream ScummVM Neverhood engine authors.
 - Run the original C++ Neverhood engine in WebAssembly, with a 4:3 high-DPI player.
 - Return from in-game Quit or the page's Return to site button, then play again.
+- Import/export native saves and save ZIPs, with explicit overwrite review,
+  atomic pre-import backups and stale-confirmation protection.
 - Build a self-contained static site from the repository without an SDK or secrets.
 - Serve matching source archives, hashes, build materials and third-party notices.
 
 ## Verified Scope
 
-The unit suite currently has 48 tests covering import transactions, ZIP framing,
+The unit suite currently has 62 tests covering import transactions, ZIP framing,
 legacy filename decoding, CRC and size checks, source discovery, static packaging,
 public-source integrity, server isolation and related error handling.
 
@@ -38,8 +40,9 @@ runtime output. These checks do not constitute an independent security or legal 
 ## Known Limits
 
 - No complete playthrough or comprehensive audible-sound test has been performed.
-- The save directory is persistent IDBFS, but a full in-game save/load cycle and
-  backup/export workflow are not yet verified.
+- Native save transfer and one full in-game save/load cycle passed Chromium tests;
+  other engine versions, game editions and browser/native-platform combinations
+  still need coverage. Browser data is not a substitute for external backups.
 - Game launch copies the library into MEMFS; substantial RAM is needed.
 - Installer and ZIP imports use temporary disk space in addition to the final library.
 - Desktop Chromium is the primary tested target. Touch, Firefox and Safari need
@@ -50,7 +53,7 @@ runtime output. These checks do not constitute an independent security or legal 
 
 ## Next Milestones
 
-1. Verify real in-game save/load, add backup import/export, and test failure recovery.
+1. Expand save/load coverage across editions and platforms, and test browser-crash recovery.
 2. Replace complete MEMFS resource copies with bounded seekable access from OPFS.
 3. Expand browser/device coverage and improve accessible input and touch handling.
 4. Design versioned offline caching and safe runtime updates without losing saves.

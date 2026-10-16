@@ -40,6 +40,32 @@ was tested; support for every installer, repack or game edition is not promised.
 ZIP supports stored and deflated entries. RAR, 7z, encrypted ZIP and ZIP64 are
 unsupported: unpack those containers locally, then choose the resulting folder.
 
+### Move Saved Games
+
+Open **Storage & more -> Saved games**, even before importing the game or after
+removing its resource files.
+
+1. Exit any running web player, including other tabs for the same site.
+2. Choose native ScummVM saves such as `neverhood.000`, or a save ZIP exported here.
+3. Press **Import saves** and review descriptions and slot conflicts. Replacing
+   existing slots requires an explicit checkbox and confirmation.
+4. Press **Play**, then use the game's **Load game** menu to continue.
+
+Original bytes are preserved, including gzip compression; target prefixes become
+`neverhood.###`. Before modifying an existing collection, one atomic transaction
+stores a ZIP backup and imports the saves. The latest three backups are retained
+and downloadable. Failed writes preserve the old collection; stale confirmations
+cannot overwrite newer progress.
+
+**Export saves** downloads the current collection as a ZIP. To transfer it to
+native ScummVM, back up its save folder first, then extract the saves there and
+review filename conflicts. Linux commonly uses `~/.local/share/scummvm/saves/`.
+If the native game uses another target prefix, adjust the filenames to match it
+while retaining the three-digit slots. Original Windows `.sav` files are unsupported.
+
+Automatic backups are still browser data, not an independent copy. Download
+important progress before clearing site data or changing hostname.
+
 ### Storage And Compatibility
 
 - Desktop Chromium is the current verified target. Firefox, Safari and mobile gameplay are not verified.
@@ -58,11 +84,11 @@ import, reload persistence, the first room and Escape menu, focused high-DPI
 **Important limitations:**
 
 - A full playthrough and audible sound have not been verified.
-- The IDBFS save directory passed a persistence probe, but real in-game save/load across sessions is not fully verified. Save backup export/import is not available. Do not rely on this browser build for irreplaceable progress.
+- Native save import/export, overwrite backups and one real in-game save/exit/reload/load cycle were tested in Chromium. This does not establish reliability for every edition or platform; keep external backups of important progress.
 - Offline relaunch is not ready. Local game storage alone does not make the site available offline.
 - HD resource replacements are not implemented. Filtered high-DPI display scales the original artwork; it does not create an HD remaster.
 
-The automated suite has passed 48 tests; this is not a substitute for gameplay
+The automated suite has passed 62 tests; this is not a substitute for gameplay
 testing. See [testing](docs/TESTING.md) and the [verification log](docs/PLAN.md)
 for scope and outstanding work.
 

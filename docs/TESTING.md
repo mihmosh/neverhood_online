@@ -99,7 +99,30 @@ INSTALLER_BIN="/path/to/your/installer/setup-1.bin" \
 node test/browser-installer-smoke.mjs
 ```
 
+## Save Transfer And Recovery
+
+The save regression uses six local native ScummVM files, `neverhood.000` through
+`neverhood.005`, as a read-only fixture. They are never committed or modified.
+
+```sh
+PLAYWRIGHT_MODULE="$(npm root -g)/playwright" \
+NATIVE_SAVE_DIR="/path/to/your/six-slot-native-fixture" \
+GAME_DATA_DIR="/path/to/your/installed-game" \
+SCREENSHOT_PATH=/tmp/neverhood-save-load.png \
+node test/browser-saves.mjs
+```
+
+Without GAME_DATA_DIR, only transfer/recovery checks run. With game resources,
+the test additionally loads native slot 000 through the original menu, creates a
+new in-game save, exports it, exits, reloads the page and loads that new slot.
+It checks that removing resources preserves progress and save export access.
+
+Other checks include byte-exact native/ZIP roundtrips, explicit overwrite consent,
+cancelled reviews, pre-import restoration, three-backup retention, quota-induced
+transaction rollback, stale-plan rejection, cross-tab locking and reload persistence.
+The IndexedDB implementation is exercised in a real disk-backed Chrome profile,
+including its interoperability with the actual Emscripten IDBFS mount.
+
 Browser checks reject upload requests and uncaught page errors. They do not prove
-a full playthrough, audible sound, actual save/load reliability, phone support or
-offline operation. The IDBFS save directory was checked previously with a persisted
-probe; save backup and a complete in-game save/load check remain open milestones.
+a full playthrough, audible sound, reliability for every engine/version/edition,
+phone support or offline operation. Keep external backups of important progress.

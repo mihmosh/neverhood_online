@@ -58,14 +58,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 190424,
-      "sha256": "74c0c63cd7fa1a8f9e599877cf4386bb5a086dc540ae4b4cb6e665c5c0d3a103",
+      "bytes": 205104,
+      "sha256": "eb6c024950af6301ff86e5ebfca21e46c7ed83d918bed5cd93ddc657619bb38f",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 190424,
-      "archiveSha256": "74c0c63cd7fa1a8f9e599877cf4386bb5a086dc540ae4b4cb6e665c5c0d3a103"
+      "archiveBytes": 205104,
+      "archiveSha256": "eb6c024950af6301ff86e5ebfca21e46c7ed83d918bed5cd93ddc657619bb38f"
     }
   ],
   "files": [
@@ -126,14 +126,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 190424,
-      "sha256": "74c0c63cd7fa1a8f9e599877cf4386bb5a086dc540ae4b4cb6e665c5c0d3a103",
+      "bytes": 205104,
+      "sha256": "eb6c024950af6301ff86e5ebfca21e46c7ed83d918bed5cd93ddc657619bb38f",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 190424,
-      "archiveSha256": "74c0c63cd7fa1a8f9e599877cf4386bb5a086dc540ae4b4cb6e665c5c0d3a103"
+      "archiveBytes": 205104,
+      "archiveSha256": "eb6c024950af6301ff86e5ebfca21e46c7ed83d918bed5cd93ddc657619bb38f"
     },
     {
       "name": "REBUILD.sh",
@@ -142,8 +142,8 @@
     },
     {
       "name": "inventory.json",
-      "bytes": 6497405,
-      "sha256": "9a7d32c47e88dad86d792c5506ad4b82c41953293c5f539a11261abd974ee45d"
+      "bytes": 6498423,
+      "sha256": "2f180922c52ba349e3598f6974daba0d43c7a499645033d184a502837cbc6f15"
     },
     {
       "name": "README.txt",
@@ -151,7 +151,7 @@
       "sha256": "f06d01adde91a93098abccb8ebcc038c341051d3cea4773e5c2311fa6326bc72"
     }
   ],
-  "totalBytes": 37886895,
+  "totalBytes": 37902593,
   "chunkMaximumBytes": 16777216,
   "runtimeRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
   "extractorVersion": "1.9",

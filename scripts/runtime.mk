@@ -8,7 +8,7 @@ LDFLAGS := $(subst --pre-js $(srcdir)/dists/emscripten/custom_shell-pre.js,,$(LD
 # Keep upstream's exports and expose the filesystem to the external launcher.
 LDFLAGS += -s EXPORTED_RUNTIME_METHODS=[ccall,lengthBytesUTF8,setValue,writeArrayToMemory,FS,IDBFS,callMain,getValue]
 # Observe the existing engine pointer without changing upstream source.
-LDFLAGS += -s EXPORTED_FUNCTIONS=[_main,_malloc,_free,_raise,_g_engine,_SDL_GetWindowFromID,_SDL_SetWindowSize,_emscripten_pause_main_loop]
+LDFLAGS += -s EXPORTED_FUNCTIONS=[_main,_malloc,_free,_raise,_g_engine,_SDL_GetWindowFromID,_SDL_GetWindowID,_SDL_GL_GetCurrentWindow,_SDL_GetKeyboardFocus,_SDL_SetWindowSize,_emscripten_pause_main_loop]
 LDFLAGS += -s EXIT_RUNTIME=1
 
 $(EXECUTABLE): .EXTRA_PREREQS := $(firstword $(MAKEFILE_LIST))

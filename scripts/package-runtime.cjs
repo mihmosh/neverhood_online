@@ -15,6 +15,9 @@ const { execFileSync } = require('node:child_process');
   if (!exports.some(entry => entry.name === 'g_engine' && entry.kind === 'global')) {
     throw new Error('Built WebAssembly is missing the g_engine lifecycle data export');
   }
+  for (const name of ['SDL_GL_GetCurrentWindow', 'SDL_GetKeyboardFocus', 'SDL_GetWindowID', 'SDL_SetWindowSize']) {
+    if (!exports.some(entry => entry.name === name && entry.kind === 'function')) throw new Error(`Built WebAssembly is missing active-window resizing: ${name}`);
+  }
   const config = await fs.readFile(path.join(build, 'config.mk'), 'utf8');
   const value = name => config.match(new RegExp(`^${name}\\s*[:+]?=\\s*(.*)$`, 'm'))?.[1] || '';
   const descriptor = {
@@ -32,6 +35,12 @@ const { execFileSync } = require('node:child_process');
       stopped: 'A nonzero engine pointer followed by zero means the engine was destroyed. Hide and stop the isolated player, flush saves, then remove its iframe.',
       exitRuntime: true,
       pauseMainLoop: 'Module._emscripten_pause_main_loop',
+    },
+    viewport: {
+      activeWindow: 'Module._SDL_GL_GetCurrentWindow() || Module._SDL_GetKeyboardFocus()',
+      windowIdentity: 'Module._SDL_GetWindowID(window)',
+      resize: 'Module._SDL_SetWindowSize(window, width, height)',
+      note: 'Window IDs change when the renderer recreates its SDL window; never assume ID 1.',
     },
     emsdk,
     sourceRevision: execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),

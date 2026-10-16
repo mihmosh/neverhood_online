@@ -10,23 +10,24 @@ WebAssembly with [Emscripten](https://emscripten.org/). It is not a new game
 engine, a new reverse-engineering effort, an official release or a remaster.
 **You supply the game. No game archives or installers are included.**
 
-[Play in your browser](https://nevehood-online.vercel.app) |
+[Play in your browser](https://neverhood-online.vercel.app) |
 [Source code](https://github.com/mihmosh/neverhood_online) |
 [Report a bug](https://github.com/mihmosh/neverhood_online/issues) |
 [Contribute](CONTRIBUTING.md)
 
-The live address above is intentional: its existing hostname is spelled
-`nevehood-online`. The live deployment may lag this repository, including its
-latest ZIP filename fixes.
-
 ![Neverhood Online onboarding interface, without game artwork](docs/images/onboarding.png)
+
+The launcher uses original CSS clay surfaces, inset fields and a small animated
+bud, plus the independently licensed Mansalva typeface. No game screenshots,
+sprites, textures, videos or original game font are used in the site design.
+The bud follows actual import state and respects reduced-motion preferences.
 
 ## Play With Your Own Copy
 
 1. Open the site in a current desktop Chromium browser using a normal browser profile.
 2. Choose a folder or ZIP containing your legally obtained installed game, or a supported Inno Setup installer together with all its adjacent BIN parts.
 3. Let the importer find the game inside nested folders and extract it automatically where needed. You do not need to pick individual BLB or installer files.
-4. Wait for the local import to finish, then choose **Play**. Use the in-game menu with Escape, or **Return to site** to leave the player.
+4. Wait for the local import to finish, then choose **Play**. Press Escape for the game's menu and choose **Quit** to return to the site. The floating fullscreen button only toggles browser fullscreen; it does not end the game.
 
 Import and extraction happen locally in the browser. The Windows installer is
 parsed by [innoextract](https://constexpr.org/innoextract/) in a WebAssembly
@@ -79,7 +80,7 @@ important progress before clearing site data or changing hostname.
 This is an early, working desktop-oriented project, not a promise of complete
 game compatibility. Real Chromium checks have covered folder and installer ZIP
 import, reload persistence, the first room and Escape menu, focused high-DPI
-4:3 rendering, resizing, in-game Quit, Return to site and replay without reloading.
+4:3 rendering, resizing, in-game Quit and replay without reloading.
 
 **Important limitations:**
 
@@ -88,7 +89,7 @@ import, reload persistence, the first room and Escape menu, focused high-DPI
 - Offline relaunch is not ready. Local game storage alone does not make the site available offline.
 - HD resource replacements are not implemented. Filtered high-DPI display scales the original artwork; it does not create an HD remaster.
 
-The automated suite has passed 62 tests; this is not a substitute for gameplay
+The automated suite has passed 63 tests; this is not a substitute for gameplay
 testing. See [testing](docs/TESTING.md) and the [verification log](docs/PLAN.md)
 for scope and outstanding work.
 
@@ -179,7 +180,7 @@ Neverhood Online is distributed under the **GNU General Public License, version
 This is also the license election in `package.json`. Individual files with an
 explicit MIT SPDX notice and third-party components retain their own licenses;
 the root license does not relicense them. Matching binary sources are available
-through the site's [source downloads](https://nevehood-online.vercel.app/sources/index.html)
+through the site's [source downloads](https://neverhood-online.vercel.app/sources/index.html)
 and in `web/public/sources/`.
 
 The Neverhood's name, characters, artwork, music and commercial game data remain

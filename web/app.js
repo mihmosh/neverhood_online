@@ -18,6 +18,16 @@ let runtime = { available: false };
 let extractor = { available: false };
 let importController;
 let gameController;
+let gameStarted = false;
+
+function placeFullscreen() {
+  const { width, height } = $('game').getBoundingClientRect();
+  const sideMargin = (width - Math.min(width, height * 4 / 3)) / 2;
+  const topMargin = (height - Math.min(height, width * 3 / 4)) / 2;
+  const button = $('fullscreen');
+  button.style.left = `${sideMargin >= 52 ? width - sideMargin / 2 - 22 : topMargin >= 52 ? width / 2 - 22 : Math.max(0, width - 52)}px`;
+  button.style.top = `${sideMargin >= 52 ? height / 2 - 22 : topMargin >= 52 ? topMargin / 2 - 22 : 8}px`;
+}
 
 function message(text, error = false) {
   $('message').textContent = text;
@@ -64,7 +74,7 @@ async function refreshLibrary() {
   $('library-warning').textContent = '';
   try {
     library = await getLibrary();
-    $('library-status').textContent = library ? 'Your game is ready on this device.' : 'Import once, then play from this browser.';
+    $('library-status').textContent = library ? 'Your game is ready on this device.' : 'Import once. Play here anytime.';
     if (library) {
       const details = $('library-details');
       details.replaceChildren();
@@ -179,18 +189,22 @@ $('delete-dialog').addEventListener('close', async () => {
 $('play').addEventListener('click', async () => {
   if (!library || !runtime.available || busy || saveBusy || running) return;
   running = true;
+  gameStarted = false;
   gameController = new AbortController();
   controls();
   $('game').hidden = false;
   $('game-loading').hidden = false;
+  $('game-loading').querySelector('h2').textContent = 'Opening your world';
   $('game-status').textContent = 'Starting the player...';
   $('game-progress').removeAttribute('value');
   $('site').inert = true;
   document.querySelector('header').inert = true;
   document.querySelector('footer').inert = true;
   document.body.classList.add('playing');
-  $('stop-game').disabled = false;
-  $('stop-game').focus();
+  $('cancel-loading').hidden = false;
+  $('cancel-loading').disabled = false;
+  $('cancel-loading').focus();
+  placeFullscreen();
   try {
     await withStorageLock(async () => {
       gameController.signal.throwIfAborted();
@@ -199,8 +213,16 @@ $('play').addEventListener('click', async () => {
         $('game-status').textContent = text;
         if (Number.isFinite(progress)) $('game-progress').value = progress;
         else $('game-progress').removeAttribute('value');
-        if (state === 'playing') $('game-loading').hidden = true;
-        if (state === 'stopping') $('game-loading').hidden = false;
+        if (state === 'playing') {
+          gameStarted = true;
+          $('cancel-loading').hidden = true;
+          $('cancel-loading').disabled = true;
+          $('game-loading').hidden = true;
+        }
+        if (state === 'stopping') {
+          $('game-loading').querySelector('h2').textContent = 'Saving your progress';
+          $('game-loading').hidden = false;
+        }
       } });
     }, { signal: gameController.signal });
     message('Back home. You can play again whenever you like.');
@@ -216,16 +238,17 @@ $('play').addEventListener('click', async () => {
     document.body.classList.remove('playing');
     gameController = null;
     running = false;
+    gameStarted = false;
     controls();
-    $('play').focus();
     await saveControls.refresh();
+    $('play').focus();
   }
 });
 
-$('stop-game').addEventListener('click', () => {
-  $('stop-game').disabled = true;
-  $('game-loading').hidden = false;
-  $('game-status').textContent = 'Saving and returning to the site...';
+$('cancel-loading').addEventListener('click', () => {
+  if (!running || gameStarted || !gameController || gameController.signal.aborted) return;
+  $('cancel-loading').disabled = true;
+  $('game-status').textContent = 'Cancelling loading...';
   gameController?.abort();
 });
 $('fullscreen').hidden = !document.documentElement.requestFullscreen;
@@ -235,7 +258,16 @@ $('fullscreen').addEventListener('click', async () => {
     else await $('game').requestFullscreen();
   } catch { $('game-status').textContent = 'Full screen is not available. You can keep playing here.'; }
 });
-document.addEventListener('fullscreenchange', () => { $('fullscreen').textContent = document.fullscreenElement ? 'Leave full screen' : 'Full screen'; });
+document.addEventListener('fullscreenchange', () => {
+  const active = Boolean(document.fullscreenElement);
+  const label = active ? 'Leave full screen' : 'Full screen';
+  $('fullscreen').setAttribute('aria-label', label);
+  $('fullscreen').title = label;
+  $('fullscreen').setAttribute('aria-pressed', String(active));
+  placeFullscreen();
+});
+window.addEventListener('resize', placeFullscreen);
+new ResizeObserver(placeFullscreen).observe($('game'));
 window.addEventListener('beforeunload', event => {
   if (busy || saveBusy || running) { event.preventDefault(); event.returnValue = ''; }
 });

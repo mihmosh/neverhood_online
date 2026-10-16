@@ -39,7 +39,7 @@ storage and player boundaries.
 
 - Keep patches focused and include regression tests for behavior changes.
 - For import changes, check cancellation, quota failures, path safety and preservation of an existing library. Never weaken limits just to accept one installer.
-- For player changes, check startup cancellation, Return to site, in-game Quit, replay and resizing. Distinguish mocked tests from real-browser checks.
+- For player changes, check loading-only cancellation, in-game Quit, replay, resizing and fullscreen controls in letterbox margins. Distinguish mocked tests from real-browser checks.
 - State exactly what you tested and what remains unverified. Do not claim full-game, mobile, offline or save reliability from a UI smoke test.
 - Do not add game downloads, bundled assets, telemetry or upload behavior as incidental changes.
 - Keep generated artifacts, metadata, notices and corresponding-source packages synchronized. Follow [rebuild instructions](web/public/sources/README.txt) and the [deployment checklist](docs/DEPLOYMENT.md) when changing binaries.

@@ -243,17 +243,19 @@ try {
     await frame.locator('#canvas').pressSequentially('web roundtrip', { delay: 120 });
     await click(560, 130);
     await frame.waitForFunction(() => window.Module.FS.readdir('/saves').filter(name => /^neverhood\.\d{3}$/.test(name)).length === 7, null, { timeout: 15000 });
-    await page.locator('#stop-game').click();
+    await waitForGameFrame(frame, 'menu');
+    await click(95, 400);
     await page.locator('#game').waitFor({ state: 'hidden', timeout: 15000 });
     await page.waitForFunction(() => !document.getElementById('export-saves').disabled);
     console.log('Actual WASM player populated imported saves and loaded native slot 000 through the original game menu');
     const roundtrip = await download('#export-saves');
     const records = await readSaveFiles([new File([roundtrip.bytes], roundtrip.name)]);
     assert.equal(records.length, 7);
-    for (const file of expected) assert.equal(records.find(record => record.name === file.name)?.sha256, file.sha256);
+    // Original Quit may autosave slot 000; all other native slots stay byte-exact.
+    for (const file of expected.filter(file => file.name !== 'neverhood.000')) assert.equal(records.find(record => record.name === file.name)?.sha256, file.sha256);
     const created = records.find(record => !names.includes(record.name));
     assert.ok(created?.description.length);
-    console.log('Created a new in-game web save and exported it with the six unchanged native files');
+    console.log('Created and exported an in-game web save; original Quit may update browser autosave slot 000');
     await page.reload();
     await page.waitForFunction(() => !document.getElementById('play').disabled);
     await page.locator('#play').click();
@@ -267,9 +269,13 @@ try {
     await gameClick(reopened, 350, 150 + created.slot * 17);
     await gameClick(reopened, 76, 130);
     await waitForSaveScreen(reopened, restoredMenu);
-    await page.locator('#stop-game').click();
+    await waitForGameFrame(reopened);
+    await reopened.locator('#canvas').press('Escape');
+    await waitForGameFrame(reopened, 'menu');
+    await gameClick(reopened, 95, 400);
     await page.locator('#game').waitFor({ state: 'hidden', timeout: 15000 });
     await page.waitForFunction(() => !document.getElementById('export-saves').disabled);
+    const afterReplay = await hashes();
     console.log('Real in-game save -> exit -> page reload -> new player -> load cycle passed');
     await page.locator('#delete').click();
     await page.locator('#delete-dialog button[value="delete"]').click();
@@ -277,7 +283,7 @@ try {
     assert.equal((await state()).files.length, 7);
     if (!await page.locator('details.advanced').evaluate(details => details.open)) await page.locator('details.advanced > summary').click();
     const afterRemoval = await readSaveFiles([new File([(await download('#export-saves')).bytes], 'saves.zip')]);
-    assert.deepEqual(afterRemoval.map(({ name, sha256 }) => ({ name, sha256 })), records.map(({ name, sha256 }) => ({ name, sha256 })));
+    assert.deepEqual(afterRemoval.map(({ name, sha256 }) => ({ name, sha256 })), afterReplay);
     console.log('Removing game resources preserves progress and keeps save export available');
   }
   assert.deepEqual(errors, []);

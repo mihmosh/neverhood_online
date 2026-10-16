@@ -7,6 +7,11 @@ Installers, BLB archives and user saves are not sent to the server.
 The user selects a game/installer folder or ZIP. Nested directories are searched
 automatically for a complete game or an installer with adjacent BIN parts.
 No technical file-by-file selection is exposed in the interface.
+The launcher uses original procedural CSS clay surfaces and a self-hosted OFL
+Mansalva font, not extracted game graphics or the game's font. A decorative CSS
+bud follows import state: animated while preparing, closed when ready, static for
+reduced-motion users. Engine credits and one source/license link share a single
+area; packaging changes that link to the same-origin source-download page.
 Import, local storage and removal share one responsive panel. The empty state
 shows folder/ZIP import without removal; the ready state hides import and exposes
 Play, storage and removal. Removing the browser copy returns to the empty state
@@ -121,6 +126,10 @@ child check origin, message source and a session nonce. Loading appears immediat
 in a fixed viewport overlay, with background scrolling and interaction disabled.
 SDL manages the drawable, high-DPI scale and resizing; CSS contains the scene in 4:3.
 Filtering is enabled. This scales original art; it is not an HD asset replacement.
+Resize handling follows the actual SDL GL/keyboard-focus window and its ID,
+including renderer recreation and later graphics initialization. It reapplies the
+embedded viewport through SDL if the drawable no longer matches the requested
+high-DPI size; it never directly changes the GL canvas dimensions.
 
 The browser backend intentionally reports NoQuit, so game Quit otherwise returns
 to ScummVM's launcher and `onExit` alone is insufficient. External linker flags
@@ -128,8 +137,11 @@ export the existing `g_engine` address and `getValue`, without source changes.
 After the pointer has been nonzero, a zero marks actual engine destruction.
 The child hides the canvas, pauses the game loop, flushes IDBFS and reports exit.
 The parent removes the iframe, releases the library lock and enables Play again.
-Return to site follows the same cleanup; a bounded timeout disposes a wedged frame
-and warns if saving could not complete. Save backup remains future work.
+Normal exit uses the game's own Quit menu; there is no site-level stop button
+during play. Loading can be cancelled before the engine starts. A bounded timeout
+disposes a wedged frame and warns if saving could not complete. The canvas uses
+the whole viewport without a top toolbar; fullscreen controls float in available
+letterbox margins, with a minimal corner fallback if there is no margin.
 
 ## Future HD Replacements
 

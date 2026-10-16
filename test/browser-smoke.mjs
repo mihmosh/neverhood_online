@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -43,6 +43,11 @@ async function prepare(selector, path) {
   await page.locator(selector).setInputFiles(path);
   await page.waitForFunction(() => !document.getElementById('prepare').disabled);
   await page.locator('#prepare').click();
+  await page.locator('#library-panel[data-state="preparing"]').waitFor();
+  assert.equal(await page.locator('.jaw-top').evaluate(jaw => getComputedStyle(jaw).animationName), 'chew-top');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  assert.equal(await page.locator('.jaw-top').evaluate(jaw => getComputedStyle(jaw).animationName), 'none');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.waitForFunction(() => document.getElementById('progress-wrap').hidden, null, { timeout: 600000 });
   assert.equal(await page.locator('#message.error').count(), 0, await page.locator('#message').innerText());
   await page.locator('#library-status').filter({ hasText: 'Your game is ready' }).waitFor();
@@ -53,6 +58,7 @@ async function prepare(selector, path) {
   assert.equal(await page.locator('#ready-state').isVisible(), true);
   assert.equal(await page.locator('#delete').isVisible(), true);
   await checkCompactLayout('#play');
+  assert.equal(await page.locator('.jaw-top').evaluate(jaw => getComputedStyle(jaw).animationName), 'none');
   console.log(`${selector}: ${library.total} game bytes adopted`);
 }
 
@@ -73,10 +79,15 @@ async function play() {
   assert.equal(await page.evaluate(() => document.body.classList.contains('playing')), true);
   const overlay = await page.locator('#game').boundingBox();
   assert.equal(overlay.y, 0, 'player must be visible immediately without scrolling');
+  assert.equal(await page.locator('.game-toolbar, #stop-game').count(), 0, 'no toolbar or site exit during play');
+  const host = await page.locator('#player-host').boundingBox();
+  assert.equal(host.y, 0);
+  assert.equal(host.height, overlay.height, 'the game must use the full viewport height');
   await page.locator('#game-loading').waitFor({ state: 'hidden', timeout: 180000 });
   const frame = page.frames().find(frame => frame.url().includes('/player.html?'));
   assert.ok(frame);
   await waitForGameFrame(frame, 'room');
+  await frame.waitForFunction(() => Math.abs(document.getElementById('canvas').height - document.getElementById('canvas').getBoundingClientRect().height * devicePixelRatio) < 10);
   const geometry = await frame.locator('#canvas').evaluate(canvas => ({
     width: canvas.width, height: canvas.height,
     cssWidth: canvas.getBoundingClientRect().width, cssHeight: canvas.getBoundingClientRect().height,
@@ -87,8 +98,62 @@ async function play() {
   return frame;
 }
 
+async function quit(frame) {
+  await frame.locator('#canvas').press('Escape');
+  await waitForGameFrame(frame, 'menu');
+  assert.equal(await page.locator('#game').isVisible(), true, 'Escape opens the original menu, not the site');
+  const box = await frame.locator('#canvas').boundingBox();
+  const x = box.x + box.width * 95 / 640;
+  const y = box.y + box.height * 400 / 480;
+  await page.mouse.move(x, y);
+  await frame.evaluate(() => new Promise(resolve => {
+    let frames = 0;
+    const tick = () => ++frames === 5 ? resolve() : requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
+  }));
+  await page.mouse.click(x, y, { delay: 60 });
+  await page.locator('#game').waitFor({ state: 'hidden', timeout: 30000 });
+  await page.waitForFunction(() => !document.getElementById('play').disabled);
+  assert.equal(await page.locator('#playframe').count(), 0);
+  assert.equal(await page.locator('#play').isEnabled(), true);
+  assert.equal(await page.locator('#play').evaluate(button => document.activeElement === button), true);
+  assert.equal(await page.locator('#site').evaluate(site => site.inert), false);
+}
+
+async function checkPlayerControls(frame) {
+  assert.equal(await page.locator('#cancel-loading').isHidden(), true);
+  // Even a stale/programmatic click must not abort a running engine.
+  await page.locator('#cancel-loading').dispatchEvent('click');
+  assert.equal(await page.locator('#game-loading').isHidden(), true);
+  for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }, { width: 800, height: 600 }]) {
+    await page.setViewportSize(viewport);
+    await page.waitForFunction(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const button = await page.locator('#fullscreen').boundingBox();
+    const canvas = await frame.locator('#canvas').boundingBox();
+    const host = await page.locator('#player-host').boundingBox();
+    assert.equal(host.height, viewport.height);
+    assert.equal(host.y, 0);
+    assert.equal(button.width, 44);
+    assert.equal(button.height, 44);
+    if (viewport.width === 1440) assert.ok(button.x >= canvas.x + canvas.width, 'fullscreen must stay in the right letterbox');
+    if (viewport.width === 390) assert.ok(button.y + button.height <= canvas.y, 'fullscreen must stay in the top letterbox');
+    assert.ok(button.x >= 0 && button.y >= 0 && button.x + 44 <= viewport.width && button.y + 44 <= viewport.height);
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.locator('#fullscreen').click();
+  await page.waitForFunction(() => Boolean(document.fullscreenElement));
+  assert.equal(await page.locator('#fullscreen').getAttribute('aria-label'), 'Leave full screen');
+  await page.locator('#fullscreen').click();
+  await page.waitForFunction(() => !document.fullscreenElement);
+  assert.equal(await page.locator('#game').isVisible(), true, 'leaving browser fullscreen must not end the game');
+  assert.equal(await page.locator('#game-loading').isHidden(), true);
+  assert.equal(await page.locator('#site').evaluate(site => site.inert), true);
+  console.log('Floating fullscreen stays in letterboxing; toggle and stale startup cancel preserve the game');
+}
+
 try {
   await page.goto(process.env.TEST_ORIGIN || 'http://127.0.0.1:4173');
+  assert.equal(await page.evaluate(async () => { await document.fonts.ready; return [...document.fonts].some(font => font.family === 'Mansalva' && font.status === 'loaded'); }), true);
   assert.equal(await page.locator('html').getAttribute('lang'), 'en');
   await page.locator('#library-panel[data-state="empty"]').waitFor();
   assert.equal(await page.locator('.game-panel').count(), 1);
@@ -96,6 +161,19 @@ try {
   assert.equal(await page.locator('#import-state').isVisible(), true);
   assert.equal(await page.locator('#archives').count(), 0, 'manual BLB controls must not remain');
   assert.equal(await page.locator('.intro').count(), 0);
+  assert.equal(await page.locator('[data-source-link]').count(), 1);
+  const chooser = page.waitForEvent('filechooser');
+  await page.waitForFunction(() => !document.getElementById('game-folder').disabled);
+  await page.locator('label[for="game-folder"]').click();
+  const emptyFolder = join(profile, 'empty-import-folder');
+  await mkdir(emptyFolder);
+  await (await chooser).setFiles(emptyFolder);
+  await page.waitForFunction(() => !document.getElementById('game-folder').disabled);
+  await page.locator('#game-folder').focus();
+  assert.equal(await page.locator('#game-folder').evaluate(input => document.activeElement === input && parseFloat(getComputedStyle(input.parentElement).outlineWidth) >= 3), true);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  assert.equal(await page.locator('.jaw-top').evaluate(jaw => getComputedStyle(jaw).animationName), 'none');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await checkCompactLayout('#prepare');
   if (process.env.GAME_DATA_DIR) await prepare('#game-folder', process.env.GAME_DATA_DIR);
   if (process.env.INSTALLER_DIR) await prepare('#game-folder', process.env.INSTALLER_DIR);
@@ -107,6 +185,7 @@ try {
     if (process.env.SCREENSHOT_PATH) await page.screenshot({ path: process.env.SCREENSHOT_PATH.replace(/\.png$/, '.ready.png'), fullPage: true });
     if (process.env.TEST_RUNTIME === '1') {
       const frame = await play();
+      await checkPlayerControls(frame);
       await page.setViewportSize({ width: 1200, height: 800 });
       await frame.waitForFunction(() => Math.abs(document.getElementById('canvas').height - document.getElementById('canvas').getBoundingClientRect().height * devicePixelRatio) < 10);
       await waitForGameFrame(frame, 'room');
@@ -114,26 +193,23 @@ try {
       await frame.waitForFunction(() => Math.abs(document.getElementById('canvas').height - document.getElementById('canvas').getBoundingClientRect().height * devicePixelRatio) < 10);
       console.log('Live resize preserved the high-DPI drawable and game frame');
       if (process.env.SCREENSHOT_PATH) await page.screenshot({ path: process.env.SCREENSHOT_PATH.replace(/\.png$/, '.game.png') });
-      await frame.locator('#canvas').press('Escape');
-      await waitForGameFrame(frame, 'menu');
-      const box = await frame.locator('#canvas').boundingBox();
-      await page.mouse.click(box.x + box.width * 95 / 640, box.y + box.height * 400 / 480);
-      await page.locator('#game').waitFor({ state: 'hidden', timeout: 30000 });
-      await page.waitForFunction(() => !document.getElementById('play').disabled);
-      assert.equal(await page.locator('#playframe').count(), 0);
-      assert.equal(await page.locator('#play').isEnabled(), true);
+      await quit(frame);
       console.log('In-game Quit returned to the site without a launcher');
-      await play();
-      await page.locator('#stop-game').click();
+      await quit(await play());
+      console.log('Two actual in-game Quit/replay cycles completed without page reload');
+      let releaseStartup;
+      const startupHeld = new Promise(resolve => { releaseStartup = resolve; });
+      await page.route('**/player.html?*', async route => { await startupHeld; await route.continue(); });
+      const startupRequest = page.waitForRequest('**/player.html?*');
+      await page.locator('#play').click();
+      await startupRequest;
+      await page.locator('#cancel-loading').click();
+      releaseStartup();
       await page.locator('#game').waitFor({ state: 'hidden', timeout: 15000 });
+      await page.unroute('**/player.html?*');
       await page.waitForFunction(() => !document.getElementById('play').disabled);
       assert.equal(await page.locator('#playframe').count(), 0);
-      assert.equal(await page.locator('#play').isEnabled(), true);
-      console.log('Replay and Return to site completed without page reload');
-      await page.locator('#play').click();
-      await page.locator('#stop-game').click();
-      await page.locator('#game').waitFor({ state: 'hidden', timeout: 15000 });
-      console.log('Stopping during startup also releases the player');
+      console.log('Cancel loading releases a deliberately stalled startup');
     }
     await removeGame();
     console.log('Adaptive panel: empty -> ready -> reload -> remove -> empty');

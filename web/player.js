@@ -10,10 +10,26 @@ let mounted = false;
 let resizeObserver;
 let syncing = Promise.resolve();
 let engineFrame;
+let windowStamp = '';
 
 function windowSize() {
   const width = Math.max(4, Math.floor(Math.min(innerWidth, innerHeight * 4 / 3) / 4) * 4);
   return [width, width * 3 / 4];
+}
+
+function resizeWindow() {
+  const module = window.Module;
+  if (!module?._SDL_GetWindowID || !module?._SDL_SetWindowSize) return;
+  const handle = module._SDL_GL_GetCurrentWindow?.() || module._SDL_GetKeyboardFocus?.();
+  if (!handle) return;
+  const size = windowSize();
+  const stamp = `${module._SDL_GetWindowID(handle)}:${size.join(',')}`;
+  const scale = devicePixelRatio || 1;
+  const matches = Math.abs(canvas.width - size[0] * scale) < 4 && Math.abs(canvas.height - size[1] * scale) < 4;
+  // Graphics initialization can resize an existing window after it was observed.
+  if (stamp === windowStamp && matches) return;
+  windowStamp = stamp;
+  module._SDL_SetWindowSize(handle, ...size);
 }
 
 function send(type, data = {}) {
@@ -117,6 +133,7 @@ async function start(descriptor) {
     const observeEngine = () => {
       if (signal.aborted) return;
       const active = Module.getValue(Module._g_engine, '*') !== 0;
+      if (active) resizeWindow();
       if (active && !sawEngine) {
         sawEngine = true;
         send('playing');
@@ -138,10 +155,7 @@ async function start(descriptor) {
   }
   // Let SDL resize its own drawable and GL viewport; never resize the GL canvas directly.
   if (Module._SDL_GetWindowFromID && Module._SDL_SetWindowSize && !signal.aborted) {
-    resizeObserver = new ResizeObserver(() => {
-      const window = Module._SDL_GetWindowFromID(1);
-      if (window) Module._SDL_SetWindowSize(window, ...windowSize());
-    });
+    resizeObserver = new ResizeObserver(resizeWindow);
     resizeObserver.observe(document.body);
   }
 }

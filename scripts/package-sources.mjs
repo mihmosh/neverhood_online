@@ -179,7 +179,7 @@ try {
       if (name.isFile() && !excluded.test(name.name)) projectFiles.push(path.join(root, directory, name.name));
     }
   }
-  for (const directory of ['tools/extractor-deps', 'web/lib', 'web/vendor', 'web/data', 'web/test', 'test', 'docs', '.github']) projectFiles.push(...await walk(path.join(root, directory)));
+  for (const directory of ['tools/extractor-deps', 'web/lib', 'web/vendor', 'web/assets', 'web/data', 'web/test', 'test', 'docs', '.github']) projectFiles.push(...await walk(path.join(root, directory)));
   for (const name of ['package.json', 'vercel.json', 'server.mjs', 'README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'THIRD_PARTY_NOTICES.md', '.gitignore', '.gitattributes']) projectFiles.push(path.join(root, name));
   const projectEntries = projectFiles.map(name => [name, path.relative(root, name)]);
   for (const [source, destination] of [

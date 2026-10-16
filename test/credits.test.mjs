@@ -10,6 +10,8 @@ test('compact launcher prominently credits the upstream Neverhood engine authors
   assert.match(credits, /scummvm\/scummvm\/blob\/c546a4c80d2daf3bb1d5a3652279e26f762c0204\/engines\/neverhood\/credits\.pl/);
   assert.doesNotMatch(credits.slice(0, credits.indexOf('>') + 1), /\shidden(?:\s|=|>)|\saria-hidden="true"/);
   assert.doesNotMatch(html, /class="intro"/);
+  assert.equal(html.match(/data-source-link/g)?.length, 1, 'project sources must have one clear location');
+  assert.doesNotMatch(html.match(/<footer>[\s\S]*?<\/footer>/)?.[0] || '', /<a\b/);
   for (const path of ['../README.md', '../THIRD_PARTY_NOTICES.md']) {
     const document = await readFile(new URL(path, import.meta.url), 'utf8');
     assert.ok(document.includes('Benjamin Haisch'));

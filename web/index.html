@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#e5dfcf">
+  <meta name="theme-color" content="#b97b50">
   <title>Neverhood Online | Play your own copy</title>
   <meta name="description" content="Play your own copy of The Neverhood directly in your browser. An independent ScummVM/WebAssembly client. Your game files stay on your device.">
   <meta property="og:title" content="Neverhood Online">
@@ -13,21 +13,23 @@
   <script type="module" src="./app.js"></script>
 </head>
 <body>
+  <div class="menu-board">
   <header class="masthead">
-    <a class="brand" href="./" aria-label="Neverhood Online home"><span class="brand-mark" aria-hidden="true">NH</span><div><h1>Neverhood Online</h1><span class="brand-note">Your copy. In your browser.</span></div></a>
-    <nav aria-label="Main navigation"><a href="#credits">Credits</a><a href="https://github.com/mihmosh/neverhood_online" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
+    <a class="brand" href="./" aria-label="Neverhood Online home"><h1>Neverhood Online</h1><span class="brand-note">Your copy. In your browser.</span></a>
+    <span class="menu-stamp">Unofficial web player</span>
   </header>
   <main id="site">
     <div class="workbench">
       <section class="panel game-panel" id="library-panel" aria-labelledby="library-title" aria-busy="true" data-state="checking">
-        <div class="section-number">YOUR GAME / STORED LOCALLY</div>
+        <div class="clay-bud" aria-hidden="true"><span class="bud-stem"></span><span class="bud-leaf leaf-left"></span><span class="bud-leaf leaf-right"></span><span class="bud-head"><span class="bud-jaw jaw-top"></span><span class="bud-jaw jaw-bottom"></span></span></div>
+        <div class="section-number">Your little world</div>
         <h2 id="library-title">Checking this browser...</h2>
         <p id="library-status" role="status">Looking for your game...</p>
         <div id="import-state" hidden>
-          <p class="import-copy">Choose your game folder or ZIP. We'll find the files inside.</p>
+          <p class="import-copy">Choose your game folder or ZIP.</p>
           <div class="source-choices">
-            <div class="file-picker"><label for="game-folder">Game folder</label><input type="file" id="game-folder" webkitdirectory multiple></div>
-            <div class="file-picker"><label for="game-archive">ZIP archive</label><input type="file" id="game-archive" accept=".zip,application/zip"></div>
+            <div class="file-picker"><label for="game-folder">Folder</label><input type="file" id="game-folder" webkitdirectory multiple></div>
+            <div class="file-picker"><label for="game-archive">ZIP</label><input type="file" id="game-archive" accept=".zip,application/zip"></div>
           </div>
           <p id="selection" class="selection" role="status">No files selected yet.</p>
           <button id="prepare" disabled>Prepare game</button>
@@ -67,26 +69,27 @@
         <div id="message" class="message" role="status" aria-live="polite" hidden></div>
       </section>
       <aside class="credits" id="credits" aria-labelledby="credits-title">
-        <div class="eyebrow">SCUMMVM / NEVERHOOD</div>
-        <h2 id="credits-title">Made possible<br>by ScummVM.</h2>
-        <p>ScummVM's reverse-engineered Neverhood engine makes this possible. Its credited engine authors are:</p>
+        <h2 id="credits-title">Credits</h2>
+        <p class="engine-credit"><a href="https://github.com/scummvm/scummvm/blob/c546a4c80d2daf3bb1d5a3652279e26f762c0204/engines/neverhood/credits.pl" target="_blank" rel="noopener noreferrer">ScummVM's Neverhood engine</a></p>
         <ul class="engine-authors">
           <li><a href="https://github.com/johndoe123" target="_blank" rel="noopener noreferrer"><span><strong>Benjamin Haisch</strong><code>john_doe</code></span><span class="credit-arrow" aria-hidden="true">&nearr;</span></a></li>
           <li><a href="https://github.com/bluegr" target="_blank" rel="noopener noreferrer"><span><strong>Filippos Karapetis</strong><code>bluegr</code></span><span class="credit-arrow" aria-hidden="true">&nearr;</span></a></li>
         </ul>
-        <p class="upstream-credit">And the wider ScummVM community.<br><a href="https://github.com/scummvm/scummvm/blob/c546a4c80d2daf3bb1d5a3652279e26f762c0204/engines/neverhood/credits.pl" target="_blank" rel="noopener noreferrer">Official engine credits &nearr;</a></p>
-        <div class="browser-credit"><span>THE BROWSER LAYER</span><p>This project adds local import, storage and a web player, not a new game engine.</p><p>Built with <a href="https://emscripten.org/" target="_blank" rel="noopener noreferrer">Emscripten</a>, <a href="https://constexpr.org/innoextract/" target="_blank" rel="noopener noreferrer">innoextract</a> and <a href="https://github.com/101arrowz/fflate" target="_blank" rel="noopener noreferrer">fflate</a>.</p></div>
-        <p class="credits-note">Bring your own legally obtained game. No original game files are included. This is an independent, unofficial project.</p>
+        <p class="engine-context">Their engine work, with the wider community's reverse engineering and maintenance, makes play possible. This site adds browser import, storage and controls.</p>
+        <a data-source-link href="https://github.com/mihmosh/neverhood_online" class="source-link" target="_blank" rel="noopener noreferrer">Source &amp; licenses &nearr;</a>
+        <details class="browser-credit"><summary>Browser tools</summary><p><a href="https://emscripten.org/" target="_blank" rel="noopener noreferrer">Emscripten</a>, <a href="https://constexpr.org/innoextract/" target="_blank" rel="noopener noreferrer">innoextract</a> and <a href="https://github.com/101arrowz/fflate" target="_blank" rel="noopener noreferrer">fflate</a>.</p></details>
+        <p class="credits-note">Bring your own legally obtained game. No original game files are included or uploaded.</p>
       </aside>
     </div>
     <noscript><p class="message">Turn on JavaScript to prepare and play your game.</p></noscript>
   </main>
+  <footer><span>The original game and its assets belong to their respective rights holders.</span></footer>
+  </div>
   <section id="game" hidden role="dialog" aria-modal="true" aria-label="Neverhood player">
-    <div class="game-toolbar"><span>THE NEVERHOOD</span><div><button id="fullscreen" class="player-button">Full screen</button><button id="stop-game" class="player-button">Return to site</button></div></div>
     <div id="player-host"></div>
-    <div id="game-loading"><div class="loading-card"><div class="eyebrow">A little patience...</div><h2>Opening your world</h2><p id="game-status" role="status" aria-live="polite">Starting the player...</p><progress id="game-progress" max="100"></progress></div></div>
+    <button id="fullscreen" type="button" aria-label="Full screen" title="Full screen" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+    <div id="game-loading"><div class="loading-card"><div class="eyebrow">A little patience...</div><h2>Opening your world</h2><p id="game-status" role="status" aria-live="polite">Starting the player...</p><progress id="game-progress" max="100"></progress><button id="cancel-loading" type="button" class="secondary">Cancel loading</button></div></div>
   </section>
-  <footer><span>Independent, unofficial browser client.</span><a href="https://github.com/mihmosh/neverhood_online">GitHub</a><a href="https://www.scummvm.org/">Powered by ScummVM</a><span>Local files. No uploads.</span></footer>
   <dialog id="delete-dialog"><h2>Remove the local game data?</h2><p>This removes the site's copy from this browser to free storage. Your original folders, archives and saved games will not change.</p><form method="dialog"><button value="cancel" class="secondary">Keep it</button><button value="delete" class="danger">Remove game</button></form></dialog>
   <dialog id="save-import-dialog" aria-labelledby="save-import-title">
     <h2 id="save-import-title">Review saved games</h2>

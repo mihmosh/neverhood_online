@@ -58,14 +58,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 205104,
-      "sha256": "eb6c024950af6301ff86e5ebfca21e46c7ed83d918bed5cd93ddc657619bb38f",
+      "bytes": 1245564,
+      "sha256": "0163288d31242a0c8f4b472d9eb28e1d21a8e29d345bfbc5e91a54493b66a0e8",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 205104,
-      "archiveSha256": "eb6c024950af6301ff86e5ebfca21e46c7ed83d918bed5cd93ddc657619bb38f"
+      "archiveBytes": 1245564,
+      "archiveSha256": "0163288d31242a0c8f4b472d9eb28e1d21a8e29d345bfbc5e91a54493b66a0e8"
     }
   ],
   "files": [
@@ -126,14 +126,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 205104,
-      "sha256": "eb6c024950af6301ff86e5ebfca21e46c7ed83d918bed5cd93ddc657619bb38f",
+      "bytes": 1245564,
+      "sha256": "0163288d31242a0c8f4b472d9eb28e1d21a8e29d345bfbc5e91a54493b66a0e8",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 205104,
-      "archiveSha256": "eb6c024950af6301ff86e5ebfca21e46c7ed83d918bed5cd93ddc657619bb38f"
+      "archiveBytes": 1245564,
+      "archiveSha256": "0163288d31242a0c8f4b472d9eb28e1d21a8e29d345bfbc5e91a54493b66a0e8"
     },
     {
       "name": "REBUILD.sh",
@@ -142,8 +142,8 @@
     },
     {
       "name": "inventory.json",
-      "bytes": 6498423,
-      "sha256": "2f180922c52ba349e3598f6974daba0d43c7a499645033d184a502837cbc6f15"
+      "bytes": 6499468,
+      "sha256": "c070fafb02af6e3aabbe41fa37c14c00af1ecbead7cb4598aff19c35c0eb3484"
     },
     {
       "name": "README.txt",
@@ -151,7 +151,7 @@
       "sha256": "f06d01adde91a93098abccb8ebcc038c341051d3cea4773e5c2311fa6326bc72"
     }
   ],
-  "totalBytes": 37902593,
+  "totalBytes": 38944098,
   "chunkMaximumBytes": 16777216,
   "runtimeRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
   "extractorVersion": "1.9",
@@ -161,13 +161,13 @@
   "binaries": [
     {
       "name": "runtime/scummvm.js",
-      "bytes": 221090,
-      "sha256": "1a8e6063c32ced237c8284f20ed1f40e575d89a44a28145a1ddaf1945d16f03a"
+      "bytes": 221418,
+      "sha256": "5bbcf41d47a81279ac43f735652dfdccc2cd9ff9efa1badcfde7a2df67ae2408"
     },
     {
       "name": "runtime/scummvm.wasm",
-      "bytes": 8082026,
-      "sha256": "3c0c7473c63fd996e658fff2d287c0d5460c1d6ac58481244fa8f2f2ca4d7f28"
+      "bytes": 8082356,
+      "sha256": "31bdb5fa1afcdf80a6895e2fe5c87a5a999a245af85de7326df20f0756e0d83c"
     },
     {
       "name": "runtime/neverhood.dat",

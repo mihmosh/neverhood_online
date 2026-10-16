@@ -86,13 +86,14 @@ export async function buildSite({ root = project } = {}) {
       if (entry.name.endsWith('.js')) await copy(join(web, 'lib', entry.name), `lib/${entry.name}`);
     }
     for (const file of ['fflate-0.8.2.js', 'fflate-LICENSE', 'fflate-provenance.json']) await copy(join(web, 'vendor', file), `vendor/${file}`);
+    for (const file of ['Mansalva-Regular.ttf', 'OFL.txt', 'provenance.json']) await copy(join(web, 'assets/fonts', file), `assets/fonts/${file}`);
     for (const [bundle, files] of Object.entries(bundles)) {
       for (const file of files) await copy(join(web, 'public', bundle, file), `${bundle}/${file}`);
     }
     for (const name of RUNTIME_LICENSES) await copy(join(web, 'public/runtime/LICENSES', name), `runtime/LICENSES/${name}`);
     for (const file of extractor.licenses) await copy(join(web, 'public/extractor', file), `extractor/${file}`);
     for (const file of ['manifest.json', ...sources.files.map(entry => entry.name)]) await copy(join(web, 'public/sources', file), `sources/${file}`);
-    await writeFile(join(stage, 'sources/index.html'), `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Source Code and Licenses</title><body><main><h1>Source Code and Licenses</h1><p>These downloads contain the matching open-source engine, extractor, dependencies and build materials. They contain no original game archives or installers.</p><p>Start with the README download for unpacking and rebuilding instructions. The manifest records versions, archive groups and checksums.</p><ul>${sources.files.map(file => `<li><a href="${file.name}">${file.name}</a> (${file.bytes} bytes)<br><code>SHA-256: ${file.sha256}</code></li>`).join('')}</ul><p><a href="manifest.json">Source manifest</a> | <a href="/runtime/COPYING">ScummVM license</a> | <a href="/vendor/fflate-LICENSE">ZIP decoder license</a> | <a href="/">Back to the game client</a></p></main></body></html>`);
+    await writeFile(join(stage, 'sources/index.html'), `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Source Code and Licenses</title><body><main><h1>Source Code and Licenses</h1><p>These downloads contain the matching open-source engine, extractor, dependencies and build materials. They contain no original game archives or installers.</p><p>Start with the README download for unpacking and rebuilding instructions. The manifest records versions, archive groups and checksums.</p><ul>${sources.files.map(file => `<li><a href="${file.name}">${file.name}</a> (${file.bytes} bytes)<br><code>SHA-256: ${file.sha256}</code></li>`).join('')}</ul><p><a href="https://github.com/mihmosh/neverhood_online">Project on GitHub</a> | <a href="manifest.json">Source manifest</a> | <a href="/runtime/COPYING">ScummVM license</a> | <a href="/vendor/fflate-LICENSE">ZIP decoder license</a> | <a href="/assets/fonts/OFL.txt">Menu typeface license</a> | <a href="/">Back to the game client</a></p></main></body></html>`);
     await writeFile(join(stage, 'sources.json'), JSON.stringify({
       correspondingSource: '/sources/manifest.json',
       sourceDistributionConfigured: true,
@@ -101,8 +102,9 @@ export async function buildSite({ root = project } = {}) {
       note: 'Matching source archives, versions, hashes and rebuild instructions are served by this site without requiring repository access.',
     }, null, 2) + '\n');
     const index = await readFile(join(stage, 'index.html'), 'utf8');
-    const link = '<a href="/sources/index.html">Licenses &amp; source downloads</a>';
-    await writeFile(join(stage, 'index.html'), index.replace('</footer>', `${link}</footer>`));
+    const sourceLink = 'data-source-link href="https://github.com/mihmosh/neverhood_online"';
+    if (!index.includes(sourceLink)) throw new Error('The launcher is missing its single source-link location.');
+    await writeFile(join(stage, 'index.html'), index.replace(sourceLink, 'data-source-link href="/sources/index.html"'));
     await rm(join(root, 'dist'), { recursive: true, force: true });
     await rename(stage, join(root, 'dist'));
     return join(root, 'dist');

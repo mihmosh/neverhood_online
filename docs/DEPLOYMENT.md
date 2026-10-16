@@ -45,7 +45,7 @@ After a Git-triggered deployment, verify public files, worker headers, real 404s
 WASM validity and the complete SHA-256 of every source download:
 
 ```sh
-npm run verify:deployment -- https://nevehood-online.vercel.app
+npm run verify:deployment -- https://neverhood-online.vercel.app
 ```
 
 This uses only public GET requests and does not upload game data. A successful

@@ -15,8 +15,8 @@ async function fixture(t) {
     await mkdir(join(root, name, '..'), { recursive: true });
     await writeFile(join(root, name), data);
   };
-  for (const name of ['app.js', 'styles.css', 'player.html', 'player.js', 'lib/app.js', 'data/index.json', 'vendor/fflate-0.8.2.js', 'vendor/fflate-LICENSE', 'vendor/fflate-provenance.json']) await file(`web/${name}`);
-  await file('web/index.html', '<html><footer>Local game client</footer></html>');
+  for (const name of ['app.js', 'styles.css', 'player.html', 'player.js', 'lib/app.js', 'data/index.json', 'vendor/fflate-0.8.2.js', 'vendor/fflate-LICENSE', 'vendor/fflate-provenance.json', 'assets/fonts/Mansalva-Regular.ttf', 'assets/fonts/OFL.txt', 'assets/fonts/provenance.json']) await file(`web/${name}`);
+  await file('web/index.html', '<html><aside><a data-source-link href="https://github.com/mihmosh/neverhood_online">Source &amp; licenses</a></aside><footer>Local game client</footer></html>');
   await file('web/public/runtime/runtime.json', JSON.stringify({ available: true, api: 'emscripten-global-module', engine: 'neverhood', module: 'scummvm.js', wasm: 'scummvm.wasm', engineData: ['neverhood.dat'], sourceRevision: 'a'.repeat(40) }));
   for (const name of ['scummvm.js', 'neverhood.dat', 'COPYING', 'COPYRIGHT', 'AUTHORS', ...RUNTIME_LICENSES.map(name => `LICENSES/${name}`)]) await file(`web/public/runtime/${name}`);
   const wasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]);
@@ -52,12 +52,15 @@ test('static packaging flattens artifact URLs and excludes private and developme
   assert.ok(names.includes('extractor/innoextract.wasm'));
   assert.ok(names.includes('runtime/LICENSES/SDL.txt'));
   assert.ok(names.includes('lib/app.js'));
+  assert.ok(names.includes('assets/fonts/Mansalva-Regular.ttf'));
+  assert.ok(names.includes('assets/fonts/OFL.txt'));
   assert.ok(!names.some(name => /(^|\/)(public|test|original game|extracted)\/|server\.mjs|\.env|\.exe$|\.blb$|package\.json/.test(name)));
   assert.equal(JSON.parse(await readFile(join(out, 'sources.json'), 'utf8')).sourceDistributionConfigured, true);
   assert.equal(JSON.parse(await readFile(join(out, 'sources.json'), 'utf8')).correspondingSource, '/sources/manifest.json');
   assert.ok(names.includes('sources/README.txt'));
   assert.ok(names.includes('sources/index.html'));
   assert.match(await readFile(join(out, 'index.html'), 'utf8'), /href="\/sources\/index.html"/);
+  assert.equal((await readFile(join(out, 'index.html'), 'utf8')).match(/data-source-link/g).length, 1);
 });
 
 test('missing or invalid artifacts fail before replacing an existing static build', async t => {
@@ -117,6 +120,7 @@ test('packaged output serves as static files without exposing the Node server or
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'application/wasm');
   }
+  assert.equal((await fetch(`${origin}/assets/fonts/Mansalva-Regular.ttf`)).headers.get('content-type'), 'font/ttf');
   for (const name of ['server.mjs', 'api', 'missing.wasm', 'original%20game/setup.exe']) assert.equal((await fetch(`${origin}/${name}`)).status, 404);
   const sourceMetadata = await (await fetch(`${origin}/sources/manifest.json`)).json();
   assert.equal(sourceMetadata.files[0].name, 'README.txt');

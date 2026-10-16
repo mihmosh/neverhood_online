@@ -13,8 +13,11 @@ neither an official release nor a remaster.
 - Show one adaptive import/Play/storage/removal panel.
 - Keep the launcher controls in the first viewport, without a separate hero section,
   and prominently credit the upstream ScummVM Neverhood engine authors.
+- Use an original game-menu-inspired clay interface, with no extracted visual assets,
+  a licensed handwritten font and a reduced-motion-aware CSS import indicator.
 - Run the original C++ Neverhood engine in WebAssembly, with a 4:3 high-DPI player.
-- Return from in-game Quit or the page's Return to site button, then play again.
+- Exit through the original in-game Quit menu, then play again; a loading-only
+  cancel action is available before the game starts.
 - Import/export native saves and save ZIPs, with explicit overwrite review,
   atomic pre-import backups and stale-confirmation protection.
 - Build a self-contained static site from the repository without an SDK or secrets.
@@ -22,7 +25,7 @@ neither an official release nor a remaster.
 
 ## Verified Scope
 
-The unit suite currently has 62 tests covering import transactions, ZIP framing,
+The unit suite currently has 63 tests covering import transactions, ZIP framing,
 legacy filename decoding, CRC and size checks, source discovery, static packaging,
 public-source integrity, server isolation and related error handling.
 

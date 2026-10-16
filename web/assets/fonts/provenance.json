@@ -1,0 +1,28 @@
+{
+  "name": "Mansalva",
+  "version": "2.112",
+  "author": "Carolina Short",
+  "authorURL": "https://github.com/carolinashort/mansalva",
+  "copyright": "Copyright 2022 The Mansalva Project Authors (https://github.com/carolinashort/mansalva)",
+  "licenseCopyright": "Copyright 2019 The Mansalva Project Authors (https://github.com/carolinashort/mansalva)",
+  "license": "OFL-1.1",
+  "licenseURL": "https://raw.githubusercontent.com/google/fonts/4e5f06dbb274a27ebe71ed54ea706b3ee40eabd9/ofl/mansalva/OFL.txt",
+  "source": "https://github.com/google/fonts/tree/4e5f06dbb274a27ebe71ed54ea706b3ee40eabd9/ofl/mansalva",
+  "metadataURL": "https://raw.githubusercontent.com/google/fonts/4e5f06dbb274a27ebe71ed54ea706b3ee40eabd9/ofl/mansalva/METADATA.pb",
+  "commit": "4e5f06dbb274a27ebe71ed54ea706b3ee40eabd9",
+  "modified": false,
+  "files": {
+    "Mansalva-Regular.ttf": {
+      "url": "https://raw.githubusercontent.com/google/fonts/4e5f06dbb274a27ebe71ed54ea706b3ee40eabd9/ofl/mansalva/Mansalva-Regular.ttf",
+      "bytes": 355776,
+      "sha256": "613ca294f0a364fd282a06d5e8a65db5d8f2bb8b834f8b21437a53cf70dafb8a",
+      "gitBlob": "ebc942600613bbee91ec2134b2fbadaac4d93cc1"
+    },
+    "OFL.txt": {
+      "url": "https://raw.githubusercontent.com/google/fonts/4e5f06dbb274a27ebe71ed54ea706b3ee40eabd9/ofl/mansalva/OFL.txt",
+      "bytes": 4391,
+      "sha256": "14ac0a5413a923c9ad11b6f541df17207fb7a0e0725e43eb29c88eb04c3ea2aa",
+      "gitBlob": "db3eb9201fbd1b345526fa5e97ade64350d0cb32"
+    }
+  }
+}

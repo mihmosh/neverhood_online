@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-const origin = new URL(process.argv[2] || 'https://nevehood-online.vercel.app');
+const origin = new URL(process.argv[2] || 'https://neverhood-online.vercel.app');
 if (!['https:', 'http:'].includes(origin.protocol) || origin.username || origin.password) throw new Error('Supply an HTTP(S) site origin without credentials.');
 
 async function get(path, type) {
@@ -16,6 +16,12 @@ for (const [name, value] of [['cross-origin-opener-policy', 'same-origin'], ['cr
 }
 await get('/app.js', 'javascript');
 await get('/player.html', 'text/html');
+const font = await (await get('/assets/fonts/provenance.json', 'application/json')).json();
+for (const name of ['Mansalva-Regular.ttf', 'OFL.txt']) {
+  const bytes = Buffer.from(await (await get(`/assets/fonts/${name}`, name.endsWith('.ttf') ? 'font/ttf' : undefined)).arrayBuffer());
+  if (bytes.length !== font.files?.[name]?.bytes || createHash('sha256').update(bytes).digest('hex') !== font.files?.[name]?.sha256) throw new Error(`Menu font provenance mismatch: ${name}`);
+}
+console.log('Menu typeface and license: verified local files');
 for (const [name, module] of [['runtime', 'scummvm'], ['extractor', 'innoextract']]) {
   const metadata = await (await get(`/${name}/${name}.json`, 'application/json')).json();
   if (!metadata.available || metadata.module !== `${module}.js` || metadata.wasm !== `${module}.wasm`) throw new Error(`${name}: invalid artifact descriptor`);

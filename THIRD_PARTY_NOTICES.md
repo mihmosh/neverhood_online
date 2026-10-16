@@ -75,6 +75,29 @@ Barrett, is used under the MIT License. The vendored browser module is
 `d3243651cb142e3e04f3e4bc037b9e985878f444`, upstream archive and checksums are
 recorded in [fflate-provenance.json](web/vendor/fflate-provenance.json).
 
+## Handwritten Menu Font
+
+[Mansalva](https://github.com/carolinashort/mansalva) **2.112**, designed by
+**Carolina Short**, is bundled unmodified as
+`web/assets/fonts/Mansalva-Regular.ttf` under the **SIL Open Font License 1.1**
+(`OFL-1.1`), independently of the application code's license.
+
+The font and Google Fonts metadata state:
+Copyright 2022 The Mansalva Project Authors (https://github.com/carolinashort/mansalva).
+The verbatim accompanying license notice states:
+Copyright 2019 The Mansalva Project Authors (https://github.com/carolinashort/mansalva).
+Both are retained without changing upstream notices. The complete license is
+[OFL.txt](web/assets/fonts/OFL.txt).
+
+The source is the official [Google Fonts family directory at revision
+`4e5f06dbb274a27ebe71ed54ea706b3ee40eabd9`](https://github.com/google/fonts/tree/4e5f06dbb274a27ebe71ed54ea706b3ee40eabd9/ofl/mansalva).
+[provenance.json](web/assets/fonts/provenance.json) records immutable download
+URLs, SHA-256 checksums, Git blob IDs and author/license metadata;
+`node scripts/vendor-menu-font.mjs` verifies and reproduces the local copies.
+The original source TTF is used directly without conversion and is included with
+its license and provenance in the source package. No Google Fonts runtime
+request is needed. This font is not copied from The Neverhood or its assets.
+
 ## Corresponding Sources And Redistribution
 
 Matching sources, preserved upstream notices and build materials are distributed

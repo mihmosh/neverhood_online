@@ -66,9 +66,14 @@ Layout checks cover 1366x768, 1280x720, 1024x768, 390x844, 360x740 and 320x568.
 Prepare and Play must fit in the first viewport without horizontal scrolling.
 The credited engine authors must also be visible in the desktop first viewport.
 Mobile checks cover the launcher layout, not mobile gameplay compatibility.
+The theme checks also cover the real labeled native folder chooser, visible
+keyboard focus, locally loaded font, actual import-state animation and reduced
+motion. Player checks require no top toolbar, fullscreen controls outside the
+canvas when a letterbox is available, no site-level stop action while playing,
+two real in-game Quit/replay cycles and cancellation of a stalled startup.
 
 Automatic installed-folder discovery, first room, 4:3/high-DPI geometry and live resizing, actual in-game
-Quit, Return to site, replay without reload and stopping during startup:
+Quit, replay without reload, loading cancellation and fullscreen controls:
 
 ```sh
 PLAYWRIGHT_MODULE="$(npm root -g)/playwright" \

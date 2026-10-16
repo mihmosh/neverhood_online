@@ -1,0 +1,18 @@
+web/public/runtime/*.wasm binary
+web/public/runtime/*.dat binary
+web/public/extractor/*.wasm binary
+web/public/runtime/scummvm.js -text -diff
+web/public/extractor/innoextract.js -text -diff
+web/public/sources/* -text
+web/public/sources/*.gz binary
+web/public/sources/*.xz binary
+web/public/sources/*.part* binary
+web/public/sources/inventory.json -diff
+# Preserve upstream notices verbatim, including their original whitespace.
+web/public/runtime/AUTHORS -whitespace
+web/public/runtime/COPYRIGHT -whitespace
+web/public/runtime/COPYING -whitespace
+web/public/runtime/LICENSES/* -whitespace
+web/public/extractor/*.txt -whitespace
+web/public/** linguist-generated=true
+web/vendor/** linguist-vendored=true

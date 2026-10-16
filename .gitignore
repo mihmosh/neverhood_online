@@ -1,0 +1,29 @@
+# Private copyrighted data and local saves
+/original game/
+/extracted/
+*.blb
+*.BLB
+*.bin
+*.exe
+*.nhc
+*.zip
+*.7z
+*.rar
+
+# Local credentials and machine-specific files
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# Upstream checkout and local build toolchains
+# Reviewed runtime, extractor and corresponding-source artifacts are committed.
+/scummvm/
+/tools/.build/
+/build/
+/dist/
+/.site-build-*/
+/.vercel/
+/scripts/.build/
+/node_modules/
+*.log

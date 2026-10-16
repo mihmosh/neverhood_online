@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e5dfcf">
+  <title>Neverhood Online | Play your own copy</title>
+  <meta name="description" content="Play your own copy of The Neverhood directly in your browser. An independent ScummVM/WebAssembly client. Your game files stay on your device.">
+  <meta property="og:title" content="Neverhood Online">
+  <meta property="og:description" content="Play your own copy of The Neverhood in your browser. Local files, no uploads, powered by ScummVM and WebAssembly.">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="masthead"><a href="./" aria-label="Neverhood home">NH<span class="stamp">THE NEVERHOOD</span></a><span>Your game. On your device.</span></header>
+  <main id="site">
+    <section class="intro" aria-labelledby="title">
+      <div class="eyebrow">A little world of clay</div>
+      <h1 id="title">Hello, Neverhood.<br><em>Let's play.</em></h1>
+      <p class="lead">Bring your own legally obtained copy of the game.<br>Your game files stay on this device.</p>
+    </section>
+    <div class="workbench">
+      <section class="panel game-panel" id="library-panel" aria-labelledby="library-title" aria-busy="true" data-state="checking">
+        <div class="section-number">YOUR GAME / ON THIS DEVICE</div>
+        <h2 id="library-title">Checking this browser...</h2>
+        <p id="library-status" role="status">Looking for your game...</p>
+        <div id="import-state" hidden>
+        <p>Choose the folder with your game or installer inside. We'll find the right files, even in folders inside it.</p>
+        <div class="file-picker"><label for="game-folder">Choose game folder</label><input type="file" id="game-folder" webkitdirectory multiple></div>
+        <p class="picker-or">or, if your copy is zipped</p>
+        <div class="file-picker"><label for="game-archive">Choose ZIP archive</label><input type="file" id="game-archive" accept=".zip,application/zip"></div>
+        <p id="selection" class="selection" role="status">Choose a folder or ZIP to begin.</p>
+        <button id="prepare" disabled>Prepare game</button>
+        <button id="cancel-import" class="text-button" hidden>Cancel</button>
+        <div id="progress-wrap" hidden><label for="progress" id="progress-label">Getting ready...</label><progress id="progress" max="100"></progress></div>
+        <p class="fine">ZIP archives only. RAR and 7z archives need to be unpacked first.</p>
+        <p id="extractor-status" class="fine"></p>
+        </div>
+        <div id="ready-state" hidden>
+        <p id="runtime-status" class="fine">Checking the game player...</p>
+        <button id="play" disabled>Play</button>
+        <p class="fine">Use a mouse and keyboard to play.</p>
+        <details class="advanced">
+          <summary>Storage &amp; more</summary>
+          <dl id="library-details" hidden></dl>
+          <p id="library-warning" class="fine"></p>
+          <div class="storage-row"><span>Browser storage</span><span id="storage-size">Checking...</span></div>
+          <p id="persistence" class="fine">Your game and saves are stored in this browser. Clearing site data removes them. The browser may also remove them when space is low.</p>
+          <div class="text-actions"><button id="persist" class="text-button">Keep files on this device</button></div>
+          <p class="fine">Preparing a game needs extra disk space. Playing loads the game into memory, so a computer works best. Saved games have no backup export yet. Keep another copy of important progress.</p>
+          <p class="fine">No game files are included. The player needs a connection to load; offline play is not supported yet.</p>
+        </details>
+        </div>
+        <div id="remove-control" class="remove-control" hidden><span class="fine">Remove only the game data stored by this site.</span><button id="delete" class="text-button danger" disabled>Remove from this browser</button></div>
+        <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+      </section>
+    </div>
+    <noscript><p class="message">Turn on JavaScript to prepare and play your game.</p></noscript>
+  </main>
+  <section id="game" hidden role="dialog" aria-modal="true" aria-label="Neverhood player">
+    <div class="game-toolbar"><span>THE NEVERHOOD</span><div><button id="fullscreen" class="player-button">Full screen</button><button id="stop-game" class="player-button">Return to site</button></div></div>
+    <div id="player-host"></div>
+    <div id="game-loading"><div class="loading-card"><div class="eyebrow">A little patience...</div><h2>Opening your world</h2><p id="game-status" role="status" aria-live="polite">Starting the player...</p><progress id="game-progress" max="100"></progress></div></div>
+  </section>
+  <footer><span>Independent, unofficial browser client.</span><a href="https://github.com/mihmosh/neverhood_online">GitHub</a><a href="https://www.scummvm.org/">Powered by ScummVM</a><span>Local files. No uploads.</span></footer>
+  <dialog id="delete-dialog"><h2>Remove the local game data?</h2><p>This removes the site's copy from this browser to free storage. Your original folders, archives and saved games will not change.</p><form method="dialog"><button value="cancel" class="secondary">Keep it</button><button value="delete" class="danger">Remove game</button></form></dialog>
+</body>
+</html>

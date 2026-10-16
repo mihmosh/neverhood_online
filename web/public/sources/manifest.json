@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "archives": [
+    {
+      "name": "scummvm-neverhood.tar.xz",
+      "bytes": 10126924,
+      "sha256": "9d8ab9c7e37b54c11f9abd349f060faee9ecf1c711713be824a6c0821e8e2009",
+      "component": "scummvm-neverhood",
+      "archive": "scummvm-neverhood.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 10126924,
+      "archiveSha256": "9d8ab9c7e37b54c11f9abd349f060faee9ecf1c711713be824a6c0821e8e2009"
+    },
+    {
+      "name": "boost-1.75.0-selected.tar.xz",
+      "bytes": 9906836,
+      "sha256": "ee4011644d6386d8702ce6691c779e2776cc885a2f7c01ac2d2488017af108e3",
+      "component": "boost-1.75.0-selected",
+      "archive": "boost-1.75.0-selected.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 9906836,
+      "archiveSha256": "ee4011644d6386d8702ce6691c779e2776cc885a2f7c01ac2d2488017af108e3"
+    },
+    {
+      "name": "extractor-dependencies.tar.xz",
+      "bytes": 3482396,
+      "sha256": "d28559bb4dc9218efa9cf63ee3f3c15b3fb4d28a771401c5880c4811f6cb6809",
+      "component": "extractor-dependencies",
+      "archive": "extractor-dependencies.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 3482396,
+      "archiveSha256": "d28559bb4dc9218efa9cf63ee3f3c15b3fb4d28a771401c5880c4811f6cb6809"
+    },
+    {
+      "name": "emscripten-4.0.10-sources.tar.xz",
+      "bytes": 4825888,
+      "sha256": "2fa1b80e3b33a7abf4cf4ed71da583ef86bf2e2951d8d9de16e200338711ce55",
+      "component": "emscripten-4.0.10-sources",
+      "archive": "emscripten-4.0.10-sources.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 4825888,
+      "archiveSha256": "2fa1b80e3b33a7abf4cf4ed71da583ef86bf2e2951d8d9de16e200338711ce55"
+    },
+    {
+      "name": "sdl-3.2.4-sources.tar.xz",
+      "bytes": 2847816,
+      "sha256": "633af067f8618b741831f01a8b3374bbab13a3bf17f49d67678e3c4870f9b42c",
+      "component": "sdl-3.2.4-sources",
+      "archive": "sdl-3.2.4-sources.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 2847816,
+      "archiveSha256": "633af067f8618b741831f01a8b3374bbab13a3bf17f49d67678e3c4870f9b42c"
+    },
+    {
+      "name": "project-build-sources.tar.xz",
+      "bytes": 187712,
+      "sha256": "5e80364212c60186cbe726038035707b75721132f94760833b51e896b7f4567d",
+      "component": "project-build-sources",
+      "archive": "project-build-sources.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 187712,
+      "archiveSha256": "5e80364212c60186cbe726038035707b75721132f94760833b51e896b7f4567d"
+    }
+  ],
+  "files": [
+    {
+      "name": "scummvm-neverhood.tar.xz",
+      "bytes": 10126924,
+      "sha256": "9d8ab9c7e37b54c11f9abd349f060faee9ecf1c711713be824a6c0821e8e2009",
+      "component": "scummvm-neverhood",
+      "archive": "scummvm-neverhood.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 10126924,
+      "archiveSha256": "9d8ab9c7e37b54c11f9abd349f060faee9ecf1c711713be824a6c0821e8e2009"
+    },
+    {
+      "name": "boost-1.75.0-selected.tar.xz",
+      "bytes": 9906836,
+      "sha256": "ee4011644d6386d8702ce6691c779e2776cc885a2f7c01ac2d2488017af108e3",
+      "component": "boost-1.75.0-selected",
+      "archive": "boost-1.75.0-selected.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 9906836,
+      "archiveSha256": "ee4011644d6386d8702ce6691c779e2776cc885a2f7c01ac2d2488017af108e3"
+    },
+    {
+      "name": "extractor-dependencies.tar.xz",
+      "bytes": 3482396,
+      "sha256": "d28559bb4dc9218efa9cf63ee3f3c15b3fb4d28a771401c5880c4811f6cb6809",
+      "component": "extractor-dependencies",
+      "archive": "extractor-dependencies.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 3482396,
+      "archiveSha256": "d28559bb4dc9218efa9cf63ee3f3c15b3fb4d28a771401c5880c4811f6cb6809"
+    },
+    {
+      "name": "emscripten-4.0.10-sources.tar.xz",
+      "bytes": 4825888,
+      "sha256": "2fa1b80e3b33a7abf4cf4ed71da583ef86bf2e2951d8d9de16e200338711ce55",
+      "component": "emscripten-4.0.10-sources",
+      "archive": "emscripten-4.0.10-sources.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 4825888,
+      "archiveSha256": "2fa1b80e3b33a7abf4cf4ed71da583ef86bf2e2951d8d9de16e200338711ce55"
+    },
+    {
+      "name": "sdl-3.2.4-sources.tar.xz",
+      "bytes": 2847816,
+      "sha256": "633af067f8618b741831f01a8b3374bbab13a3bf17f49d67678e3c4870f9b42c",
+      "component": "sdl-3.2.4-sources",
+      "archive": "sdl-3.2.4-sources.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 2847816,
+      "archiveSha256": "633af067f8618b741831f01a8b3374bbab13a3bf17f49d67678e3c4870f9b42c"
+    },
+    {
+      "name": "project-build-sources.tar.xz",
+      "bytes": 187712,
+      "sha256": "5e80364212c60186cbe726038035707b75721132f94760833b51e896b7f4567d",
+      "component": "project-build-sources",
+      "archive": "project-build-sources.tar.xz",
+      "part": 1,
+      "parts": 1,
+      "archiveBytes": 187712,
+      "archiveSha256": "5e80364212c60186cbe726038035707b75721132f94760833b51e896b7f4567d"
+    },
+    {
+      "name": "REBUILD.sh",
+      "bytes": 3515,
+      "sha256": "77aee611feedae492a2eced527d70cae95123b1ab4d9c40a572f89f6ebd52d33"
+    },
+    {
+      "name": "inventory.json",
+      "bytes": 6497205,
+      "sha256": "b7e0c5c09f0424a58856a62b134c184daf6e3a3fa3e34f92733afc196d1dd4af"
+    },
+    {
+      "name": "README.txt",
+      "bytes": 5691,
+      "sha256": "f06d01adde91a93098abccb8ebcc038c341051d3cea4773e5c2311fa6326bc72"
+    }
+  ],
+  "totalBytes": 37883983,
+  "chunkMaximumBytes": 16777216,
+  "runtimeRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
+  "extractorVersion": "1.9",
+  "sourceRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
+  "emscripten": "4.0.10",
+  "sdl": "3.2.4",
+  "binaries": [
+    {
+      "name": "runtime/scummvm.js",
+      "bytes": 221090,
+      "sha256": "1a8e6063c32ced237c8284f20ed1f40e575d89a44a28145a1ddaf1945d16f03a"
+    },
+    {
+      "name": "runtime/scummvm.wasm",
+      "bytes": 8082026,
+      "sha256": "3c0c7473c63fd996e658fff2d287c0d5460c1d6ac58481244fa8f2f2ca4d7f28"
+    },
+    {
+      "name": "runtime/neverhood.dat",
+      "bytes": 23804,
+      "sha256": "b86cb788237ace2988f7a8b7b02fddd213f29e2cac4e19764e6e3b29342894c6"
+    },
+    {
+      "name": "extractor/innoextract.js",
+      "bytes": 91025,
+      "sha256": "a24a852aacbd162736c8e467ce6eb3db6724d42ef686627db3174affc3ce1d39"
+    },
+    {
+      "name": "extractor/innoextract.wasm",
+      "bytes": 818370,
+      "sha256": "c023c6e908fa35e1831af8202213f4835410f611ca0993d80b41f6a668068186"
+    }
+  ],
+  "dependencyFilesChecked": 495
+}

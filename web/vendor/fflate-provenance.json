@@ -1,0 +1,13 @@
+{
+  "name": "fflate",
+  "version": "0.8.2",
+  "url": "https://registry.npmjs.org/fflate/-/fflate-0.8.2.tgz",
+  "sha256": "61fd5061e2fc8e5e3e3129f7f2fec7bd78a313e1bf4becbf1cc1cc9998d141dc",
+  "license": "MIT",
+  "source": "https://github.com/101arrowz/fflate/tree/d3243651cb142e3e04f3e4bc037b9e985878f444",
+  "files": {
+    "fflate-0.8.2.js": "package/esm/browser.js",
+    "fflate-LICENSE": "package/LICENSE"
+  },
+  "browserSHA256": "8cc1f687e0159e977addb6b85e274dbd11e622cf151f4fcb7b85d49622ea43e7"
+}

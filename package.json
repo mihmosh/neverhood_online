@@ -1,0 +1,23 @@
+{
+  "name": "neverhood-online",
+  "description": "Play your own copy of The Neverhood in your browser with local-only game import.",
+  "private": true,
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "repository": { "type": "git", "url": "git+https://github.com/mihmosh/neverhood_online.git" },
+  "bugs": { "url": "https://github.com/mihmosh/neverhood_online/issues" },
+  "homepage": "https://nevehood-online.vercel.app",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "node server.mjs",
+    "build": "node scripts/build-site.mjs",
+    "preview": "node server.mjs --dist",
+    "build:runtime": "bash scripts/build-runtime.sh",
+    "build:extractor": "bash scripts/build-extractor.sh",
+    "package:sources": "node scripts/package-sources.mjs",
+    "verify:deployment": "node scripts/verify-deployment.mjs",
+    "capture:ui": "node scripts/capture-ui.mjs",
+    "vendor:zip": "node scripts/vendor-zip.mjs",
+    "test": "node --test test/*.test.mjs web/test/*.test.mjs"
+  }
+}

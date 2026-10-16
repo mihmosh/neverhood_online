@@ -1,0 +1,26 @@
+{
+  "available": true,
+  "api": "emscripten-global-module",
+  "module": "scummvm.js",
+  "wasm": "scummvm.wasm",
+  "engine": "neverhood",
+  "engineData": [
+    "neverhood.dat"
+  ],
+  "filesystem": "MEMFS",
+  "saves": "IDBFS",
+  "lifecycle": {
+    "enginePointerAddress": "Module._g_engine",
+    "readEnginePointer": "Module.getValue(Module._g_engine, '*')",
+    "stopped": "A nonzero engine pointer followed by zero means the engine was destroyed. Hide and stop the isolated player, flush saves, then remove its iframe.",
+    "exitRuntime": true,
+    "pauseMainLoop": "Module._emscripten_pause_main_loop"
+  },
+  "emsdk": "4.0.10",
+  "sourceRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
+  "configureFlags": "--host=wasm32-unknown-emscripten --build=wasm32-unknown-emscripten --disable-all-engines --enable-engine=neverhood --disable-detection-full --disable-debug --disable-cloud --disable-tts",
+  "configuredLinkFlags": "-s INITIAL_MEMORY=128MB -s STACK_SIZE=32MB -s ALLOW_MEMORY_GROWTH=1 -s FORCE_FILESYSTEM -lidbfs.js -s ASYNCIFY=1 -s ASYNCIFY_STACK_SIZE=1048576 -s EXPORTED_FUNCTIONS=[_main,_malloc,_free,_raise] -s EXPORTED_RUNTIME_METHODS=[ccall,lengthBytesUTF8,setValue,writeArrayToMemory] --js-library backends/networking/http/emscripten/networkreadstream-emscripten.js -O2 --pre-js $(srcdir)/dists/emscripten/custom_shell-pre.js --post-js $(srcdir)/dists/emscripten/custom_shell-post.js --shell-file $(srcdir)/dists/emscripten/custom_shell.html",
+  "libraries": "-sUSE_SDL=3 ",
+  "linkerOverrides": "# SPDX-License-Identifier: GPL-3.0-or-later\ninclude Makefile\n\n# Upstream's JS library path assumes an in-tree build.\nLDFLAGS := $(subst --js-library backends/,--js-library $(srcdir)/backends/,$(LDFLAGS))\n# The external launcher supplies arguments; Neverhood does not need Web MIDI.\nLDFLAGS := $(subst --pre-js $(srcdir)/dists/emscripten/custom_shell-pre.js,,$(LDFLAGS))\n# Keep upstream's exports and expose the filesystem to the external launcher.\nLDFLAGS += -s EXPORTED_RUNTIME_METHODS=[ccall,lengthBytesUTF8,setValue,writeArrayToMemory,FS,IDBFS,callMain,getValue]\n# Observe the existing engine pointer without changing upstream source.\nLDFLAGS += -s EXPORTED_FUNCTIONS=[_main,_malloc,_free,_raise,_g_engine,_SDL_GetWindowFromID,_SDL_SetWindowSize,_emscripten_pause_main_loop]\nLDFLAGS += -s EXIT_RUNTIME=1\n\n$(EXECUTABLE): .EXTRA_PREREQS := $(firstword $(MAKEFILE_LIST))\n",
+  "sourceCompliance": "Before public binary distribution provide corresponding ScummVM, SDL and toolchain library source and build scripts as required by their licenses. A revision URL alone is not a complete GPL source offer."
+}

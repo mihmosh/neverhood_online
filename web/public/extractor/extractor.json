@@ -1,0 +1,111 @@
+{
+  "available": true,
+  "api": "emscripten-modularize",
+  "factory": "createInnoextract",
+  "module": "innoextract.js",
+  "wasm": "innoextract.wasm",
+  "version": "1.9",
+  "inputFilesystem": "WORKERFS",
+  "outputFilesystem": "MEMFS",
+  "exports": [
+    "FS",
+    "WORKERFS",
+    "NODEFS",
+    "callMain"
+  ],
+  "freshModulePerOperation": true,
+  "memory": {
+    "wasmMaximumBytes": 2147483648,
+    "outputMaximumBytes": 1073741824,
+    "fileMaximumBytes": 536870912,
+    "limitsEnforcedBy": "Browser integration must validate listed and actual output sizes; MEMFS is JavaScript memory outside the WASM heap limit",
+    "baseline": "64-bit desktop browser; input File objects mounted without copying; extracted output held in MEMFS"
+  },
+  "cli": {
+    "list": [
+      "--list",
+      "--silent",
+      "--list-sizes",
+      "--color=false",
+      "--progress=false"
+    ],
+    "listingFormat": "<decimal-byte-size> <archive-path>",
+    "extract": [
+      "--extract",
+      "--silent",
+      "--color=false",
+      "--progress=false",
+      "--output-dir=/output"
+    ],
+    "include": "--include=/<archive-path> (repeat per file; case-insensitive, anchored, no glob)"
+  },
+  "build": {
+    "emscripten": "4.0.10",
+    "dependencies": {
+      "innoextract": "1.9",
+      "boost": "1.75.0",
+      "xz": "5.6.4",
+      "zlib": "1.3.1",
+      "bzip2": "1.0.8"
+    },
+    "recipe": "scripts/build-extractor.sh",
+    "sources": [
+      {
+        "archive": "innoextract-1.9.tar.gz",
+        "sha256": "6344a69fc1ed847d4ed3e272e0da5998948c6b828cb7af39c6321aba6cf88126",
+        "url": "https://constexpr.org/innoextract/files/innoextract-1.9.tar.gz",
+        "directory": "innoextract-1.9"
+      },
+      {
+        "archive": "boost_1_75_0.tar.bz2",
+        "sha256": "953db31e016db7bb207f11432bef7df100516eeb746843fa0486a222e3fd49cb",
+        "url": "https://archives.boost.io/release/1.75.0/source/boost_1_75_0.tar.bz2",
+        "directory": "boost_1_75_0"
+      },
+      {
+        "archive": "xz-5.6.4.tar.gz",
+        "sha256": "269e3f2e512cbd3314849982014dc199a7b2148cf5c91cedc6db629acdf5e09b",
+        "url": "https://github.com/tukaani-project/xz/releases/download/v5.6.4/xz-5.6.4.tar.gz",
+        "directory": "xz-5.6.4"
+      },
+      {
+        "archive": "zlib-1.3.1.tar.gz",
+        "sha256": "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
+        "url": "https://zlib.net/fossils/zlib-1.3.1.tar.gz",
+        "directory": "zlib-1.3.1"
+      },
+      {
+        "archive": "bzip2-1.0.8.tar.gz",
+        "sha256": "ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269",
+        "url": "https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz",
+        "directory": "bzip2-1.0.8"
+      }
+    ],
+    "optimization": "-O2",
+    "cxxStandard": "C++14",
+    "exceptions": true
+  },
+  "licenses": [
+    "innoextract-LICENSE.txt",
+    "boost-LICENSE.txt",
+    "xz-COPYING.txt",
+    "xz-0BSD.txt",
+    "zlib-LICENSE.txt",
+    "bzip2-LICENSE.txt",
+    "emscripten-LICENSE.txt",
+    "musl-COPYRIGHT.txt",
+    "libcxx-LICENSE.txt",
+    "libcxxabi-LICENSE.txt",
+    "compiler-rt-LICENSE.txt"
+  ],
+  "artifacts": {
+    "innoextract.js": {
+      "bytes": 91025,
+      "sha256": "a24a852aacbd162736c8e467ce6eb3db6724d42ef686627db3174affc3ce1d39"
+    },
+    "innoextract.wasm": {
+      "bytes": 818370,
+      "sha256": "c023c6e908fa35e1831af8202213f4835410f611ca0993d80b41f6a668068186"
+    }
+  }
+}

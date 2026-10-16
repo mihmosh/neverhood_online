@@ -21,6 +21,23 @@ page.on('console', message => logs.push(message.text()));
 page.on('request', request => { if (!['GET', 'HEAD'].includes(request.method())) uploads.push(request.url()); });
 page.on('dialog', dialog => dialog.accept());
 
+async function checkCompactLayout(action) {
+  for (const viewport of [{ width: 1366, height: 768 }, { width: 1280, height: 720 }, { width: 1024, height: 768 }, { width: 390, height: 844 }, { width: 360, height: 740 }, { width: 320, height: 568 }]) {
+    await page.setViewportSize(viewport);
+    await page.evaluate(() => scrollTo(0, 0));
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `horizontal overflow at ${viewport.width}px`);
+    const box = await page.locator(action).boundingBox();
+    assert.ok(box && box.y >= 0 && box.y + box.height <= viewport.height, `${action} requires scrolling at ${viewport.width}x${viewport.height}: ${JSON.stringify(box)}`);
+    if (viewport.width > 800) {
+      for (const name of ['Benjamin Haisch', 'Filippos Karapetis']) {
+        const credit = await page.getByText(name, { exact: true }).boundingBox();
+        assert.ok(credit && credit.y >= 0 && credit.y + credit.height <= viewport.height, `engine author is below the fold: ${name}`);
+      }
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+}
+
 async function prepare(selector, path) {
   if (await page.locator('#delete').isVisible()) await removeGame();
   await page.locator(selector).setInputFiles(path);
@@ -35,9 +52,7 @@ async function prepare(selector, path) {
   assert.equal(await page.locator('#import-state').isHidden(), true);
   assert.equal(await page.locator('#ready-state').isVisible(), true);
   assert.equal(await page.locator('#delete').isVisible(), true);
-  await page.setViewportSize({ width: 390, height: 844 });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  await checkCompactLayout('#play');
   console.log(`${selector}: ${library.total} game bytes adopted`);
 }
 
@@ -46,6 +61,8 @@ async function removeGame() {
   await page.locator('#delete-dialog button[value="delete"]').click();
   await page.locator('#library-panel[data-state="empty"]').waitFor();
   assert.equal(await page.locator('#import-state').isVisible(), true);
+  assert.equal(await page.locator('.intro').count(), 0);
+  await checkCompactLayout('#prepare');
   assert.equal(await page.locator('#ready-state').isHidden(), true);
   assert.equal(await page.locator('#delete').isHidden(), true);
 }
@@ -78,9 +95,8 @@ try {
   assert.equal(await page.locator('#delete').isHidden(), true);
   assert.equal(await page.locator('#import-state').isVisible(), true);
   assert.equal(await page.locator('#archives').count(), 0, 'manual BLB controls must not remain');
-  await page.setViewportSize({ width: 390, height: 844 });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  await page.setViewportSize({ width: 1440, height: 1000 });
+  assert.equal(await page.locator('.intro').count(), 0);
+  await checkCompactLayout('#prepare');
   if (process.env.GAME_DATA_DIR) await prepare('#game-folder', process.env.GAME_DATA_DIR);
   if (process.env.INSTALLER_DIR) await prepare('#game-folder', process.env.INSTALLER_DIR);
   if (process.env.INSTALLER_ZIP) await prepare('#game-archive', process.env.INSTALLER_ZIP);

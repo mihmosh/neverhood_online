@@ -62,6 +62,11 @@ Basic English/responsive interface:
 PLAYWRIGHT_MODULE="$(npm root -g)/playwright" node test/browser-smoke.mjs
 ```
 
+Layout checks cover 1366x768, 1280x720, 1024x768, 390x844, 360x740 and 320x568.
+Prepare and Play must fit in the first viewport without horizontal scrolling.
+The credited engine authors must also be visible in the desktop first viewport.
+Mobile checks cover the launcher layout, not mobile gameplay compatibility.
+
 Automatic installed-folder discovery, first room, 4:3/high-DPI geometry and live resizing, actual in-game
 Quit, Return to site, replay without reload and stopping during startup:
 

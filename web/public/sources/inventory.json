@@ -154174,20 +154174,20 @@
     {
       "component": "project-build-sources",
       "path": "docs/images/onboarding.png",
-      "bytes": 95736,
-      "sha256": "d806419abd3ec279400ea63ef57ecb719bfd73931680181b8356987ef3b7b3a2"
+      "bytes": 93195,
+      "sha256": "82c278fdbee503d89c04a0860cbba314d488036d03b5fb9603bf499cef54a15d"
     },
     {
       "component": "project-build-sources",
       "path": "docs/PLAN.md",
-      "bytes": 4081,
-      "sha256": "d0345383f10055cdab074aa19ccce1acfb8bf3a8ccff26e9faaa13c478ed228b"
+      "bytes": 4238,
+      "sha256": "9cddcb5c22b9be9fef790d8ae69af1a1d736ecef20b3042c2dcccfb9a4971ade"
     },
     {
       "component": "project-build-sources",
       "path": "docs/TESTING.md",
-      "bytes": 4271,
-      "sha256": "fb9526e0fc0c88df423b6438dfd4b51521602def95331acee548a0303802b5c4"
+      "bytes": 4586,
+      "sha256": "212aebc0bc41d5db15ac9ff590afc8b7c723c477f286ad60195f8370edac3724"
     },
     {
       "component": "project-build-sources",
@@ -154204,8 +154204,8 @@
     {
       "component": "project-build-sources",
       "path": "README.md",
-      "bytes": 9101,
-      "sha256": "4ca126978aa66151453b35cb3e169baff71e84fc8470ae10e9ac1247a3a41153"
+      "bytes": 9705,
+      "sha256": "824e59623dd0ba1ad83ac2bb9aebe469ebaf31ceaa320fb8a4819a55a854634a"
     },
     {
       "component": "project-build-sources",
@@ -154228,8 +154228,8 @@
     {
       "component": "project-build-sources",
       "path": "scripts/capture-ui.mjs",
-      "bytes": 1011,
-      "sha256": "0ab2f4d601fc2a2a9fb42a4e8b23511ef46dde50961a4bccf517bcdf0772f856"
+      "bytes": 1010,
+      "sha256": "cee3e4fd935ae6b861f50b43b2103392964e8887d09ee29e70d907c16e48136c"
     },
     {
       "component": "project-build-sources",
@@ -154300,14 +154300,20 @@
     {
       "component": "project-build-sources",
       "path": "test/browser-smoke.mjs",
-      "bytes": 7906,
-      "sha256": "d2f281dbc1a5141889cb32a2d1142c4c98aee1a804f8d5fc09e528b1b9d5255b"
+      "bytes": 8813,
+      "sha256": "611dadde1ae4136707b5e63b95c06f4b4659d6d15889a2cc645337e493ad8b36"
     },
     {
       "component": "project-build-sources",
       "path": "test/build-site.test.mjs",
       "bytes": 8672,
       "sha256": "936ba4601370cd34705671f7255146740d31294a7b65a3a3262b10b794ab8e95"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/credits.test.mjs",
+      "bytes": 1183,
+      "sha256": "1316e9e5b41012d66e2a5baf7f69cb4c8d34991182f1bd50e12d239eefedfab4"
     },
     {
       "component": "project-build-sources",
@@ -154330,8 +154336,8 @@
     {
       "component": "project-build-sources",
       "path": "THIRD_PARTY_NOTICES.md",
-      "bytes": 6833,
-      "sha256": "78f67cdca7f9571fb2723dd8163a5d1514a3caa9b727b9267b8609fcb74c9b3e"
+      "bytes": 7180,
+      "sha256": "056998dece89019050a70b80d59473a5bc468cea587ec64351a5a023cb714bb6"
     },
     {
       "component": "project-build-sources",
@@ -154354,8 +154360,8 @@
     {
       "component": "project-build-sources",
       "path": "web/app.js",
-      "bytes": 10723,
-      "sha256": "6ffee82a6b8eba89ad6ebf22484f2613a67aea5d6d261f79fe72b211a3903609"
+      "bytes": 10683,
+      "sha256": "525029f8c5af755d03165776fde2c7dfc607ab347ad71f3d3ba196fbfbbf64a3"
     },
     {
       "component": "project-build-sources",
@@ -154366,8 +154372,8 @@
     {
       "component": "project-build-sources",
       "path": "web/index.html",
-      "bytes": 5591,
-      "sha256": "26bcad14ed6ce8d45ea661b080714650ad5a4e42173a62ee9396830bee2ea0a2"
+      "bytes": 7427,
+      "sha256": "afad963d926a03b77019c69f7259987e7988f1bfabb68339fa77f8ce40363c85"
     },
     {
       "component": "project-build-sources",
@@ -154456,8 +154462,8 @@
     {
       "component": "project-build-sources",
       "path": "web/styles.css",
-      "bytes": 7197,
-      "sha256": "0fc532ff04ee15beafc4e96e9b6585e21140dba10084d6101f239cb28d9b481b"
+      "bytes": 9287,
+      "sha256": "9cb4644cff17162e0dd17f21993b1606716c3c1846982f76a808cca9a569e13a"
     },
     {
       "component": "project-build-sources",

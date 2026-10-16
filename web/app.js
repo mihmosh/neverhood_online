@@ -55,7 +55,7 @@ async function refreshLibrary() {
   $('library-warning').textContent = '';
   try {
     library = await getLibrary();
-    $('library-status').textContent = library ? 'Your game is ready on this device.' : 'Choose your copy once. We will keep it ready in this browser.';
+    $('library-status').textContent = library ? 'Your game is ready on this device.' : 'Import once, then play from this browser.';
     if (library) {
       const details = $('library-details');
       details.replaceChildren();
@@ -92,7 +92,7 @@ for (const id of ['game-folder', 'game-archive']) {
         message('');
       }
     }
-    if (!source) $('selection').textContent = 'Choose a folder or ZIP to begin.';
+    if (!source) $('selection').textContent = 'No files selected yet.';
     controls();
   });
 }
@@ -159,7 +159,7 @@ $('delete-dialog').addEventListener('close', async () => {
     source = null;
     $('game-folder').value = '';
     $('game-archive').value = '';
-    $('selection').textContent = 'Choose a folder or ZIP to begin.';
+    $('selection').textContent = 'No files selected yet.';
     message('Game removed from this browser. Your original files and saved games are unchanged.');
   }
   catch (error) { message(describeStorageError(error), true); }

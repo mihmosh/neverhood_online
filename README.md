@@ -62,7 +62,7 @@ import, reload persistence, the first room and Escape menu, focused high-DPI
 - Offline relaunch is not ready. Local game storage alone does not make the site available offline.
 - HD resource replacements are not implemented. Filtered high-DPI display scales the original artwork; it does not create an HD remaster.
 
-The automated suite has passed 47 tests; this is not a substitute for gameplay
+The automated suite has passed 48 tests; this is not a substitute for gameplay
 testing. See [testing](docs/TESTING.md) and the [verification log](docs/PLAN.md)
 for scope and outstanding work.
 
@@ -133,6 +133,14 @@ site build. Private game directories and toolchain build caches are not publicat
 inputs.
 
 ## Credits And License
+
+The **ScummVM Neverhood engine** is credited upstream to
+**[Benjamin Haisch](https://github.com/johndoe123) (`john_doe`)** and
+**[Filippos Karapetis](https://github.com/bluegr) (`bluegr`)**.
+Their engine work, and the wider ScummVM community's reverse engineering and
+maintenance, are what make gameplay possible. This project adds browser import,
+storage and a player around that existing engine; it did not recover the game logic.
+See the [official engine credits at the bundled revision](https://github.com/scummvm/scummvm/blob/c546a4c80d2daf3bb1d5a3652279e26f762c0204/engines/neverhood/credits.pl).
 
 This project depends on the work of the **ScummVM contributors**, **Emscripten
 contributors**, **Daniel Scharrer and innoextract contributors**, **Arjun Barrett

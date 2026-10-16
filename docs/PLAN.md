@@ -11,6 +11,8 @@ neither an official release nor a remaster.
 - Parse supported Inno Setup EXE + BIN files locally without executing Windows code.
 - Store the seven game archives in OPFS and discover them after a page reload.
 - Show one adaptive import/Play/storage/removal panel.
+- Keep the launcher controls in the first viewport, without a separate hero section,
+  and prominently credit the upstream ScummVM Neverhood engine authors.
 - Run the original C++ Neverhood engine in WebAssembly, with a 4:3 high-DPI player.
 - Return from in-game Quit or the page's Return to site button, then play again.
 - Build a self-contained static site from the repository without an SDK or secrets.
@@ -18,7 +20,7 @@ neither an official release nor a remaster.
 
 ## Verified Scope
 
-The unit suite currently has 47 tests covering import transactions, ZIP framing,
+The unit suite currently has 48 tests covering import transactions, ZIP framing,
 legacy filename decoding, CRC and size checks, source discovery, static packaging,
 public-source integrity, server isolation and related error handling.
 

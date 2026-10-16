@@ -13,29 +13,27 @@
   <script type="module" src="./app.js"></script>
 </head>
 <body>
-  <header class="masthead"><a href="./" aria-label="Neverhood home">NH<span class="stamp">THE NEVERHOOD</span></a><span>Your game. On your device.</span></header>
+  <header class="masthead">
+    <a class="brand" href="./" aria-label="Neverhood Online home"><span class="brand-mark" aria-hidden="true">NH</span><div><h1>Neverhood Online</h1><span class="brand-note">Your copy. In your browser.</span></div></a>
+    <nav aria-label="Main navigation"><a href="#credits">Credits</a><a href="https://github.com/mihmosh/neverhood_online" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
+  </header>
   <main id="site">
-    <section class="intro" aria-labelledby="title">
-      <div class="eyebrow">A little world of clay</div>
-      <h1 id="title">Hello, Neverhood.<br><em>Let's play.</em></h1>
-      <p class="lead">Bring your own legally obtained copy of the game.<br>Your game files stay on this device.</p>
-    </section>
     <div class="workbench">
       <section class="panel game-panel" id="library-panel" aria-labelledby="library-title" aria-busy="true" data-state="checking">
-        <div class="section-number">YOUR GAME / ON THIS DEVICE</div>
+        <div class="section-number">YOUR GAME / STORED LOCALLY</div>
         <h2 id="library-title">Checking this browser...</h2>
         <p id="library-status" role="status">Looking for your game...</p>
         <div id="import-state" hidden>
-        <p>Choose the folder with your game or installer inside. We'll find the right files, even in folders inside it.</p>
-        <div class="file-picker"><label for="game-folder">Choose game folder</label><input type="file" id="game-folder" webkitdirectory multiple></div>
-        <p class="picker-or">or, if your copy is zipped</p>
-        <div class="file-picker"><label for="game-archive">Choose ZIP archive</label><input type="file" id="game-archive" accept=".zip,application/zip"></div>
-        <p id="selection" class="selection" role="status">Choose a folder or ZIP to begin.</p>
-        <button id="prepare" disabled>Prepare game</button>
-        <button id="cancel-import" class="text-button" hidden>Cancel</button>
-        <div id="progress-wrap" hidden><label for="progress" id="progress-label">Getting ready...</label><progress id="progress" max="100"></progress></div>
-        <p class="fine">ZIP archives only. RAR and 7z archives need to be unpacked first.</p>
-        <p id="extractor-status" class="fine"></p>
+          <p class="import-copy">Choose your game folder or ZIP. We'll find the files inside.</p>
+          <div class="source-choices">
+            <div class="file-picker"><label for="game-folder">Game folder</label><input type="file" id="game-folder" webkitdirectory multiple></div>
+            <div class="file-picker"><label for="game-archive">ZIP archive</label><input type="file" id="game-archive" accept=".zip,application/zip"></div>
+          </div>
+          <p id="selection" class="selection" role="status">No files selected yet.</p>
+          <button id="prepare" disabled>Prepare game</button>
+          <button id="cancel-import" class="text-button" hidden>Cancel</button>
+          <div id="progress-wrap" hidden><label for="progress" id="progress-label">Getting ready...</label><progress id="progress" max="100"></progress></div>
+          <details class="import-help"><summary>Supported files &amp; privacy</summary><p class="fine">Use your own legally obtained copy. Folders and supported installers can be inside a ZIP. Unpack RAR or 7z archives first. Files stay on this device.</p><p id="extractor-status" class="fine"></p></details>
         </div>
         <div id="ready-state" hidden>
         <p id="runtime-status" class="fine">Checking the game player...</p>
@@ -55,6 +53,18 @@
         <div id="remove-control" class="remove-control" hidden><span class="fine">Remove only the game data stored by this site.</span><button id="delete" class="text-button danger" disabled>Remove from this browser</button></div>
         <div id="message" class="message" role="status" aria-live="polite" hidden></div>
       </section>
+      <aside class="credits" id="credits" aria-labelledby="credits-title">
+        <div class="eyebrow">SCUMMVM / NEVERHOOD</div>
+        <h2 id="credits-title">Made possible<br>by ScummVM.</h2>
+        <p>ScummVM's reverse-engineered Neverhood engine makes this possible. Its credited engine authors are:</p>
+        <ul class="engine-authors">
+          <li><a href="https://github.com/johndoe123" target="_blank" rel="noopener noreferrer"><span><strong>Benjamin Haisch</strong><code>john_doe</code></span><span class="credit-arrow" aria-hidden="true">&nearr;</span></a></li>
+          <li><a href="https://github.com/bluegr" target="_blank" rel="noopener noreferrer"><span><strong>Filippos Karapetis</strong><code>bluegr</code></span><span class="credit-arrow" aria-hidden="true">&nearr;</span></a></li>
+        </ul>
+        <p class="upstream-credit">And the wider ScummVM community.<br><a href="https://github.com/scummvm/scummvm/blob/c546a4c80d2daf3bb1d5a3652279e26f762c0204/engines/neverhood/credits.pl" target="_blank" rel="noopener noreferrer">Official engine credits &nearr;</a></p>
+        <div class="browser-credit"><span>THE BROWSER LAYER</span><p>This project adds local import, storage and a web player, not a new game engine.</p><p>Built with <a href="https://emscripten.org/" target="_blank" rel="noopener noreferrer">Emscripten</a>, <a href="https://constexpr.org/innoextract/" target="_blank" rel="noopener noreferrer">innoextract</a> and <a href="https://github.com/101arrowz/fflate" target="_blank" rel="noopener noreferrer">fflate</a>.</p></div>
+        <p class="credits-note">Bring your own legally obtained game. No original game files are included. This is an independent, unofficial project.</p>
+      </aside>
     </div>
     <noscript><p class="message">Turn on JavaScript to prepare and play your game.</p></noscript>
   </main>

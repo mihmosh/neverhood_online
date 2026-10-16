@@ -11,6 +11,7 @@ license.
 
 - Project: [ScummVM](https://www.scummvm.org/), copyright (C) 2001-2026 ScummVM contributors, with individual credits retained below.
 - Exact source revision: `c546a4c80d2daf3bb1d5a3652279e26f762c0204`; only the Neverhood engine is enabled in this runtime.
+- Credited Neverhood engine authors: **Benjamin Haisch (`john_doe`)** and **Filippos Karapetis (`bluegr`)**. See [upstream engine credits](https://github.com/scummvm/scummvm/blob/c546a4c80d2daf3bb1d5a3652279e26f762c0204/engines/neverhood/credits.pl). These are the engine reimplementation credits, separate from the original game's creative team.
 - License: GNU GPL version 3 or later, with upstream component notices preserved.
 - Copies: [COPYING](web/public/runtime/COPYING), [COPYRIGHT](web/public/runtime/COPYRIGHT), [AUTHORS](web/public/runtime/AUTHORS) and [LICENSES/](web/public/runtime/LICENSES/).
 - Build flags, filesystem exports and external linker overrides: [runtime.json](web/public/runtime/runtime.json). The original ScummVM source is not manually modified by this integration.

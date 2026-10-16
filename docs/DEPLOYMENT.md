@@ -58,7 +58,12 @@ commit author's linked account, not only who pushed the branch. An unrelated
 work-account identity can block a private-repository deployment before any build
 starts, even when the source and static configuration are correct.
 
-Use the owner's verified GitHub identity for deployment commits. GitHub's
+The following identity guidance is for the maintainer's own deployment commits,
+not outside contributions. Contributors must use their own identities and must
+never copy the owner's author or committer details. Maintainers can review and
+merge contributions through the normal GitHub workflow.
+
+For authorized maintainer commits, use the owner's verified GitHub identity. GitHub's
 account-specific noreply address is `109215897+mihmosh@users.noreply.github.com`.
 When a machine has another default identity, apply the correct author and committer
 only to this project's commit command rather than changing global Git settings.

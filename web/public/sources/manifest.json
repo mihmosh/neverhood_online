@@ -58,14 +58,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 187712,
-      "sha256": "5e80364212c60186cbe726038035707b75721132f94760833b51e896b7f4567d",
+      "bytes": 187844,
+      "sha256": "81c8cb247a6ad5f518f7f25dbc43c256fc982d6a2b4bba5b960adb89d3b47c40",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 187712,
-      "archiveSha256": "5e80364212c60186cbe726038035707b75721132f94760833b51e896b7f4567d"
+      "archiveBytes": 187844,
+      "archiveSha256": "81c8cb247a6ad5f518f7f25dbc43c256fc982d6a2b4bba5b960adb89d3b47c40"
     }
   ],
   "files": [
@@ -126,14 +126,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 187712,
-      "sha256": "5e80364212c60186cbe726038035707b75721132f94760833b51e896b7f4567d",
+      "bytes": 187844,
+      "sha256": "81c8cb247a6ad5f518f7f25dbc43c256fc982d6a2b4bba5b960adb89d3b47c40",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 187712,
-      "archiveSha256": "5e80364212c60186cbe726038035707b75721132f94760833b51e896b7f4567d"
+      "archiveBytes": 187844,
+      "archiveSha256": "81c8cb247a6ad5f518f7f25dbc43c256fc982d6a2b4bba5b960adb89d3b47c40"
     },
     {
       "name": "REBUILD.sh",
@@ -143,7 +143,7 @@
     {
       "name": "inventory.json",
       "bytes": 6497205,
-      "sha256": "b7e0c5c09f0424a58856a62b134c184daf6e3a3fa3e34f92733afc196d1dd4af"
+      "sha256": "a3fba5875e4cf1adb2ed08d0387741e3f87d1716d17fee19129b01795c88f8c3"
     },
     {
       "name": "README.txt",
@@ -151,7 +151,7 @@
       "sha256": "f06d01adde91a93098abccb8ebcc038c341051d3cea4773e5c2311fa6326bc72"
     }
   ],
-  "totalBytes": 37883983,
+  "totalBytes": 37884115,
   "chunkMaximumBytes": 16777216,
   "runtimeRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
   "extractorVersion": "1.9",

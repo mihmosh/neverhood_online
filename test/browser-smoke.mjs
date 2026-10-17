@@ -121,6 +121,7 @@ async function quit(frame) {
 }
 
 async function checkPlayerControls(frame) {
+  assert.equal(await frame.locator('#game-menu').isVisible(), true);
   assert.equal(await page.locator('#cancel-loading').isHidden(), true);
   // Even a stale/programmatic click must not abort a running engine.
   await page.locator('#cancel-loading').dispatchEvent('click');
@@ -138,7 +139,18 @@ async function checkPlayerControls(frame) {
     if (viewport.width === 1440) assert.ok(button.x >= canvas.x + canvas.width, 'fullscreen must stay in the right letterbox');
     if (viewport.width === 390) assert.ok(button.y + button.height <= canvas.y, 'fullscreen must stay in the top letterbox');
     assert.ok(button.x >= 0 && button.y >= 0 && button.x + 44 <= viewport.width && button.y + 44 <= viewport.height);
+    const menu = await frame.locator('#game-menu').boundingBox();
+    assert.ok(menu.width >= 44 && menu.height >= 44, 'Menu must have a touch-sized target');
+    assert.ok(menu.x >= 0 && menu.y >= 0 && menu.x + menu.width <= viewport.width && menu.y + menu.height <= viewport.height);
+    assert.ok(menu.x + menu.width <= button.x || menu.y + menu.height <= button.y || button.y + button.height <= menu.y, 'Menu and fullscreen must not overlap');
   }
+  // Exercise the actual engine on a phone-sized viewport, not just a DOM event spy.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await frame.locator('#game-menu').click();
+  await waitForGameFrame(frame, 'menu');
+  assert.equal(await page.locator('#game').isVisible(), true, 'Menu must not stop the session');
+  await frame.locator('#canvas').press('Escape');
+  await waitForGameFrame(frame, 'room');
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.locator('#fullscreen').click();
   await page.waitForFunction(() => Boolean(document.fullscreenElement));

@@ -13,6 +13,30 @@
   <script type="module" src="./app.js"></script>
 </head>
 <body>
+  <svg class="clay-world" viewBox="0 0 1600 1100" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="world-earth" x2=".7" y2="1"><stop stop-color="#e6b16b"/><stop offset=".5" stop-color="#bc7b3f"/><stop offset="1" stop-color="#e3a55c"/></linearGradient>
+      <linearGradient id="world-rock" x2="1" y2=".6"><stop stop-color="#efc380"/><stop offset=".45" stop-color="#c68d4f"/><stop offset="1" stop-color="#76502e"/></linearGradient>
+      <linearGradient id="world-shadow" x2=".8" y2="1"><stop stop-color="#352e1c"/><stop offset="1" stop-color="#80623c"/></linearGradient>
+      <filter id="world-clay"><feTurbulence type="fractalNoise" baseFrequency=".025 .055" numOctaves="3" seed="12" result="noise"/><feDiffuseLighting in="noise" surfaceScale="2" diffuseConstant="1" lighting-color="#ffffff" result="light"><feDistantLight azimuth="225" elevation="48"/></feDiffuseLighting><feComposite in="SourceGraphic" in2="light" operator="arithmetic" k1=".45" k2=".55" k3="0" k4="0"/></filter>
+    </defs>
+    <g filter="url(#world-clay)">
+      <path fill="url(#world-earth)" d="M0 0h1600v1100H0z"/>
+      <path fill="url(#world-shadow)" d="M0 0h1600v300c-134-24-193 24-281 114-89 92-166 68-283 7-145-75-187 43-346 12C470 390 436 127 244 169 134 192 91 348 0 367Z"/>
+      <path fill="url(#world-rock)" d="M0 0h281c-44 101 25 154 51 257 28 113 3 235-60 330C182 720 71 722 0 772Z"/>
+      <path fill="url(#world-rock)" d="M1177 0h423v844c-74-74-170-49-204-160-25-80-8-141-48-209-74-126-201-112-204-251-2-81 58-135 33-224Z"/>
+      <path fill="#625d38" d="M0 749c113-122 240-119 311-40 37 40 46 122 17 167-72 43-235 58-328 53Z"/>
+      <path fill="url(#world-rock)" d="M0 754c104-90 232-100 291-41-86 4-151 45-178 96-30 58-77 73-113 73Z"/>
+      <path fill="#555335" d="M1280 783c61-120 148-164 231-114l89 60v254c-157-12-268-57-320-200Z"/>
+      <path fill="url(#world-rock)" d="M1280 783c52-123 158-163 231-114l89 60v53c-117-77-191-30-224 46Z"/>
+      <path fill="#efb96c" d="M0 1038c202-98 310-1 522-50 247-57 322-42 515 19 181 57 378-41 563-1v94H0Z"/>
+      <g fill="none" stroke="#785735" stroke-linecap="round" opacity=".4">
+        <path stroke-width="6" d="m38 451 92-71 57-102M65 468l97-74m-43 65 75-54m1216-190 38 103-4 76m-24-94 30 89M54 987l105-13m-65 30 118-13m1130-41 119 21m-93 1 75 17"/>
+        <path stroke-width="3" d="m39 434 87-69m-70 83 87-68m-64 84 87-69m-65 80 82-63m1229-104 27 91m-16-105 30 100m-17-113 32 112"/>
+      </g>
+      <g fill="#95713e"><ellipse cx="258" cy="1007" rx="17" ry="9"/><ellipse cx="1192" cy="1030" rx="23" ry="11"/><ellipse cx="1140" cy="1022" rx="9" ry="6"/></g>
+    </g>
+  </svg>
   <div class="menu-board">
   <header class="masthead">
     <a class="brand" href="./" aria-label="Neverhood Online home"><h1>Neverhood Online</h1><span class="brand-note">Your copy. In your browser.</span></a>
@@ -21,7 +45,26 @@
   <main id="site">
     <div class="workbench">
       <section class="panel game-panel" id="library-panel" aria-labelledby="library-title" aria-busy="true" data-state="checking">
-        <div class="clay-bud" aria-hidden="true"><span class="bud-stem"></span><span class="bud-leaf leaf-left"></span><span class="bud-leaf leaf-right"></span><span class="bud-head"><span class="bud-jaw jaw-top"></span><span class="bud-jaw jaw-bottom"></span></span></div>
+        <svg class="clay-bud" viewBox="0 0 180 160" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="bud-clay" cx=".3" cy=".22" r=".85"><stop stop-color="#d9ac61"/><stop offset=".55" stop-color="#b2803c"/><stop offset="1" stop-color="#665024"/></radialGradient>
+            <linearGradient id="bud-leg" x2=".8" y2="1"><stop stop-color="#c69b53"/><stop offset="1" stop-color="#6b512a"/></linearGradient>
+            <filter id="bud-texture"><feTurbulence type="fractalNoise" baseFrequency=".12" numOctaves="3" seed="8" result="grain"/><feDiffuseLighting in="grain" surfaceScale="2" lighting-color="#ffffff" result="light"><feDistantLight azimuth="225" elevation="50"/></feDiffuseLighting><feComposite in="SourceGraphic" in2="light" operator="arithmetic" k1=".3" k2=".7" k3="0" k4="0"/></filter>
+          </defs>
+          <ellipse cx="91" cy="146" rx="67" ry="7" fill="#302d20" opacity=".28"/>
+          <g fill="url(#bud-leg)" filter="url(#bud-texture)"><path d="m55 109-14 17-3 25 9-1 12-21 23 8 24-1 20-10 12 24 10 1-5-30-22-13Z"/><path d="m76 105 2 21 20 3 10-23Z"/></g>
+          <path d="M35 75c15 10 37 22 55 24 21-2 41-14 55-24-2 34-27 55-55 55S37 108 35 75Z" fill="#46462b"/>
+          <g class="bud-jaw jaw-top" filter="url(#bud-texture)">
+            <path d="M88 16C56 13 26 40 25 72c-1 29 19 56 61 59l-8-18 12-11-9-14 11-14-10-14 10-14-9-12Z" fill="url(#bud-clay)"/>
+            <path d="m85 38 15 9-13 7m-1 19 14 10-14 8m-2 17 11 8-9 6" fill="#dcc184"/>
+            <path d="M48 42 39 59m-1 9-1 15m12 23 12 9" fill="none" stroke="#77552d" stroke-width="3" opacity=".5"/>
+          </g>
+          <g class="bud-jaw jaw-bottom" filter="url(#bud-texture)">
+            <path d="M93 16c35 0 62 26 63 57 2 32-23 57-65 58l11-17-10-13 10-13-10-13 10-15-10-14 9-12Z" fill="url(#bud-clay)"/>
+            <path d="m98 49-13 10 13 7m0 20-13 10 13 7" fill="#d5b375"/>
+            <path d="m124 36 12 17m7 18-1 19m-17 20-12 7" fill="none" stroke="#77552d" stroke-width="3" opacity=".5"/>
+          </g>
+        </svg>
         <div class="section-number">Your little world</div>
         <h2 id="library-title">Checking this browser...</h2>
         <p id="library-status" role="status">Looking for your game...</p>
@@ -40,7 +83,7 @@
         <div id="ready-state" hidden>
         <p id="runtime-status" class="fine">Checking the game player...</p>
         <button id="play" disabled>Play</button>
-        <p class="fine">Use a mouse and keyboard to play.</p>
+        <p class="fine">Click or tap to explore. Press Esc or use Menu during play.</p>
         </div>
         <details class="advanced">
           <summary>Storage &amp; more</summary>

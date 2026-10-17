@@ -3,6 +3,15 @@ import { openArchive } from './lib/storage.js';
 
 const nonce = new URL(location.href).searchParams.get('session');
 const canvas = document.getElementById('canvas');
+const menu = document.getElementById('game-menu');
+menu.addEventListener('click', () => {
+  if (menu.hidden || controller.signal.aborted) return;
+  canvas.focus();
+  // SDL listens to DOM keyboard events; keep the original engine menu behavior.
+  for (const type of ['keydown', 'keyup']) {
+    canvas.dispatchEvent(new KeyboardEvent(type, { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true, cancelable: true }));
+  }
+});
 const controller = new AbortController();
 let started = false;
 let finishing;
@@ -52,6 +61,7 @@ function finish(error) {
   resizeObserver?.disconnect();
   cancelAnimationFrame(engineFrame);
   canvas.hidden = true;
+  menu.hidden = true;
   window.Module?._emscripten_pause_main_loop?.();
   finishing = (async () => {
     // onExit fires after Emscripten shutdown; IDBFS remains available for flushing.
@@ -136,6 +146,7 @@ async function start(descriptor) {
       if (active) resizeWindow();
       if (active && !sawEngine) {
         sawEngine = true;
+        menu.hidden = false;
         send('playing');
       } else if (sawEngine && !active) {
         // The game's destructor has run. Dispose the whole session, not its launcher.
@@ -148,9 +159,9 @@ async function start(descriptor) {
   }
   try {
     Module.callMain(['--path=/game', '--extrapath=/engine-data', '--savepath=/saves', '--config=/tmp/neverhood.ini', '--no-fullscreen', '--filtering', '--stretch-mode=fit_force_aspect', `--window-size=${width},${height}`, 'neverhood']);
-    if (!observingEngine && !finishing && !signal.aborted) send('playing');
+    if (!observingEngine && !finishing && !signal.aborted) { menu.hidden = false; send('playing'); }
   } catch (error) {
-    if (error === 'unwind') { if (!observingEngine) send('playing'); }
+    if (error === 'unwind') { if (!observingEngine) { menu.hidden = false; send('playing'); } }
     else throw error;
   }
   // Let SDL resize its own drawable and GL viewport; never resize the GL canvas directly.

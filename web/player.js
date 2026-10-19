@@ -1,6 +1,7 @@
 import { REQUIRED_FILES } from './lib/validation.js';
 import { openArchive } from './lib/storage.js';
 import { demoAssetURL, fetchDemoBytes, fetchDemoManifest } from './lib/demo-data.js';
+import { createDemoProgress } from './lib/demo-progress.js';
 
 const nonce = new URL(location.href).searchParams.get('session');
 const prototypeRequested = new URL(location.href).searchParams.get('renderer') === 'room1-proxy';
@@ -85,10 +86,21 @@ function finish(error) {
 
 async function start(descriptor, demo) {
   const { signal } = controller;
-  const status = (text, progress) => { if (!signal.aborted) send('status', { text, progress }); };
+  let playing = false;
+  const status = (text, progress, phase = playing ? 'background' : 'loading') => { if (!signal.aborted && !(playing && phase === 'loading')) send('status', { text, progress, phase }); };
+  status(demoRequested ? 'Loading the demo manifest...' : 'Loading the game player...', 0);
   if (demoRequested && (descriptor.demo !== true || !demo?.manifestURL)) throw new Error('A bounded demo engine and demo data are required.');
   const demoManifest = demoRequested ? await fetchDemoManifest(demo.manifestURL, descriptor.sourceRuntimeSHA256, signal) : null;
-  status('Loading the game player...');
+  const startup = demoManifest ? createDemoProgress({ nativeBytes: demoManifest.totalBytes,
+    roomBytes: demoManifest.packs.Scene1001.bytes ?? 29 * 1024 ** 2 }, status) : null;
+  const announcePlaying = () => {
+    if (playing || signal.aborted) return;
+    startup?.('ready', 1, 'Enjoy Neverhood!');
+    playing = true;
+    send('playing');
+    renderPrototype?.startBackgroundLoading?.();
+  };
+  status('Loading the game player...', 0);
   await new Promise((resolve, reject) => {
     window.Module = {
       canvas,
@@ -122,6 +134,7 @@ async function start(descriptor, demo) {
     document.head.append(script);
   });
   signal.throwIfAborted();
+  startup?.('engine', 1, 'Game player initialized.');
   if (prototypeRequested) {
     try {
       const { createRoomPrototype } = await import('./prototype/room1.js');
@@ -130,11 +143,14 @@ async function start(descriptor, demo) {
         packs: Object.fromEntries(Object.entries(demoManifest.packs).map(([room, entry]) => [room, demoManifest.version === 2
           ? { ...entry, url: demoAssetURL(entry.file, demoManifest.manifestURL) } : demoAssetURL(entry, demoManifest.manifestURL)])),
         onStatus: status,
+        onStartupProgress: (loaded, total, phase) => startup(phase === 'download' ? 'room' : 'verify', total ? loaded / total : 0,
+          phase === 'download' ? 'Loading HD room 1...' : 'Verifying HD room 1 and preparing its cache...'),
         cursor: { manifestURL: demoAssetURL(demoManifest.cursor, demoManifest.manifestURL),
           imageURL: new URL('sprite-sheet-128.png', demoAssetURL(demoManifest.cursor, demoManifest.manifestURL)).href },
       } : undefined;
       renderPrototype = await createRoomPrototype({ module: Module, canvas, wasmSHA256: Module.renderPrototypeWasmSHA256, signal, demo: demoOptions });
       if (demoRequested) await renderPrototype.ready;
+      if (demoRequested) startup('verify', 1, 'HD room 1 and cursor ready.');
       if (signal.aborted) { renderPrototype.dispose(); signal.throwIfAborted(); }
     } catch (error) {
       if (error.name === 'AbortError' || demoRequested) throw error;
@@ -163,10 +179,11 @@ async function start(descriptor, demo) {
     for (const entry of demoManifest.files) {
       const bytes = await fetchDemoBytes(demoAssetURL(entry.file, demoManifest.manifestURL), {
         signal, limit: entry.bytes, expectedBytes: entry.bytes, sha256: entry.sha256,
-        onProgress: loaded => status(`Loading demo data: ${Math.floor((copied + loaded) / demoManifest.totalBytes * 100)}%`, (copied + loaded) / demoManifest.totalBytes * 100),
+        onProgress: loaded => startup('native', (copied + loaded) / demoManifest.totalBytes, 'Loading original game data...'),
       });
       fs.writeFile(`/game/${entry.name}`, bytes);
       copied += bytes.length;
+      startup('native', copied / demoManifest.totalBytes, 'Verifying original game data...');
     }
   } else {
     const files = await Promise.all(REQUIRED_FILES.map(openArchive));
@@ -196,7 +213,8 @@ async function start(descriptor, demo) {
   // Keep the session configuration separate from upstream's persisted HOME mount.
   fs.writeFile('/tmp/neverhood.ini', '[scummvm]\ngui_return_to_launcher_at_exit=false\nconfirm_exit=false\nfiltering=true\noriginalsaveload=true\n');
   canvas.focus();
-  status('Stepping into Neverhood...', 100);
+  if (startup) startup('ready', 0, 'Stepping into Neverhood...');
+  else status('Stepping into Neverhood...', 100);
   const [width, height] = windowSize();
   let observingEngine = false;
   if (typeof Module._g_engine === 'number' && typeof Module.getValue === 'function') {
@@ -210,7 +228,7 @@ async function start(descriptor, demo) {
       if (active && !sawEngine) {
         sawEngine = true;
         menu.hidden = demoRequested;
-        if (!demoRequested) { announced = true; send('playing'); }
+        if (!demoRequested) { announced = true; announcePlaying(); }
       } else if (sawEngine && !active) {
         // The game's destructor has run. Dispose the whole session, not its launcher.
         finish(engineExitError());
@@ -218,21 +236,22 @@ async function start(descriptor, demo) {
       }
       if (active && demoRequested) {
         const state = window.roomRendererPrototype?.stats();
-        if (state?.pack?.cacheError) { finish(new Error(state.pack.cacheError)); return; }
+        if (!announced && state?.pack?.cacheError) { finish(new Error(state.pack.cacheError)); return; }
         if (!announced) {
-          if (Object.keys(state?.pack?.errors ?? {}).length || state?.errors) { finish(new Error('The HD demo assets could not be drawn. Please retry.')); return; }
-          if (state?.hdDraws > 0 && state.pack?.missKeys.length === 0) { announced = true; send('playing'); }
+          if (Object.keys(state?.pack?.errors ?? {}).length || state?.errors || state?.mismatches) { finish(new Error('The HD demo assets could not be drawn. Please retry.')); return; }
+          if (state?.hdDraws > 0 && state.verified > 0 && state.pack?.missKeys.length === 0) { announced = true; announcePlaying(); }
         }
       }
       engineFrame = requestAnimationFrame(observeEngine);
     };
     engineFrame = requestAnimationFrame(observeEngine);
   }
+  if (demoRequested && !observingEngine) throw new Error('The demo player cannot verify its first game frame.');
   try {
     Module.callMain(['--path=/game', '--extrapath=/engine-data', '--savepath=/saves', '--config=/tmp/neverhood.ini', '--no-fullscreen', '--filtering', '--stretch-mode=fit_force_aspect', `--window-size=${width},${height}`, 'neverhood']);
-    if (!observingEngine && !finishing && !signal.aborted) { menu.hidden = demoRequested; send('playing'); }
+    if (!observingEngine && !finishing && !signal.aborted) { menu.hidden = demoRequested; announcePlaying(); }
   } catch (error) {
-    if (error === 'unwind') { if (!observingEngine) { menu.hidden = demoRequested; send('playing'); } }
+    if (error === 'unwind') { if (!observingEngine) { menu.hidden = demoRequested; announcePlaying(); } }
     else throw error;
   }
   // Let SDL resize its own drawable and GL viewport; never resize the GL canvas directly.

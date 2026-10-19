@@ -17,6 +17,7 @@
     "build:demo-runtime": "bash scripts/build-demo-runtime.sh",
     "build:demo-cursor": "node scripts/build-demo-cursor.mjs",
     "prepare:demo": "node scripts/prepare-demo-release.mjs",
+    "prepare:demo-previews": "node scripts/prepare-demo-previews.mjs",
     "build:extractor": "bash scripts/build-extractor.sh",
     "package:sources": "node scripts/package-sources.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs",

@@ -1,4 +1,6 @@
 import { discoverDemoRuntime } from '../lib/runtime.js';
+import { demoAssetURL } from '../lib/demo-data.js';
+import { initComparison } from './comparison.js';
 
 const element = id => document.getElementById(id);
 const page = element('demo-page');
@@ -19,6 +21,7 @@ const notice = element('demo-session-notice');
 let runtime;
 let controller;
 let stopping = false;
+let comparisonCleanup = initComparison({});
 
 function setStatus(text, error = false) {
   status.textContent = text;
@@ -44,6 +47,11 @@ async function checkAvailability() {
       setStatus('This demo has not been published yet. In the meantime, you can bring your own game on the main page.');
       return;
     }
+    comparisonCleanup?.();
+    comparisonCleanup = initComparison({
+      originalURL: demoAssetURL('room1-original-preview-v2.webp', new URL(manifestURL, location.href)),
+      hdURL: demoAssetURL('room1-hd-preview-v2.webp', new URL(manifestURL, location.href)),
+    });
     runtime = await discoverDemoRuntime({ manifestURL });
     if (!runtime.available) {
       setStatus(runtime.reason || 'The demo is not available right now. Please try again later.');
@@ -53,7 +61,7 @@ async function checkAvailability() {
     play.disabled = false;
     const size = Number.isSafeInteger(runtime.downloadBytes) && runtime.downloadBytes > 0 && runtime.downloadBytes < 1024 ** 3
       ? ` Up to ${Math.ceil(runtime.downloadBytes / 1024 ** 2)} MiB of game assets.` : '';
-    setStatus(`Two rooms are ready.${size} Click Play to step inside.`);
+    setStatus(`Start in room 1; room 2 prepares in the background.${size}`);
   } catch (error) {
     runtime = null;
     setStatus(error.message || 'The demo could not be checked. Please try again.', true);
@@ -78,6 +86,8 @@ function stop() {
 async function start() {
   if (controller || !runtime?.available) return;
   controller = new AbortController();
+  const activeController = controller;
+  let hasPlayed = false, waitingForRoom = false, startupProgress = 0;
   stopping = false;
   play.disabled = true;
   cancel.disabled = false;
@@ -85,9 +95,12 @@ async function start() {
   exit.disabled = false;
   loading.hidden = false;
   notice.hidden = true;
-  element('demo-loading-title').textContent = 'Opening two little rooms';
+  element('demo-loading-title').textContent = 'Opening the first room';
   loadingStatus.textContent = 'Starting the demo...';
-  progress.removeAttribute('value');
+  progress.value = 0;
+  const backgroundStatus = element('demo-background-status');
+  backgroundStatus.textContent = '';
+  backgroundStatus.hidden = true;
   session.hidden = false;
   page.inert = true;
   document.body.classList.add('demo-is-playing');
@@ -97,16 +110,43 @@ async function start() {
       container: host,
       signal: controller.signal,
       onStatus(text, value, phase) {
-        if (stopping) return;
-        loadingStatus.textContent = text;
-        if (Number.isFinite(value)) progress.value = Math.max(0, Math.min(100, value));
-        else progress.removeAttribute('value');
-        loading.hidden = phase === 'playing';
-        cancel.hidden = phase === 'stopping';
+        if (controller !== activeController || activeController.signal.aborted || stopping) return;
+        const percent = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : undefined;
+        if (phase === 'background') {
+          backgroundStatus.hidden = false;
+          backgroundStatus.textContent = `${text}${percent !== undefined && percent < 100 ? ` ${Math.floor(percent)}%` : ''}`;
+          return;
+        }
+        if (phase === 'playing') {
+          hasPlayed = true;
+          waitingForRoom = false;
+          progress.value = 100;
+          loading.hidden = true;
+          return;
+        }
         if (phase === 'stopping') {
+          loading.hidden = false;
+          loadingStatus.textContent = text;
+          progress.removeAttribute('value');
+          cancel.hidden = true;
           element('demo-loading-title').textContent = 'Closing the demo';
           exit.disabled = true;
+          return;
         }
+        if (phase === 'room-loading') {
+          if (!waitingForRoom) progress.value = 0;
+          waitingForRoom = true;
+          element('demo-loading-title').textContent = 'Preparing the next room';
+          cancel.textContent = 'Exit demo';
+          if (percent !== undefined) progress.value = Math.max(progress.value, percent);
+        } else {
+          if (hasPlayed) return;
+          if (percent !== undefined) startupProgress = Math.max(startupProgress, percent);
+          progress.value = startupProgress;
+        }
+        loading.hidden = false;
+        loadingStatus.textContent = text;
+        cancel.hidden = false;
       },
     });
     playLabel.textContent = 'Restart demo';
@@ -124,6 +164,8 @@ async function start() {
       try { await document.exitFullscreen(); } catch { /* The browser may already be leaving full screen. */ }
     }
     host.replaceChildren();
+    backgroundStatus.hidden = true;
+    cancel.textContent = 'Cancel loading';
     session.hidden = true;
     page.inert = false;
     document.body.classList.remove('demo-is-playing');

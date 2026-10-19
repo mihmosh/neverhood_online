@@ -25,6 +25,7 @@ function startRuntime(descriptor, { container, onStatus = () => {}, signal }, lo
     }
     let settled = false;
     let initialized = false;
+    let playing = false;
     let stopTimer;
     const send = type => frame.contentWindow?.postMessage({ channel: 'neverhood-player', nonce, type, ...(type === 'start' ? { descriptor, ...(demo ? { demo } : {}) } : {}) }, location.origin);
     const finish = error => {
@@ -52,8 +53,10 @@ function startRuntime(descriptor, { container, onStatus = () => {}, signal }, lo
         initialized = true;
         if (signal?.aborted) send('stop'); else send('start');
       } else if (data.type === 'status' && typeof data.text === 'string' && data.text.length <= 500) {
-        if (!signal?.aborted) onStatus(data.text, Number.isFinite(data.progress) ? Math.max(0, Math.min(100, data.progress)) : undefined, 'loading');
+        const phase = ['loading', 'playing', 'background', 'room-loading', 'stopping'].includes(data.phase) ? data.phase : playing ? 'background' : 'loading';
+        if (!signal?.aborted && !(playing && phase === 'loading')) onStatus(data.text, Number.isFinite(data.progress) ? Math.max(0, Math.min(100, data.progress)) : undefined, phase);
       } else if (data.type === 'playing' && !signal?.aborted) {
+        playing = true;
         clearTimeout(loadTimer);
         onStatus('Enjoy Neverhood!', 100, 'playing');
         frame.focus();

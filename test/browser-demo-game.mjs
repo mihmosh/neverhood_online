@@ -9,6 +9,8 @@ const remote = process.env.DEMO_CDN_FIXTURE === '1';
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome', headless: true });
 const report = { realRuntime: true, importedGame: false, transitionInjection: true, fullGameplayRoute: false, errors: [], httpErrors: [] };
 report.cdnFixture = remote;
+let releaseRoom2;
+const room2Gate = new Promise(resolve => { releaseRoom2 = resolve; });
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
@@ -22,6 +24,7 @@ try {
     await page.route('**/hd-demo/config.json', route => route.fulfill({ json: { version: 1, manifestURL: 'https://demo-assets.example.test/v1/manifest.json' } }));
     await page.route('https://demo-assets.example.test/v1/**', async route => {
       const file = new URL(route.request().url()).pathname.slice('/v1/'.length);
+      if (file === 'room2.zip') await room2Gate;
       const response = await fetch(`${origin}/__private-demo/${file}`);
       await route.fulfill({ status: response.status, body: Buffer.from(await response.arrayBuffer()), headers: {
         'content-type': response.headers.get('content-type') || 'application/octet-stream',
@@ -29,11 +32,13 @@ try {
       } });
     });
   }
+  if (!remote) await page.route('**/room2.zip', async route => { await room2Gate; await route.continue(); });
   page.on('pageerror', error => report.errors.push(error.message));
   page.on('response', response => { if (response.status() >= 400) report.httpErrors.push({ status: response.status(), url: response.url() }); });
   await page.goto(`${origin}/hd-demo/`);
   assert.equal(await page.locator('input[type=file]').count(), 0);
   await page.waitForFunction(() => !document.getElementById('demo-play').disabled, null, { timeout: 30000 });
+  await page.locator('#comparison-stage[data-state="ready"]').waitFor({ timeout: 30000 });
   await page.locator('#demo-play').click();
   await page.locator('#playframe').waitFor({ timeout: 30000 });
   await page.locator('#demo-loading').waitFor({ state: 'hidden', timeout: 180000 });
@@ -44,6 +49,8 @@ try {
   assert.equal(await frame.locator('#room-hd-background').count(), 0);
   assert.equal(await frame.locator('#game-menu').isVisible(), false);
   report.room1 = await frame.evaluate(() => window.roomRendererPrototype.stats());
+  report.room1StartedBeforeRoom2 = true;
+  assert.equal(await page.locator('#demo-loading').isHidden(), true, 'Room 1 must be playable while room 2 download is held');
   assert.equal(report.room1.pack.selectedBackground, 'gemini');
   assert.equal(report.room1.activeRoom, 'Scene1001');
   assert.equal(report.room1.errors, 0);
@@ -77,7 +84,13 @@ try {
     }, result);
     if (expectedScene) await frame.waitForFunction(room => window.roomRendererPrototype.stats().activeRoom === room && window.roomRendererPrototype.stats().hdDraws > 0, expectedScene, { timeout: 60000 });
   };
-  await transition(0, 'Scene1002');
+  await transition(0);
+  await page.locator('#demo-loading').waitFor({ state: 'visible', timeout: 30000 });
+  assert.match(await page.locator('#demo-loading-title').innerText(), /next room/i);
+  assert.equal(archives.filter(url => new URL(url).pathname.endsWith('/room2.zip')).length, 1, 'Room entry must reuse the background request');
+  releaseRoom2();
+  await page.locator('#demo-loading').waitFor({ state: 'hidden', timeout: 180000 });
+  await frame.waitForFunction(() => window.roomRendererPrototype.stats().activeRoom === 'Scene1002' && window.roomRendererPrototype.stats().pack?.selectedBackground === 'gemini');
   report.room2 = await frame.evaluate(() => window.roomRendererPrototype.stats());
   assert.equal(report.room2.pack.selectedBackground, 'gemini');
   assert.equal(report.room2.errors, 0);
@@ -126,6 +139,7 @@ try {
   console.error(error);
   process.exitCode = 1;
 } finally {
+  releaseRoom2();
   await writeFile(`/tmp/kilo/hd-demo-${remote ? 'cdn-fixture' : 'game'}-report.json`, JSON.stringify(report, null, 2));
   await browser.close();
 }

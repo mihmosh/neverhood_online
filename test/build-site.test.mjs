@@ -15,7 +15,7 @@ async function fixture(t) {
     await mkdir(join(root, name, '..'), { recursive: true });
     await writeFile(join(root, name), data);
   };
-  for (const name of ['app.js', 'styles.css', 'player.html', 'player.js', 'lib/app.js', 'data/index.json', 'hd-demo/index.html', 'hd-demo/demo.css', 'hd-demo/demo.js', 'hd-demo/config.json', 'vendor/fflate-0.8.2.js', 'vendor/fflate-LICENSE', 'vendor/fflate-provenance.json', 'assets/fonts/Mansalva-Regular.ttf', 'assets/fonts/OFL.txt', 'assets/fonts/provenance.json']) await file(`web/${name}`);
+  for (const name of ['app.js', 'styles.css', 'player.html', 'player.js', 'lib/app.js', 'data/index.json', 'hd-demo/index.html', 'hd-demo/demo.css', 'hd-demo/demo.js', 'hd-demo/comparison.js', 'hd-demo/config.json', 'vendor/fflate-0.8.2.js', 'vendor/fflate-LICENSE', 'vendor/fflate-provenance.json', 'assets/fonts/Mansalva-Regular.ttf', 'assets/fonts/OFL.txt', 'assets/fonts/provenance.json']) await file(`web/${name}`);
   await file('web/index.html', '<html><aside><a data-source-link href="https://github.com/mihmosh/neverhood_online">Source &amp; licenses</a></aside><footer>Local game client</footer></html>');
   for (const name of ['compositor.js', 'read-frame.js', 'room1.js', 'replacement-pack.js', 'render-abi.json', 'demo-cursor.js', 'room-archive.js', 'room-archive-cache.js']) await file(`web/prototype/${name}`);
   await file('web/public/runtime/runtime.json', JSON.stringify({ available: true, api: 'emscripten-global-module', engine: 'neverhood', module: 'scummvm.js', wasm: 'scummvm.wasm', engineData: ['neverhood.dat'], sourceRevision: 'a'.repeat(40) }));

@@ -59,7 +59,7 @@ try {
   await visit();
   assert.equal(await page.evaluate(() => window.checkedManifest), '/__private-demo/manifest.json');
   assert.equal(await page.locator('#demo-play').isEnabled(), true);
-  assert.equal(await page.locator('input').count(), 0, 'no import or save inputs');
+  assert.equal(await page.locator('input[type="file"]').count(), 0, 'no import or save inputs');
   for (const width of [1366, 1024, 768, 540, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `overflow at ${width}px`);
@@ -71,6 +71,8 @@ try {
   await page.locator('#demo-play').click();
   assert.equal(await page.locator('#demo-session').isVisible(), true);
   assert.equal(await page.locator('#demo-progress').getAttribute('value'), '35');
+  await page.evaluate(() => { window.demoStatus('Checking cached files...', 12, 'loading'); window.demoStatus('Verifying the first room...', undefined, 'loading'); });
+  assert.equal(await page.locator('#demo-progress').getAttribute('value'), '35', 'startup progress never reverses or becomes indeterminate');
   assert.equal(await page.locator('#demo-page').evaluate(node => node.inert), true);
   await page.locator('#demo-cancel').click();
   await page.locator('#demo-session').waitFor({ state: 'hidden' });
@@ -82,6 +84,19 @@ try {
   assert.match(await page.locator('#demo-status').innerText(), /download failed/);
   await visit('playing');
   await page.locator('#demo-play').click();
+  assert.equal(await page.locator('#demo-loading').isHidden(), true);
+  await page.evaluate(() => window.demoStatus('Downloading HD room 2...', 25, 'background'));
+  assert.equal(await page.locator('#demo-loading').isHidden(), true, 'background prefetch cannot cover gameplay');
+  assert.match(await page.locator('#demo-background-status').innerText(), /room 2.*25%/);
+  await page.evaluate(() => window.demoStatus('Late startup status', 40, 'loading'));
+  assert.equal(await page.locator('#demo-loading').isHidden(), true, 'late startup events cannot cover gameplay');
+  await page.evaluate(() => window.demoStatus('Preparing HD room 2...', 40, 'room-loading'));
+  assert.equal(await page.locator('#demo-loading').isVisible(), true);
+  assert.equal(await page.locator('#demo-progress').getAttribute('value'), '40');
+  await page.evaluate(() => { window.demoStatus('Verifying room 2...', 15, 'room-loading'); window.demoStatus('HD room 2 is ready.', 100, 'background'); });
+  assert.equal(await page.locator('#demo-progress').getAttribute('value'), '40');
+  assert.equal(await page.locator('#demo-loading').isVisible(), true, 'cache completion must not expose an unverified frame');
+  await page.evaluate(() => window.demoStatus('Enjoy Neverhood!', 100, 'playing'));
   assert.equal(await page.locator('#demo-loading').isHidden(), true);
   for (const width of [1366, 390, 320]) {
     await page.setViewportSize({ width, height: 740 });

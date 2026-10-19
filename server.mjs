@@ -72,6 +72,7 @@ async function demoCatalog(directory, webRoot) {
   const top = await readJSON('manifest.json', DEMO_LIMITS.manifest);
   const manifest = validateDemoManifest(top.value, top.value.sourceRuntimeSHA256);
   const files = new Map([['manifest.json', { bytes: top.bytes }]]);
+  for (const name of ['room1-original-preview-v2.webp', 'room1-hd-preview-v2.webp']) files.set(name, { limit: 2 * 1024 ** 2 });
   for (const entry of manifest.files) files.set(entry.file, { size: entry.bytes });
   for (const [room, file] of Object.entries(manifest.packs)) {
     if (manifest.version === 2) { files.set(file.file, { size: file.bytes }); continue; }

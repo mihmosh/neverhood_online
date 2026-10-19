@@ -106,6 +106,13 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
   let packLoading = false;
   let demoHD = true;
   let demoCursor;
+  let backgroundStarted = false;
+  let waitingRoom;
+  const finishRoomLoading = () => {
+    if (!waitingRoom) return;
+    waitingRoom = undefined;
+    demo?.onStatus?.('Enjoy Neverhood!', 100, 'playing');
+  };
   const cursorController = new AbortController();
   const abortCursor = () => cursorController.abort();
   signal?.addEventListener('abort', abortCursor, { once: true });
@@ -283,8 +290,24 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
         replacements.clear(); latestDraws = []; lastReference = lastPalette = undefined; selected = '';
         original('Original renderer: changing rooms.');
         syncControls();
-        if (room && !state && !debug && (demo || ['127.0.0.1', 'localhost'].includes(location.hostname))) {
+        if (demo && waitingRoom && waitingRoom !== room) finishRoomLoading();
+        if (demo && room === 'Scene1002' && demoHD && !state?.pack) {
+          waitingRoom = room;
+          demo.onStatus?.('Preparing HD room 2...', undefined, 'room-loading');
+        }
+        if (room && (demo ? !state?.pack : !state) && !debug && (demo || ['127.0.0.1', 'localhost'].includes(location.hostname))) {
           installPack(demo ? demo.packs[room] : room === 'Scene1002' ? '/__private-room-pack/room2/room-pack.json' : '/__private-room-pack/room-pack.json', true, room).catch(() => {});
+        }
+      }
+      if (demo && backgroundStarted && pack) {
+        const state = pack.stats();
+        if (state.cacheError || Object.keys(state.errors).length) {
+          const failed = roomPacks.get(activeRoom);
+          failed.controller.abort(); pack.dispose(); failed.pack = undefined;
+          pack = undefined; packEnabled = false; packLoading = false;
+          demo.onStatus?.('HD room assets could not be read. Original graphics remain available; re-enter the room to retry.', undefined, 'background');
+          finishRoomLoading();
+          syncControls();
         }
       }
       if (frame.available && mode === 'proxy' && packEnabled && parityRequired && !frame.reference) frame = reader.read({ reference: true });
@@ -306,6 +329,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
           lastEngineTick = frame.tick;
         }
         if (!debug && (mode === 'original' || (!packEnabled && !replacements.size))) {
+          if (mode === 'original' || !demoHD) finishRoomLoading();
           parityRequired = true;
           pack?.observe([]);
           pack?.prefetch([]);
@@ -358,6 +382,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
             stats.mismatches++;
             if (!debug) { mode = 'original'; if (demo) demoHD = false; surfaceSnapshots.clear(); syncControls(); }
             original(`Original fallback: ${differences} indexed pixels differ`);
+            finishRoomLoading();
           } else {
             stats.status = `${activeRoom} / ${mode === 'proxy' ? debug ? 'proxy verified' : 'HD' : 'original selected'}`;
             if (mode === 'proxy') {
@@ -376,6 +401,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
               const count = items.filter(item => !item.shadow && activeReplacements.has(item.key)).length;
               stats.hdDraws = count;
               if (count) stats.hdFrames++;
+              if (waitingRoom === activeRoom && !parityRequired && count && pack?.stats().missKeys.length === 0) finishRoomLoading();
               output.hidden = false;
               canvas.style.opacity = '0';
             } else { pack?.observe([]); original(`${activeRoom} / original selected`); }
@@ -399,6 +425,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
       stats.errors++;
       stats.lastError = error.message;
       original(error.message);
+      finishRoomLoading();
     }
     if (debug && performance.now() - lastUI > 500) { lastUI = performance.now(); find('proxy-status').textContent = stats.status; }
     frameRequest = requestAnimationFrame(update);
@@ -430,6 +457,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
   const installPack = async (files, automatic = false, room = activeRoom ?? 'Scene1001') => {
     if (!['Scene1001', 'Scene1002'].includes(room)) throw new Error('Unsupported private pack room.');
     const previous = roomPacks.get(room);
+    if (automatic && previous?.loading && !previous.controller.signal.aborted) return previous.promise;
     previous?.controller?.abort(); previous?.pack?.dispose();
     const controller = new AbortController();
     if (signal?.aborted) controller.abort();
@@ -441,20 +469,26 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
       tick = undefined; original('Original renderer: loading private pack.'); syncControls();
     }
     find('proxy-pack-status').textContent = 'Validating private pack hashes and PNG dimensions locally...';
+    state.promise = (async () => {
     try {
       const load = demo ? (await import('./replacement-pack.js')).loadDemoReplacementPackURL : automatic ? loadReplacementPackURL : loadReplacementPack;
       const archive = demo && typeof files === 'object' ? files : undefined;
       const loaded = await load(archive ? archive.url : files, { runtimeSHA256: demo?.sourceRuntimeSHA256 ?? wasmSHA256, signal: controller.signal,
         room: demo ? room : undefined, archive,
-        onProgress: (loaded, total, phase) => demo?.onStatus?.(phase === 'download'
-          ? `Loading HD ${room === 'Scene1001' ? 'room 1' : 'room 2'}: ${Math.floor(loaded / total * 100)}%`
-          : `Preparing HD ${room === 'Scene1001' ? 'room 1' : 'room 2'} cache...`),
+        onProgress: (loaded, total, phase) => {
+          if (!demo || disposed || controller.signal.aborted) return;
+          if (room === 'Scene1001' && !backgroundStarted) demo.onStartupProgress?.(loaded, total, phase);
+          else demo.onStatus?.(phase === 'download' ? 'Downloading HD room 2...' : 'Verifying HD room 2 and preparing its cache...',
+            phase === 'download' && total ? Math.min(95, loaded / total * 95) : undefined,
+            waitingRoom === room ? 'room-loading' : 'background');
+        },
         cacheBytes: automatic ? 96 * 1024 ** 2 : undefined,
         onChange: () => { if (!disposed && activeRoom === room && roomPacks.get(room) === state) tick = undefined; } });
       if (disposed || controller.signal.aborted || roomPacks.get(room) !== state) { loaded.dispose(); return; }
       if (loaded.manifest.room !== room) { loaded.dispose(); throw new Error('Private pack does not match the active room.'); }
       if (demo && !loaded.backgrounds.has('gemini')) { loaded.dispose(); throw new Error('Demo HD requires a Gemini background.'); }
       state.pack = loaded; state.loading = false; state.enabled = automatic;
+      if (demo && room === 'Scene1002') demo.onStatus?.('HD room 2 is ready.', 100, 'background');
       if (automatic) {
         const background = demo ? 'gemini' : loaded.backgrounds.has('gemini') ? 'gemini' : loaded.backgrounds.keys().next().value;
         if (background) loaded.selectBackground(background);
@@ -473,12 +507,19 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     } catch (error) {
       if (controller.signal.aborted || disposed) return;
       state.loading = false;
+      state.error = error;
       if (activeRoom === room && roomPacks.get(room) === state) {
         packLoading = false;
         find('proxy-pack-status').textContent = error.message;
       }
+      if (demo && room === 'Scene1002') {
+        demo.onStatus?.('HD room 2 could not be prepared. It will retry on room entry.', undefined, 'background');
+        if (waitingRoom === room) finishRoomLoading();
+      }
       throw error;
     }
+    })();
+    return state.promise;
   };
   const enablePack = enabled => {
     if (enabled && !pack) throw new Error('Load a private pack first.');
@@ -508,6 +549,12 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
   viewControl.addEventListener('change', () => {
     mode = viewControl.value === 'hd' ? 'proxy' : 'original';
     if (demo) demoHD = mode === 'proxy';
+    if (demo && !demoHD) finishRoomLoading();
+    if (demo && demoHD && activeRoom === 'Scene1002' && !pack) {
+      waitingRoom = activeRoom;
+      demo.onStatus?.('Preparing HD room 2...', undefined, 'room-loading');
+      installPack(demo.packs[activeRoom], true, activeRoom).catch(() => {});
+    }
     parityRequired = true;
     if (mode === 'proxy' && (!demo || pack)) enablePack(true);
     else { if (demo && pack) enablePack(false); original('Original selected'); }
@@ -625,9 +672,14 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
   });
   frameRequest = requestAnimationFrame(update);
   let ready = Promise.resolve();
+  const startBackgroundLoading = () => {
+    if (!demo || disposed || signal?.aborted || backgroundStarted) return;
+    backgroundStarted = true;
+    // Handle optional-room failures here; entry can retry a failed request.
+    return installPack(demo.packs.Scene1002, true, 'Scene1002').catch(() => {});
+  };
   if (demo) {
-    // Bounded to the two demo room manifests; image demand stays pack-managed.
-    const assets = ['Scene1001', 'Scene1002'].map(room => installPack(demo.packs[room], true, room));
+    const assets = [installPack(demo.packs.Scene1001, true, 'Scene1001')];
     if (demo.cursor) assets.push(loadDemoCursor(demo.cursor, { signal: cursorController.signal }).then(value => {
       if (disposed) value.dispose(); else { demoCursor = value; cursorPixelsKey = undefined; }
     }));
@@ -639,6 +691,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
   }
   return {
     ready,
+    startBackgroundLoading,
     preferNativeResolution: () => !debug && mode === 'proxy' && packEnabled && reader.inRoom,
     dispose() {
     disposed = true; cancelAnimationFrame(frameRequest);

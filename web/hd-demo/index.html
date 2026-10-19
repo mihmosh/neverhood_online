@@ -17,44 +17,64 @@
       <a class="demo-brand" href="../">Neverhood Online<span>A little world, reimagined.</span></a>
       <a class="demo-home" href="../">Bring your own game <span aria-hidden="true">&rarr;</span></a>
     </header>
-    <main class="menu-board demo-board" aria-labelledby="demo-title">
+    <main class="demo-board" aria-labelledby="demo-title">
+      <section class="demo-opening" aria-label="Introduction">
       <div class="demo-copy">
-        <p class="demo-kicker">Two rooms. A new coat of clay.</p>
-        <h1 id="demo-title" tabindex="-1">HD Demo<span class="demo-stamp">Work in progress</span></h1>
-        <p class="demo-intro">Step into a familiar, wonderfully strange little world. Try a new look. See what feels different.</p>
+        <p class="demo-kicker">The Neverhood / A visual experiment</p>
+        <h1 id="demo-title" tabindex="-1">A new coat<br>of <span>clay.</span></h1>
+        <p class="demo-intro">The same wonderfully strange world. A different kind of detail. An unfinished look at what an HD Neverhood could feel like.</p>
+      </div>
+      <div class="demo-invitation">
+        <span class="demo-stamp">Work in progress</span>
+        <h2>Two rooms. Step inside.</h2>
+        <p>Play a small, self-contained HD demo, with Original and HD views in the player.</p>
         <div class="demo-actions" aria-busy="true" id="demo-actions">
           <button class="demo-play" id="demo-play" type="button" disabled aria-describedby="demo-status"><span class="demo-play-icon" aria-hidden="true">&#9654;</span><span id="demo-play-label">Play demo</span></button>
           <p id="demo-status" class="demo-status" role="status" aria-live="polite">Checking the demo...</p>
           <button id="demo-recheck" class="text-button" type="button" hidden>Retry check</button>
         </div>
-        <p class="demo-small">No import needed. Just click Play when the demo is available.</p>
+        <p class="demo-small">No import needed. Game downloads begin only when you press Play. For the full game, <a href="../">bring your own copy</a>.</p>
         <noscript><p class="message">JavaScript is needed to check and play the demo.</p></noscript>
       </div>
-      <div class="demo-sculpture" aria-hidden="true">
-        <div class="demo-moon"></div>
-        <div class="demo-door demo-door-one"><i></i><b>01</b></div>
-        <div class="demo-door demo-door-two"><i></i><b>02</b></div>
-        <div class="demo-ground"></div>
-        <span class="demo-sculpture-note">a small look inside</span>
-      </div>
-      <section class="demo-notes" aria-label="About this experiment">
-        <div><span class="demo-note-number">01 / Explore</span><h2>Two rooms, no more.</h2><p>A small, self-contained visit. For the full game, <a href="../">bring your own copy</a>.</p></div>
-        <div><span class="demo-note-number">02 / Compare</span><h2>Original or HD?</h2><p>Switch between Original and HD in the player. HD backgrounds were made with Gemini.</p></div>
-        <div><span class="demo-note-number">03 / Experiment</span><h2>Still taking shape.</h2><p>The experimental HD cursor covers only some states. Performance and visual consistency may vary by device.</p></div>
       </section>
+      <section class="demo-comparison" aria-labelledby="comparison-title">
+        <div class="demo-section-heading"><div><p class="demo-kicker">01 / Look a little closer</p><h2 id="comparison-title">Old world. New texture.</h2></div><p id="comparison-help">Move your mouse across the image, drag on touch,<br>or use the slider below.</p></div>
+        <figure class="comparison-figure">
+          <div class="comparison-stage" id="comparison-stage" data-state="unavailable" style="--comparison-position:50%" aria-busy="false">
+            <img id="comparison-hd" class="comparison-image" width="1416" height="1062" alt="HD capture of the first room, with reworked clay textures" crossorigin="anonymous" decoding="async" draggable="false" hidden>
+            <img id="comparison-original" class="comparison-image comparison-original" width="1416" height="1062" alt="Original capture of the same first room" crossorigin="anonymous" decoding="async" draggable="false" hidden>
+            <div class="comparison-labels" aria-hidden="true"><span>Original</span><span>HD</span></div>
+            <div class="comparison-divider" aria-hidden="true"><span>&lsaquo; &rsaquo;</span></div>
+            <p class="comparison-state" id="comparison-status" role="status">Comparison previews are not available yet. You can still play the demo when it is ready.</p>
+          </div>
+          <div class="comparison-controls"><label for="comparison-range">Original <span aria-hidden="true">&harr;</span> HD</label><input id="comparison-range" type="range" min="0" max="100" step="1" value="50" aria-label="Original image reveal" aria-describedby="comparison-help" disabled></div>
+          <figcaption><span>Room 01 / A familiar beginning</span><span>Separate gameplay captures; character poses differ.</span></figcaption>
+        </figure>
+      </section>
+      <section class="demo-process" aria-labelledby="process-title">
+        <div class="demo-process-heading"><p class="demo-kicker">02 / From the workbench</p><h2 id="process-title">Not a remake.<br>An exploration.</h2><p>A few different tools, a lot of experiments, and plenty still to work out.</p></div>
+        <div class="demo-process-notes">
+          <article><span class="demo-note-number">I / The scenery</span><h3>A promising new surface</h3><p>The backgrounds were reworked with Gemini, with promising results. The aim is to explore more detail without losing the handmade strangeness of the original rooms.</p></article>
+          <article><span class="demo-note-number">II / The moving pieces</span><h3>Detail needs continuity</h3><p>Sprites use RealESRNet_x4plus at 4&times;. Upscaling frame by frame is not optimal: textures can flicker between frames. A future animation or video temporal upscale could add detail with better consistency and reduced texture flicker.</p></article>
+          <article><span class="demo-note-number">III / A small, sculpted detail</span><h3>A cursor made of clay</h3><p>The cursor was sculpted and rebuilt in Blender, then rendered into sprite phases. Only some states are covered; other states use the native cursor.</p></article>
+          <article><span class="demo-note-number">IV / Under the surface</span><h3>Original logic, experimental rendering</h3><p>ScummVM's WebAssembly build runs the original game logic; a JavaScript rendering proxy supplies the HD visuals. Animation currently has slight stutters. GPU-side optimization or native HD asset support in ScummVM are possible future work, not proven fixes.</p></article>
+        </div>
+      </section>
+      <aside class="demo-film" aria-labelledby="film-title"><div class="demo-film-mark" aria-hidden="true">&#9654;</div><div><p class="demo-kicker">A moving-image study</p><h2 id="film-title">What if the film had more detail, too?</h2><p>A separate video upscale experiment made using <a href="https://replicate.com/topazlabs/" target="_blank" rel="noopener noreferrer">Topaz Labs on Replicate</a>. Interesting, but imperfect: color and texture drift, and lens flares are handled poorly.</p><a class="demo-film-link" href="https://youtu.be/-U8jjMIlVU4" target="_blank" rel="noopener noreferrer">Watch the video experiment <span aria-hidden="true">&nearr;</span></a></div><span class="demo-film-note">a study,<br>not a final cut</span></aside>
     </main>
     <footer class="demo-footer"><span>An unofficial visual experiment. Original game and assets belong to their respective rights holders.</span><a href="https://github.com/mihmosh/neverhood_online" target="_blank" rel="noopener noreferrer">Source &amp; licenses <span aria-hidden="true">&nearr;</span></a></footer>
   </div>
   <section id="demo-session" class="demo-session" role="dialog" aria-modal="true" aria-label="HD demo player" hidden>
     <div class="demo-toolbar">
       <span class="demo-player-title">HD Demo</span>
+      <span id="demo-background-status" class="demo-background-status" role="status" hidden></span>
       <div class="demo-player-actions"><button id="demo-fullscreen" type="button" aria-pressed="false">Full screen</button><button id="demo-exit" type="button">Exit demo</button></div>
     </div>
     <div id="demo-player-host" class="demo-player-host"></div>
     <div id="demo-loading" class="demo-loading">
       <div class="loading-card">
         <p class="eyebrow">A little patience...</p>
-        <h2 id="demo-loading-title">Opening two little rooms</h2>
+        <h2 id="demo-loading-title">Opening the first room</h2>
         <p id="demo-loading-status" role="status" aria-live="polite">Starting the demo...</p>
         <progress id="demo-progress" max="100" aria-labelledby="demo-loading-status"></progress>
         <button id="demo-cancel" type="button">Cancel loading</button>

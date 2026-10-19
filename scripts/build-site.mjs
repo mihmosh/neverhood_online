@@ -7,7 +7,7 @@ import { demoAddress } from '../web/lib/demo-data.js';
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const frontend = ['index.html', 'app.js', 'styles.css', 'player.html', 'player.js', 'data/index.json',
-  'hd-demo/index.html', 'hd-demo/demo.css', 'hd-demo/demo.js', 'hd-demo/config.json'];
+  'hd-demo/index.html', 'hd-demo/demo.css', 'hd-demo/demo.js', 'hd-demo/comparison.js', 'hd-demo/config.json'];
 const prototype = ['compositor.js', 'read-frame.js', 'room1.js', 'replacement-pack.js', 'render-abi.json', 'demo-cursor.js', 'room-archive.js', 'room-archive-cache.js'];
 const bundles = {
   runtime: ['runtime.json', 'scummvm.js', 'scummvm.wasm', 'neverhood.dat', 'COPYING', 'COPYRIGHT', 'AUTHORS'],

@@ -86,6 +86,10 @@ test('demo ABI is checked against actual variant hash, packs against source hash
   let renderer;
   let cssScale = 1, resize;
   let backgroundID = 'gemini';
+  let releaseRoom2;
+  let room2Gate = new Promise(resolve => { releaseRoom2 = resolve; });
+  let room2Failure = false;
+  const statuses = [];
   let cursorDecoded;
   const cursorDecode = new Promise(resolve => { cursorDecoded = resolve; });
   t.after(() => renderer?.dispose());
@@ -129,28 +133,42 @@ test('demo ABI is checked against actual variant hash, packs against source hash
     : { palette: new Uint8Array(768), frames: [1, 2, 3].map(index => new Uint8Array(1024).fill(index)) };
   const frame = frameFor(binding);
   t.mock.method(RenderFrameReader.prototype, 'read', function () { this.inRoom = true; return frame; });
-  t.mock.method(globalThis, 'fetch', async url => {
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
     requests.push(String(url));
     if (String(url).endsWith('/demo-runtime/render-abi.json')) return new Response(JSON.stringify(demoABI));
     if (String(url).endsWith('/cursor.json')) return new Response(JSON.stringify(privateManifest));
     if (String(url).endsWith('/sprite-sheet-128.png')) return new Response(await readFile(new URL('../private-assets/demo-cursor/sprite-sheet-128.png', import.meta.url)));
     const room = String(url).includes('room2') ? 'Scene1002' : 'Scene1001';
+    if (room === 'Scene1002') {
+      await room2Gate;
+      options.signal?.throwIfAborted();
+      if (room2Failure) throw new Error('Room 2 download failed');
+    }
     return new Response(JSON.stringify({ version: 1, private: true, scale: 4, runtimeSHA256: sourceHash,
       sourceBinding: 'unit-test', room, entries: [], backgrounds: [{ id: backgroundID, label: 'Gemini',
         key: '640x480-640-11111111-p12345678-opaque', file: 'gemini.png', sha256: 'a'.repeat(64), width: 2560, height: 1920, scale: 4 }] }));
   });
   const demo = { abiURL: 'https://demo.example/demo-runtime/render-abi.json', sourceRuntimeSHA256: sourceHash,
+    onStatus: (...args) => statuses.push(args),
     packs: { Scene1001: 'https://demo.example/room1/room-pack.json', Scene1002: 'https://demo.example/room2/room-pack.json' } };
   if (privateManifest) demo.cursor = { manifestURL: 'https://demo.example/cursor.json', imageURL: 'https://demo.example/sprite-sheet-128.png' };
   await assert.rejects(createRoomPrototype({ module: {}, canvas: new Element('canvas'), wasmSHA256: sourceHash, demo }), /WASM build/);
   renderer = await createRoomPrototype({ module: {}, canvas: new Element('canvas'), wasmSHA256: actualHash, demo });
+  await renderer.ready;
+  assert.equal(requests.some(url => url.includes('/room2/')), false, 'first-room ready does not request room 2');
+  const background = renderer.startBackgroundLoading();
+  renderer.startBackgroundLoading();
   for (let i = 0; i < 3; i++) await new Promise(setImmediate);
   const api = window.roomRendererPrototype;
   assert.equal(api.stats().pack.selectedBackground, 'gemini');
   assert.equal(nodes.has('room-hd-background'), false);
   const view = nodes.get('room-hd-view');
-  view.value = 'original'; view.listeners.get('change')(); callbacks.shift()();
   frame.room = 'Scene1002'; frame.tick++; callbacks.shift()();
+  assert.equal(statuses.at(-1)[2], 'room-loading', 'HD entry before prefetch completes has an explicit overlay phase');
+  view.value = 'original'; view.listeners.get('change')(); callbacks.shift()();
+  assert.equal(statuses.at(-1)[2], 'playing', 'Original selection dismisses room-loading without changing background download');
+  releaseRoom2();
+  await background;
   assert.equal(api.stats().mode, 'original');
   assert.equal(api.stats().packEnabled, false);
   assert.equal(api.stats().pack.room, 'Scene1002');
@@ -161,7 +179,7 @@ test('demo ABI is checked against actual variant hash, packs against source hash
   assert.equal(api.stats().packEnabled, true);
   assert.equal(view.value, 'hd');
   assert.throws(() => api.selectPackBackground('realesrnet'), /Gemini/);
-  assert.equal(requests.filter(url => url.endsWith('room-pack.json')).length, 2, 'bounded manifest preload once per room');
+  assert.equal(requests.filter(url => url.endsWith('room-pack.json')).length, 2, 'background and room entry share one request');
   if (privateManifest) {
     await cursorDecode;
     await Promise.resolve(); await Promise.resolve();
@@ -189,6 +207,28 @@ test('demo ABI is checked against actual variant hash, packs against source hash
   assert.equal(api.stats().pack, null, 'missing Gemini cannot silently select RealESRNet');
   assert.equal(api.output.hidden, true);
   renderer.dispose();
+  backgroundID = 'gemini'; room2Failure = true;
+  renderer = await createRoomPrototype({ module: {}, canvas: new Element('canvas'), wasmSHA256: actualHash, demo });
+  await renderer.ready;
+  await renderer.startBackgroundLoading();
+  assert.match(statuses.at(-1)[0], /retry/);
+  assert.equal(statuses.at(-1)[2], 'background', 'optional-room failure cannot revert startup loading');
+  room2Failure = false;
+  const retryAPI = window.roomRendererPrototype;
+  const beforeRetry = requests.filter(url => url.includes('/room2/')).length;
+  await retryAPI.loadPack(demo.packs.Scene1002, true, 'Scene1002');
+  assert.equal(requests.filter(url => url.includes('/room2/')).length, beforeRetry + 1, 'failed prefetch can retry on entry');
+  renderer.dispose();
+  const abort = new AbortController();
+  room2Gate = new Promise(resolve => { releaseRoom2 = resolve; });
+  renderer = await createRoomPrototype({ module: {}, canvas: new Element('canvas'), wasmSHA256: actualHash, demo, signal: abort.signal });
+  await renderer.ready;
+  const cancelled = renderer.startBackgroundLoading();
+  for (let i = 0; i < 3; i++) await new Promise(setImmediate);
+  abort.abort(); renderer.dispose(); releaseRoom2();
+  await cancelled;
+  assert.equal(requests.filter(url => url.includes('/room2/')).length, beforeRetry + 2);
+  backgroundID = 'realesrnet';
   renderer = await createRoomPrototype({ module: {}, canvas: new Element('canvas'), wasmSHA256: actualHash, demo });
   await assert.rejects(renderer.ready, /[Gg]emini/);
 });

@@ -89,7 +89,7 @@ import, reload persistence, the first room and Escape menu, focused high-DPI
 - Offline relaunch is not ready. Local game storage alone does not make the site available offline.
 - HD replacements are limited to the separate two-room demo. This is not a whole-game HD remaster; normal BYO play does not download the demo assets.
 
-The automated suite has passed 228 tests; one compiler-dump comparison is skipped
+The automated suite has passed 240 tests; one compiler-dump comparison is skipped
 when its optional local toolchain outputs are absent. This is not a substitute for gameplay
 testing. See [testing](docs/TESTING.md) and the [verification log](docs/PLAN.md)
 for scope and outstanding work.
@@ -105,9 +105,12 @@ disabled. Original/HD switching does not restart gameplay. HD uses only Gemini
 backgrounds and the prepared Blender cursor states, with native cursor fallback
 for other gestures and palettes.
 
-Each HD room is delivered as one SHA256-pinned STORE ZIP. The browser validates
-and extracts both archives into Cache Storage before play; subsequent launches
-read verified images from that cache without downloading the room ZIPs again.
+Each HD room is delivered as one SHA256-pinned STORE ZIP. Startup prepares only
+the first room and cursor; the second room starts downloading in the background
+after the first playable frame. The browser validates and extracts archives into
+Cache Storage; subsequent launches read verified images from that cache without
+downloading the room ZIPs again. Loading progress is monotonic and background
+updates do not reopen the startup overlay.
 Unavailable or quota-limited storage falls back to session memory. Game data and
 derived media live outside Git and the static website, on the configured asset
 host. The current game-data bundle is conservative, not a proven minimal resource
@@ -126,6 +129,13 @@ prepared release outside the repository/public trees. Media preparation uses
 `build:demo-data`, `build:demo-cursor` and `prepare:demo`; runtime rebuilds use
 `build:demo-runtime`. Normal deployment uses the committed runtime and its matching
 corresponding-source archives, without requiring the local game or toolchain.
+
+The comparison on `/hd-demo/` uses two small, cropped screenshot previews hosted
+beside the demo manifest: `room1-original-preview-v2.webp` and
+`room1-hd-preview-v2.webp`. Prepare them outside Git with `prepare:demo-previews`.
+Missing previews do not block the game. Mouse, touch and keyboard reveal the
+captures; their character poses differ. The page also records the Gemini,
+RealESRNet, Blender and separate Topaz video experiments and their limitations.
 
 ## Experimental First-Room Renderer
 

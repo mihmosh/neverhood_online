@@ -154234,14 +154234,14 @@
     {
       "component": "project-build-sources",
       "path": "package.json",
-      "bytes": 1941,
-      "sha256": "ee14c553b5c4b424b0f43d0735fd39bd6360b749a17d67cb9604173b18aac5ab"
+      "bytes": 2012,
+      "sha256": "89bef9105fce313c3349db82b1a3dcabb075c9f78a510b793ca132305e2c63ae"
     },
     {
       "component": "project-build-sources",
       "path": "README.md",
-      "bytes": 20310,
-      "sha256": "05d5bbbefc096a05a8a178fec33e39267dec709d02882eb7b5b47d1f7c1a8e1a"
+      "bytes": 20974,
+      "sha256": "f8a6aba64193f5c2d7722a7f5489f02307e47a25565efd23e8f8f412f3fef042"
     },
     {
       "component": "project-build-sources",
@@ -154294,8 +154294,8 @@
     {
       "component": "project-build-sources",
       "path": "scripts/build-site.mjs",
-      "bytes": 11264,
-      "sha256": "fde704239e100af0bbed3f74d8deabf741ab6bd1885cddec7566f14605298b4f"
+      "bytes": 11289,
+      "sha256": "52c84e1a95f2a2b4b150db59e5898d90f0d373d18346030cd189f49680ee4d83"
     },
     {
       "component": "project-build-sources",
@@ -154365,6 +154365,12 @@
     },
     {
       "component": "project-build-sources",
+      "path": "scripts/prepare-demo-previews.mjs",
+      "bytes": 4778,
+      "sha256": "6cd214c16d9fc18a883bac8d9b1e236ffbb837737119747bed803ec99302fad6"
+    },
+    {
+      "component": "project-build-sources",
       "path": "scripts/prepare-demo-release.mjs",
       "bytes": 6969,
       "sha256": "cce7b793ab7c4b3da8ba0217e268b69775dcf1c2e0121d7ad2b53ca1c39beb41"
@@ -154414,8 +154420,8 @@
     {
       "component": "project-build-sources",
       "path": "server.mjs",
-      "bytes": 16644,
-      "sha256": "db800d1a90cefd3c1e6c86d3658b7de6fce596c861eb5cfd192f07dfc208be92"
+      "bytes": 16772,
+      "sha256": "66229105a8512b2f9589a1266708fbc678b4eb48f12d78222748804b48b23639"
     },
     {
       "component": "project-build-sources",
@@ -154437,9 +154443,15 @@
     },
     {
       "component": "project-build-sources",
+      "path": "test/browser-demo-comparison.mjs",
+      "bytes": 5512,
+      "sha256": "c3fd4eda93e25bf269513debfe4ba2ececb2c43512ca9d3311f5e622bafcbd41"
+    },
+    {
+      "component": "project-build-sources",
       "path": "test/browser-demo-game.mjs",
-      "bytes": 8545,
-      "sha256": "9ce32381c1a8a87da6fdd32453e3b2dba3fbe6c7f2c9c31bb94b011222d6cbd4"
+      "bytes": 9654,
+      "sha256": "a6975095520ef40e3660274b6d6a2e826109a76d0a6f3f4daa1abcc914226717"
     },
     {
       "component": "project-build-sources",
@@ -154456,8 +154468,8 @@
     {
       "component": "project-build-sources",
       "path": "test/browser-hd-demo.mjs",
-      "bytes": 6305,
-      "sha256": "9cba295ebfc69ebb57bc3ccfc9131548fc0fe7fb5e66d337b69a61ff8095bc8e"
+      "bytes": 7895,
+      "sha256": "f3100be336595df0c8dd3f80a8749bf47f56e5e65d0fd026bb4b887ad4b2efb6"
     },
     {
       "component": "project-build-sources",
@@ -154504,8 +154516,8 @@
     {
       "component": "project-build-sources",
       "path": "test/build-site.test.mjs",
-      "bytes": 11800,
-      "sha256": "ff321e4e8dee1a6791899573df1e06d12fecc53f91a0d8cceb7a333baecdd438"
+      "bytes": 11825,
+      "sha256": "d6fef19361207c170c9c397cb226d32ed2a6ce6c8dea09d67fa8615fc7af0a62"
     },
     {
       "component": "project-build-sources",
@@ -154515,9 +154527,15 @@
     },
     {
       "component": "project-build-sources",
+      "path": "test/demo-comparison.test.mjs",
+      "bytes": 5089,
+      "sha256": "a4ff3be2f4200db73b2c4dc852b1244e43fb9306453c8fe7017cc300977afe3c"
+    },
+    {
+      "component": "project-build-sources",
       "path": "test/demo-cursor.test.mjs",
-      "bytes": 13154,
-      "sha256": "bcb6d6f9f57b97e22a142285006b9260caf75d9cb1bdc60c507e4d2e5bec8540"
+      "bytes": 15375,
+      "sha256": "c4e7b63bc375609e7f0818d158d7d345304f2eeb1363311b8b7e049f81eb7810"
     },
     {
       "component": "project-build-sources",
@@ -154533,9 +154551,27 @@
     },
     {
       "component": "project-build-sources",
+      "path": "test/demo-previews.test.mjs",
+      "bytes": 897,
+      "sha256": "7443f5a351d5bbe226b6e9873f8cfb499633fcb8bb926258706bc1815d2c36e1"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/demo-progress.test.mjs",
+      "bytes": 1366,
+      "sha256": "551f4920569276059a1af96e7abe37abb626a000fc0ecd1882cfb814b32975d0"
+    },
+    {
+      "component": "project-build-sources",
       "path": "test/demo-release.test.mjs",
       "bytes": 3914,
       "sha256": "8c405edd09cf6bcea1b75dfc1087019302aa8110217f811ead9e5ea7916eeb9f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/demo-runtime-status.test.mjs",
+      "bytes": 2750,
+      "sha256": "41802ab07daf7d8dc7b584ff3a3afde485aa9eebf53ce9a4610227629cd380fa"
     },
     {
       "component": "project-build-sources",
@@ -154713,6 +154749,12 @@
     },
     {
       "component": "project-build-sources",
+      "path": "web/hd-demo/comparison.js",
+      "bytes": 4676,
+      "sha256": "db17cb0b941ca026bb886e3fcf7a2d4921f713a5cc1e8f7389c68adf5db88d15"
+    },
+    {
+      "component": "project-build-sources",
       "path": "web/hd-demo/config.json",
       "bytes": 42,
       "sha256": "782f8eb5f05051d1f1552baa3192df614f4c17403a907042bd3f7dbcf3bfac57"
@@ -154720,20 +154762,20 @@
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/demo.css",
-      "bytes": 8365,
-      "sha256": "1822987434ecc9b671af886fbba72e3b185b75ea6ea6100cb1fe80609566ae5a"
+      "bytes": 11817,
+      "sha256": "0c71aa7ecdb8f8e71de3d68fc069ff3640ec80f3e5ebea5fa58b94fd2f74d46c"
     },
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/demo.js",
-      "bytes": 6572,
-      "sha256": "8431646a6fa9a980fc65338dfed9e3f3d5cc18518a321eae560c4f85d990faf6"
+      "bytes": 8431,
+      "sha256": "5dc8040ca425ae423e5265c4f53ce2582bb587c07420fa8842a166541cbfad6e"
     },
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/index.html",
-      "bytes": 4466,
-      "sha256": "dd6fe891c5e676362f1a8862d95cfe1d06e8022f633bc45093dae01c83141bfc"
+      "bytes": 8216,
+      "sha256": "cd182f4bac35827e8737d18e50ae19d96ce6460367deccaba042dc58a1813d2a"
     },
     {
       "component": "project-build-sources",
@@ -154746,6 +154788,12 @@
       "path": "web/lib/demo-data.js",
       "bytes": 5431,
       "sha256": "9f3fb62252859feeacd15ea0bdfe751fd7291baca70ebd87b48728d055e1c45b"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "web/lib/demo-progress.js",
+      "bytes": 836,
+      "sha256": "6a6effde80dc1763e945e18f13df75b92b5dd0025180c6a34be57df4f6225de6"
     },
     {
       "component": "project-build-sources",
@@ -154768,8 +154816,8 @@
     {
       "component": "project-build-sources",
       "path": "web/lib/runtime.js",
-      "bytes": 6496,
-      "sha256": "9c9cb250d0acdd7f71e4d943bcd67e8e6f1c897cfae95699975360422e5593dc"
+      "bytes": 6737,
+      "sha256": "95dbba58bde2ef47229baceebdb1af15fff0a11c471c71aafe6f1dd5dcc06504"
     },
     {
       "component": "project-build-sources",
@@ -154846,8 +154894,8 @@
     {
       "component": "project-build-sources",
       "path": "web/player.js",
-      "bytes": 12255,
-      "sha256": "19ac118530fb2a13300e45a5409a147bb0d5da61b876203b9e7f529d6e44fed6"
+      "bytes": 13585,
+      "sha256": "223b26f4a3a798608e35eca2692ba69e74aa9c947d44b9ec90c377836742f324"
     },
     {
       "component": "project-build-sources",
@@ -154894,8 +154942,8 @@
     {
       "component": "project-build-sources",
       "path": "web/prototype/room1.js",
-      "bytes": 38292,
-      "sha256": "eb19fcb9fc897df8244602677ab688af295d77054a85b9e2bee487be4e32dc8c"
+      "bytes": 40936,
+      "sha256": "96f51ec2c07d815fd1d17463f5f98c1f37bea4f1b7fdc0080be1036b259607aa"
     },
     {
       "component": "project-build-sources",

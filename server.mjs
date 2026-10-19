@@ -139,7 +139,7 @@ export function createStaticServer({ webRoot = resolve(workspace, 'web'), bundle
 
     try {
       const rawPath = request.url.split('?')[0];
-      if (['/hd-demo', '/hd-demo/', '/hd-demo/index.html'].includes(rawPath)) response.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+      if (rawPath === '/hd-demo' || rawPath.startsWith('/hd-demo/') || rawPath === '/player.html' && new URL(request.url, 'http://localhost').searchParams.get('demo') === '1') response.removeHeader('Cross-Origin-Embedder-Policy');
       if (rawPath.startsWith('/__private-demo') || decodeURIComponent(rawPath).startsWith('/__private-demo')) {
         response.setHeader('Cache-Control', 'private, no-store');
         if (!privateDemoDir || !bundlesInPublic) { response.writeHead(404).end(); return; }

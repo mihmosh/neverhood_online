@@ -154240,8 +154240,8 @@
     {
       "component": "project-build-sources",
       "path": "README.md",
-      "bytes": 21415,
-      "sha256": "df10900da422f1a3842190bc15bc1629480941291c66ea2b2c571727152dc545"
+      "bytes": 21291,
+      "sha256": "08fd87e044d4cdd73cffcf52d4370220b6283be7dde96928009e80668fe385f1"
     },
     {
       "component": "project-build-sources",
@@ -154294,8 +154294,8 @@
     {
       "component": "project-build-sources",
       "path": "scripts/build-site.mjs",
-      "bytes": 11309,
-      "sha256": "f7cd70e95e1eb51af2d4bb00666245324210a36946f722f8970e9a122bcb4713"
+      "bytes": 11289,
+      "sha256": "52c84e1a95f2a2b4b150db59e5898d90f0d373d18346030cd189f49680ee4d83"
     },
     {
       "component": "project-build-sources",
@@ -154420,8 +154420,8 @@
     {
       "component": "project-build-sources",
       "path": "server.mjs",
-      "bytes": 16917,
-      "sha256": "b258b930b4bcd8f82883d3340f4f7e911de7591c07e56ca6cc8f6dee075e1b5f"
+      "bytes": 17003,
+      "sha256": "b1d21ac5ce2e5c14809e2b262e8e18671dc8bcdd593123681bfaf4d00c73c12b"
     },
     {
       "component": "project-build-sources",
@@ -154462,8 +154462,8 @@
     {
       "component": "project-build-sources",
       "path": "test/browser-demo-video.mjs",
-      "bytes": 3706,
-      "sha256": "94d20602445f4dfdbfbe9b3add51d235529e5c1f723924ee64cbc8a8c0f55ef0"
+      "bytes": 4036,
+      "sha256": "1d3c036bad13e00106000df403e55b8181037043fad968443f788c62c5c4cbe9"
     },
     {
       "component": "project-build-sources",
@@ -154474,8 +154474,8 @@
     {
       "component": "project-build-sources",
       "path": "test/browser-hd-demo.mjs",
-      "bytes": 8302,
-      "sha256": "181b88ffda9e4ad9cb64f103f1ef4619c7712c989fa25bfbe918e5dd42ca2798"
+      "bytes": 8262,
+      "sha256": "52f3fd96f078146dea5ab7ccd00ad9621bf0980b7dc24565917c4e218d66f4ed"
     },
     {
       "component": "project-build-sources",
@@ -154522,8 +154522,8 @@
     {
       "component": "project-build-sources",
       "path": "test/build-site.test.mjs",
-      "bytes": 12085,
-      "sha256": "e1736a266f6747b077ba05c232dd762bcaad21c9740b0645623adca412de7da8"
+      "bytes": 12357,
+      "sha256": "cb49d1357df048750be9631e3f9030179e552ddce2b226ce32b804cbc21a66b1"
     },
     {
       "component": "project-build-sources",
@@ -154584,12 +154584,6 @@
       "path": "test/demo-runtime.test.mjs",
       "bytes": 7340,
       "sha256": "3b61c5297fbc5c62351c36d14f449a6e20d3bea2136c3d16b1da42554d341e42"
-    },
-    {
-      "component": "project-build-sources",
-      "path": "test/demo-video.test.mjs",
-      "bytes": 3122,
-      "sha256": "af96ad9cf605d86111e1864bdc50b0eae1865f2ab792c821cbf81a7a3509ccef"
     },
     {
       "component": "project-build-sources",
@@ -154726,8 +154720,8 @@
     {
       "component": "project-build-sources",
       "path": "vercel.json",
-      "bytes": 979,
-      "sha256": "4865faa4ef3d229bbe2e861ba001a9e3d494be8b2b56099f8006061bf42004bb"
+      "bytes": 1130,
+      "sha256": "eceeb392d98e42aa5a2a1dd281b53696bbbd68ee08aa6da1a6934c10f75cece5"
     },
     {
       "component": "project-build-sources",
@@ -154774,26 +154768,20 @@
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/demo.css",
-      "bytes": 13223,
-      "sha256": "e8785ce87cb0dbd7773031c5b01d6970415247f794a4bf7202ed81726336c372"
+      "bytes": 12167,
+      "sha256": "884824de18e2ce025ccc4f2ba5baf08d180d091bc3a81130e2a6a44b2a7c7d03"
     },
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/demo.js",
-      "bytes": 8519,
-      "sha256": "16d7b1879e8898383d2224d18c3a92be141a3c500e944c224d358c7c83186789"
+      "bytes": 8594,
+      "sha256": "20d8bfef0a8c6e733b9ad46173bba1f3b281c5c041e934fa5095026d85b4fd8f"
     },
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/index.html",
-      "bytes": 8757,
-      "sha256": "f2a55fe22ccb527032d0e08d883ac27bd0f309603459b6378b39796c183004c8"
-    },
-    {
-      "component": "project-build-sources",
-      "path": "web/hd-demo/video.js",
-      "bytes": 1416,
-      "sha256": "89e0d9c05f0a86f342a01e7fa72bb1cfbb0c03da31248c1fa5937eed57ffc4ae"
+      "bytes": 8827,
+      "sha256": "3e4d1aa72414e3a7079ddc6f8155ab176f71793b55176339f038beb33d2a9cad"
     },
     {
       "component": "project-build-sources",

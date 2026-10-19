@@ -8,7 +8,6 @@
       "source": "/(.*)",
       "headers": [
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "no-referrer" },
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
@@ -23,8 +22,13 @@
       "headers": [{ "key": "Content-Type", "value": "application/wasm" }]
     },
     {
-      "source": "/hd-demo/:path*",
-      "headers": [{ "key": "Cross-Origin-Embedder-Policy", "value": "unsafe-none" }]
+      "source": "/((?!hd-demo/|hd-demo$|player\\.html$).*)",
+      "headers": [{ "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }]
+    },
+    {
+      "source": "/player.html",
+      "missing": [{ "type": "query", "key": "demo", "value": "1" }],
+      "headers": [{ "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }]
     }
   ]
 }

@@ -57,13 +57,6 @@
 .hd-demo .demo-video-host, .hd-demo .demo-video-host iframe { width:100%; height:100%; border:0; }
 .hd-demo .demo-video-host { position:absolute; inset:0; }
 .hd-demo .demo-video-host iframe { display:block; }
-.hd-demo .demo-video-play { position:absolute; inset:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px; padding:16px; border:0; border-radius:0; color:#f0d4a6; background:radial-gradient(ellipse at center,#584030,#241d17 80%); box-shadow:inset 0 0 30px #0008; font:25px/1.2 var(--hand); }
-.hd-demo .demo-video-play::before, .hd-demo .demo-video-play::after { content:''; position:absolute; left:10px; right:10px; height:8px; background:repeating-linear-gradient(90deg,#c39a6538 0 12px,transparent 12px 22px); }
-.hd-demo .demo-video-play::before { top:10px; }
-.hd-demo .demo-video-play::after { bottom:10px; }
-.hd-demo .demo-video-play:hover { color:#ffe8c5; background:radial-gradient(ellipse at center,#6b4932,#241d17 80%); }
-.hd-demo .demo-video-play small { font:11px/1.4 'Trebuchet MS',Verdana,sans-serif; }
-.hd-demo .demo-video-reel { display:grid; place-items:center; width:54px; height:54px; padding-left:3px; border:1px solid #bf9a67; border-radius:50%; font:19px/1 sans-serif; }
 .hd-demo .demo-video p.demo-video-status { margin:9px 0 0; font-size:10px; line-height:1.5; color:#d5bd98; }
 .hd-demo .demo-film .demo-kicker { color:#d5ae7a; margin-bottom:10px; }
 .hd-demo .demo-film h2 { font-size:32px; text-shadow:none; }

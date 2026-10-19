@@ -60,7 +60,16 @@
           <article><span class="demo-note-number">IV / Under the surface</span><h3>Original logic, experimental rendering</h3><p>ScummVM's WebAssembly build runs the original game logic; a JavaScript rendering proxy supplies the HD visuals. Animation currently has slight stutters. GPU-side optimization or native HD asset support in ScummVM are possible future work, not proven fixes.</p></article>
         </div>
       </section>
-      <aside class="demo-film" aria-labelledby="film-title"><div class="demo-film-mark" aria-hidden="true">&#9654;</div><div><p class="demo-kicker">A moving-image study</p><h2 id="film-title">What if the film had more detail, too?</h2><p>A separate video upscale experiment made using <a href="https://replicate.com/topazlabs/" target="_blank" rel="noopener noreferrer">Topaz Labs on Replicate</a>. Interesting, but imperfect: color and texture drift, and lens flares are handled poorly.</p><a class="demo-film-link" href="https://youtu.be/-U8jjMIlVU4" target="_blank" rel="noopener noreferrer">Watch the video experiment <span aria-hidden="true">&nearr;</span></a></div><span class="demo-film-note">a study,<br>not a final cut</span></aside>
+      <aside class="demo-film" aria-labelledby="film-title">
+        <div class="demo-video">
+          <div class="demo-video-screen">
+            <div id="demo-video-host" class="demo-video-host"></div>
+            <button id="demo-video-play" class="demo-video-play" type="button" aria-label="Play the video experiment" aria-describedby="demo-video-status"><span class="demo-video-reel" aria-hidden="true">&#9654;</span><span>Video upscale study</span><small>Play on this page</small></button>
+          </div>
+          <p id="demo-video-status" class="demo-video-status" role="status">YouTube loads only after you press Play.</p>
+        </div>
+        <div><p class="demo-kicker">A moving-image study</p><h2 id="film-title">What if the film had more detail, too?</h2><p>A separate video upscale experiment made using <a href="https://replicate.com/topazlabs/" target="_blank" rel="noopener noreferrer">Topaz Labs on Replicate</a>. Interesting, but imperfect: color and texture drift, and lens flares are handled poorly.</p><a class="demo-film-link" href="https://youtu.be/-U8jjMIlVU4" target="_blank" rel="noopener noreferrer">Watch directly on YouTube <span aria-hidden="true">&nearr;</span></a><span class="demo-film-note">a study, not a final cut</span></div>
+      </aside>
     </main>
     <footer class="demo-footer"><span>An unofficial visual experiment. Original game and assets belong to their respective rights holders.</span><a href="https://github.com/mihmosh/neverhood_online" target="_blank" rel="noopener noreferrer">Source &amp; licenses <span aria-hidden="true">&nearr;</span></a></footer>
   </div>

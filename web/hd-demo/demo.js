@@ -1,6 +1,7 @@
 import { discoverDemoRuntime } from '../lib/runtime.js';
 import { demoAssetURL } from '../lib/demo-data.js';
 import { initComparison } from './comparison.js';
+import { initVideo } from './video.js';
 
 const element = id => document.getElementById(id);
 const page = element('demo-page');
@@ -22,6 +23,7 @@ let runtime;
 let controller;
 let stopping = false;
 let comparisonCleanup = initComparison({});
+const resetVideo = initVideo();
 
 function setStatus(text, error = false) {
   status.textContent = text;
@@ -85,6 +87,7 @@ function stop() {
 
 async function start() {
   if (controller || !runtime?.available) return;
+  resetVideo();
   controller = new AbortController();
   const activeController = controller;
   let hasPlayed = false, waitingForRoom = false, startupProgress = 0;

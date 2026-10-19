@@ -89,7 +89,7 @@ import, reload persistence, the first room and Escape menu, focused high-DPI
 - Offline relaunch is not ready. Local game storage alone does not make the site available offline.
 - HD replacements are limited to the separate two-room demo. This is not a whole-game HD remaster; normal BYO play does not download the demo assets.
 
-The automated suite has passed 240 tests; one compiler-dump comparison is skipped
+The automated suite has passed 244 tests; one compiler-dump comparison is skipped
 when its optional local toolchain outputs are absent. This is not a substitute for gameplay
 testing. See [testing](docs/TESTING.md) and the [verification log](docs/PLAN.md)
 for scope and outstanding work.
@@ -136,6 +136,10 @@ beside the demo manifest: `room1-original-preview-v2.webp` and
 Missing previews do not block the game. Mouse, touch and keyboard reveal the
 captures; their character poses differ. The page also records the Gemini,
 RealESRNet, Blender and separate Topaz video experiments and their limitations.
+The Topaz study has a click-to-load `youtube-nocookie.com` player: no YouTube
+requests are made before Play. A credentialless iframe preserves the isolated
+game page; unsupported browsers retain a direct YouTube link. Starting the game
+removes the video player to prevent overlapping audio.
 
 ## Experimental First-Room Renderer
 

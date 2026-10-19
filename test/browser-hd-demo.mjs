@@ -68,7 +68,11 @@ try {
   await page.screenshot({ path: '/tmp/kilo/hd-demo-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: '/tmp/kilo/hd-demo-mobile.png', fullPage: true });
+  await page.route('https://www.youtube-nocookie.com/embed/**', route => route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Video fixture</title>' }));
+  await page.locator('#demo-video-play').click();
+  assert.equal(await page.locator('#demo-video-host iframe').count(), 1);
   await page.locator('#demo-play').click();
+  assert.equal(await page.locator('#demo-video-host iframe').count(), 0, 'Starting the game stops the video');
   assert.equal(await page.locator('#demo-session').isVisible(), true);
   assert.equal(await page.locator('#demo-progress').getAttribute('value'), '35');
   await page.evaluate(() => { window.demoStatus('Checking cached files...', 12, 'loading'); window.demoStatus('Verifying the first room...', undefined, 'loading'); });

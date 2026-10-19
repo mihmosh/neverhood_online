@@ -14,6 +14,22 @@
 *.sve
 /saves/
 /save-backups/
+/private-assets/
+/asset-workspace/
+/private-research/
+*.safetensors
+*.ckpt
+*.pth
+*.pt
+*.onnx
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+*.smk
 
 # Local credentials and machine-specific files
 .env

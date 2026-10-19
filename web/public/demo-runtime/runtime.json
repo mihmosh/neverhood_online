@@ -1,0 +1,104 @@
+{
+  "available": true,
+  "api": "emscripten-global-module",
+  "module": "scummvm.js",
+  "wasm": "scummvm.wasm",
+  "engine": "neverhood",
+  "engineData": [
+    "neverhood.dat"
+  ],
+  "filesystem": "MEMFS",
+  "saves": false,
+  "lifecycle": {
+    "enginePointerAddress": "Module._g_engine",
+    "readEnginePointer": "Module.getValue(Module._g_engine, '*')",
+    "stopped": "A nonzero engine pointer followed by zero means teardown completed. Read demoState to distinguish completion from user quit. Remove the isolated iframe; demo saves are disabled and must not be flushed or mounted.",
+    "exitRuntime": true,
+    "pauseMainLoop": "Module._emscripten_pause_main_loop"
+  },
+  "viewport": {
+    "activeWindow": "Module._SDL_GL_GetCurrentWindow() || Module._SDL_GetKeyboardFocus()",
+    "windowIdentity": "Module._SDL_GetWindowID(window)",
+    "resize": "Module._SDL_SetWindowSize(window, width, height)",
+    "note": "Window IDs change when the renderer recreates its SDL window; never assume ID 1."
+  },
+  "emsdk": "4.0.10",
+  "sourceRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
+  "configureFlags": "--host=wasm32-unknown-emscripten --build=wasm32-unknown-emscripten --disable-all-engines --enable-engine=neverhood --disable-detection-full --disable-debug --disable-cloud --disable-tts",
+  "configuredLinkFlags": "-s INITIAL_MEMORY=128MB -s STACK_SIZE=32MB -s ALLOW_MEMORY_GROWTH=1 -s FORCE_FILESYSTEM -lidbfs.js -s ASYNCIFY=1 -s ASYNCIFY_STACK_SIZE=1048576 -s EXPORTED_FUNCTIONS=[_main,_malloc,_free,_raise] -s EXPORTED_RUNTIME_METHODS=[ccall,lengthBytesUTF8,setValue,writeArrayToMemory] --js-library backends/networking/http/emscripten/networkreadstream-emscripten.js -O2 --pre-js $(srcdir)/dists/emscripten/custom_shell-pre.js --post-js $(srcdir)/dists/emscripten/custom_shell-post.js --shell-file $(srcdir)/dists/emscripten/custom_shell.html",
+  "libraries": "-sUSE_SDL=3 ",
+  "linkerOverrides": "# SPDX-License-Identifier: GPL-3.0-or-later\nDEMO_SCRIPTS := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))\ninclude $(DEMO_SCRIPTS)runtime.mk\n\nDEMO_COMMA := ,\nLDFLAGS := $(subst _emscripten_pause_main_loop],_emscripten_pause_main_loop$(DEMO_COMMA)_neverhood_demo_state],$(LDFLAGS))\nDEMO_OVERLAYS := $(CURDIR)/overlays\nDEMO_OBJECTS := engines/neverhood/gamemodule.o engines/neverhood/modules/module1000.o engines/neverhood/saveload.o engines/engine.o backends/fs/emscripten/emscripten-fs-factory.o\n\n$(DEMO_OBJECTS): %.o: $(DEMO_OVERLAYS)/%.cpp\n\t$(QUIET)$(MKDIR) $(*D)/$(DEPDIR)\n\t$(QUIET_CXX)$(CXX) $(CXX_UPDATE_DEP_FLAG) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@\n\n$(EXECUTABLE): .EXTRA_PREREQS := $(DEMO_SCRIPTS)demo-runtime.mk $(DEMO_SCRIPTS)runtime.mk\n",
+  "sourceCompliance": "Before public binary distribution provide corresponding ScummVM, SDL and toolchain library source and build scripts as required by their licenses. A revision URL alone is not a complete GPL source offer.",
+  "demo": true,
+  "runtimeSHA256": "868c53fe1b050cb14e2e45a0c44ac2886e00baef447b67196a6c411c66f9ec3c",
+  "wasmSHA256": "868c53fe1b050cb14e2e45a0c44ac2886e00baef447b67196a6c411c66f9ec3c",
+  "sourceRuntimeSHA256": "31bdb5fa1afcdf80a6895e2fe5c87a5a999a245af85de7326df20f0756e0d83c",
+  "abi": "render-abi.json",
+  "settings": {
+    "filesystem": "MEMFS",
+    "persistence": false,
+    "bootstrapFetch": false,
+    "note": "The demo filesystem factory leaves HOME in MEMFS. No HOME IDBFS mount, sync or scummvm.ini download."
+  },
+  "demoPolicy": {
+    "module": 1000,
+    "scenes": [
+      0,
+      1,
+      2
+    ],
+    "start": {
+      "module": 1000,
+      "scene": 0,
+      "which": 0
+    },
+    "load": false,
+    "save": false,
+    "menus": false,
+    "escape": "quit",
+    "completion": "Engine-side guards execute before creating any scene outside 0/1/2 or module outside 1000; room 2 exits both complete the demo."
+  },
+  "demoState": {
+    "address": "Module._neverhood_demo_state",
+    "read": "Module.getValue(Module._neverhood_demo_state, 'i32')",
+    "states": {
+      "startup": 0,
+      "running": 1,
+      "completed": 2,
+      "quit": 3
+    },
+    "note": "State 2 is set synchronously before quitGame; state remains readable after engine teardown. Startup is not completion."
+  },
+  "hdPackCompatibility": {
+    "sourceRuntimeSHA256": "31bdb5fa1afcdf80a6895e2fe5c87a5a999a245af85de7326df20f0756e0d83c",
+    "policy": "Packs built for this exact source runtime may be used with the demo ABI; class layout is unchanged. The pack runtime hash identifies the source runtime, not this variant."
+  },
+  "overlays": [
+    {
+      "unit": "engines/neverhood/gamemodule",
+      "sourceSHA256": "2f903d6ee85a96c188a17002df5f054434b67b1e0dda5df8b3f48eea5a5d6a01",
+      "overlaySHA256": "d9d8f014944cbfb00315e2f9f9a1f42753a4ab52b766d1aea402d85168149507"
+    },
+    {
+      "unit": "engines/neverhood/modules/module1000",
+      "sourceSHA256": "3096c0b8e81ca98091b1471079626e4753931bb91bb1a63fd81d9f475ead0f44",
+      "overlaySHA256": "330ab0443c1e2caaedf2d0dd59f70e030059842b84373d842acda18ad139aa51"
+    },
+    {
+      "unit": "engines/neverhood/saveload",
+      "sourceSHA256": "ca809823559a042e578526576b67219801901068ac8b4bf57d2d3dd2bd033101",
+      "overlaySHA256": "1c1ec327ab50ea3e3439c77f7ca6cd0b8b8bf7326e99c9d364135ab1d97f37b7"
+    },
+    {
+      "unit": "engines/engine",
+      "sourceSHA256": "1e7b1136c2752cd124cb955355a148fdaca1a2bb9f13ed2e8329d2b80fd8ce59",
+      "overlaySHA256": "e9420f2097c26475d002275432c2e049179e7c29aafd32be8b5abc9679af67e8"
+    },
+    {
+      "unit": "backends/fs/emscripten/emscripten-fs-factory",
+      "sourceSHA256": "9698fb98c3fddd97899aed8a18dae95e2616441eb1721175a95fc6819e5c3944",
+      "overlaySHA256": "bcd6094a2de41972d159aafc8079eaf2d8ce6d50c8254c8dd7b7e4d676fdb675"
+    }
+  ],
+  "baseLinkerOverrides": "# SPDX-License-Identifier: GPL-3.0-or-later\ninclude Makefile\n\n# Upstream's JS library path assumes an in-tree build.\nLDFLAGS := $(subst --js-library backends/,--js-library $(srcdir)/backends/,$(LDFLAGS))\n# The external launcher supplies arguments; Neverhood does not need Web MIDI.\nLDFLAGS := $(subst --pre-js $(srcdir)/dists/emscripten/custom_shell-pre.js,,$(LDFLAGS))\n# Keep upstream's exports and expose the filesystem to the external launcher.\nLDFLAGS += -s EXPORTED_RUNTIME_METHODS=[ccall,lengthBytesUTF8,setValue,writeArrayToMemory,FS,IDBFS,callMain,getValue]\n# Observe the existing engine pointer without changing upstream source.\nLDFLAGS += -s EXPORTED_FUNCTIONS=[_main,_malloc,_free,_raise,_g_engine,_SDL_GetWindowFromID,_SDL_GetWindowID,_SDL_GL_GetCurrentWindow,_SDL_GetKeyboardFocus,_SDL_SetWindowSize,_emscripten_pause_main_loop]\nLDFLAGS += -s EXIT_RUNTIME=1\n\n$(EXECUTABLE): .EXTRA_PREREQS := $(firstword $(MAKEFILE_LIST))\n"
+}

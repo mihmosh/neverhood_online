@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#bf874a">
+  <title>HD Demo | Neverhood Online</title>
+  <meta name="description" content="A two-room experiment in The Neverhood: Gemini backgrounds, Original and HD views, and an experimental cursor. No import needed.">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="./demo.css">
+  <script type="module" src="./demo.js"></script>
+</head>
+<body class="hd-demo">
+  <div class="demo-page" id="demo-page">
+    <a class="demo-skip" href="#demo-title">Skip to demo</a>
+    <header class="demo-masthead">
+      <a class="demo-brand" href="../">Neverhood Online<span>A little world, reimagined.</span></a>
+      <a class="demo-home" href="../">Bring your own game <span aria-hidden="true">&rarr;</span></a>
+    </header>
+    <main class="menu-board demo-board" aria-labelledby="demo-title">
+      <div class="demo-copy">
+        <p class="demo-kicker">Two rooms. A new coat of clay.</p>
+        <h1 id="demo-title" tabindex="-1">HD Demo<span class="demo-stamp">Work in progress</span></h1>
+        <p class="demo-intro">Step into a familiar, wonderfully strange little world. Try a new look. See what feels different.</p>
+        <div class="demo-actions" aria-busy="true" id="demo-actions">
+          <button class="demo-play" id="demo-play" type="button" disabled aria-describedby="demo-status"><span class="demo-play-icon" aria-hidden="true">&#9654;</span><span id="demo-play-label">Play demo</span></button>
+          <p id="demo-status" class="demo-status" role="status" aria-live="polite">Checking the demo...</p>
+          <button id="demo-recheck" class="text-button" type="button" hidden>Retry check</button>
+        </div>
+        <p class="demo-small">No import needed. Just click Play when the demo is available.</p>
+        <noscript><p class="message">JavaScript is needed to check and play the demo.</p></noscript>
+      </div>
+      <div class="demo-sculpture" aria-hidden="true">
+        <div class="demo-moon"></div>
+        <div class="demo-door demo-door-one"><i></i><b>01</b></div>
+        <div class="demo-door demo-door-two"><i></i><b>02</b></div>
+        <div class="demo-ground"></div>
+        <span class="demo-sculpture-note">a small look inside</span>
+      </div>
+      <section class="demo-notes" aria-label="About this experiment">
+        <div><span class="demo-note-number">01 / Explore</span><h2>Two rooms, no more.</h2><p>A small, self-contained visit. For the full game, <a href="../">bring your own copy</a>.</p></div>
+        <div><span class="demo-note-number">02 / Compare</span><h2>Original or HD?</h2><p>Switch between Original and HD in the player. HD backgrounds were made with Gemini.</p></div>
+        <div><span class="demo-note-number">03 / Experiment</span><h2>Still taking shape.</h2><p>The experimental HD cursor covers only some states. Performance and visual consistency may vary by device.</p></div>
+      </section>
+    </main>
+    <footer class="demo-footer"><span>An unofficial visual experiment. Original game and assets belong to their respective rights holders.</span><a href="https://github.com/mihmosh/neverhood_online" target="_blank" rel="noopener noreferrer">Source &amp; licenses <span aria-hidden="true">&nearr;</span></a></footer>
+  </div>
+  <section id="demo-session" class="demo-session" role="dialog" aria-modal="true" aria-label="HD demo player" hidden>
+    <div class="demo-toolbar">
+      <span class="demo-player-title">HD Demo</span>
+      <div class="demo-player-actions"><button id="demo-fullscreen" type="button" aria-pressed="false">Full screen</button><button id="demo-exit" type="button">Exit demo</button></div>
+    </div>
+    <div id="demo-player-host" class="demo-player-host"></div>
+    <div id="demo-loading" class="demo-loading">
+      <div class="loading-card">
+        <p class="eyebrow">A little patience...</p>
+        <h2 id="demo-loading-title">Opening two little rooms</h2>
+        <p id="demo-loading-status" role="status" aria-live="polite">Starting the demo...</p>
+        <progress id="demo-progress" max="100" aria-labelledby="demo-loading-status"></progress>
+        <button id="demo-cancel" type="button">Cancel loading</button>
+      </div>
+    </div>
+    <p class="demo-session-notice" id="demo-session-notice" role="status" hidden></p>
+  </section>
+</body>
+</html>

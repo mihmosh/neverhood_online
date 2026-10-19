@@ -3,9 +3,12 @@ import { createReadStream } from 'node:fs';
 import { copyFile, lstat, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { demoAddress } from '../web/lib/demo-data.js';
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const frontend = ['index.html', 'app.js', 'styles.css', 'player.html', 'player.js', 'data/index.json'];
+const frontend = ['index.html', 'app.js', 'styles.css', 'player.html', 'player.js', 'data/index.json',
+  'hd-demo/index.html', 'hd-demo/demo.css', 'hd-demo/demo.js', 'hd-demo/config.json'];
+const prototype = ['compositor.js', 'read-frame.js', 'room1.js', 'replacement-pack.js', 'render-abi.json', 'demo-cursor.js', 'room-archive.js', 'room-archive-cache.js'];
 const bundles = {
   runtime: ['runtime.json', 'scummvm.js', 'scummvm.wasm', 'neverhood.dat', 'COPYING', 'COPYRIGHT', 'AUTHORS'],
   extractor: ['extractor.json', 'innoextract.js', 'innoextract.wasm'],
@@ -34,7 +37,7 @@ async function readDescriptor(root, bundle) {
   }
 }
 
-async function verifySources(root, runtime, extractor) {
+async function verifySources(root, runtime, extractor, demo) {
   const directory = join(root, 'web/public/sources');
   const manifestPath = join(directory, 'manifest.json');
   await regularFile(manifestPath);
@@ -55,6 +58,7 @@ async function verifySources(root, runtime, extractor) {
     if (hash.digest('hex') !== entry.sha256) throw new Error(`Corresponding-source checksum mismatch: ${entry.name}`);
   }
   const binaries = new Set(['runtime/scummvm.js', 'runtime/scummvm.wasm', 'runtime/neverhood.dat', 'extractor/innoextract.js', 'extractor/innoextract.wasm']);
+  if (demo) for (const name of ['scummvm.js', 'scummvm.wasm', 'neverhood.dat']) binaries.add(`demo-runtime/${name}`);
   if (!Array.isArray(manifest.binaries) || manifest.binaries.length !== binaries.size) throw new Error('Missing exact source-to-binary bindings. Run npm run package:sources.');
   for (const entry of manifest.binaries) {
     if (!binaries.delete(entry.name) || !Number.isSafeInteger(entry.bytes) || entry.bytes <= 0 || !/^[a-f0-9]{64}$/.test(entry.sha256)) throw new Error('Invalid source-to-binary binding.');
@@ -66,10 +70,23 @@ async function verifySources(root, runtime, extractor) {
   return manifest;
 }
 
-export async function buildSite({ root = project } = {}) {
+export async function buildSite({ root = project, demoManifestURL = process.env.NEVERHOOD_DEMO_MANIFEST_URL } = {}) {
   const runtime = await readDescriptor(root, 'runtime');
   const extractor = await readDescriptor(root, 'extractor');
-  const sources = await verifySources(root, runtime, extractor);
+  let demo;
+  try { demo = JSON.parse(await readFile(join(root, 'web/public/demo-runtime/runtime.json'), 'utf8')); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (demo) {
+    const wasm = await readFile(join(root, 'web/public/demo-runtime/scummvm.wasm'));
+    const sourceWasm = await readFile(join(root, 'web/public/runtime/scummvm.wasm'));
+    const abi = JSON.parse(await readFile(join(root, 'web/public/demo-runtime/render-abi.json'), 'utf8'));
+    if (!demo.demo || demo.sourceRevision !== runtime.sourceRevision || demo.module !== 'scummvm.js' || demo.wasm !== 'scummvm.wasm' ||
+        demo.abi !== 'render-abi.json' || JSON.stringify(demo.engineData) !== '["neverhood.dat"]' || !WebAssembly.validate(wasm) ||
+        demo.sourceRuntimeSHA256 !== createHash('sha256').update(sourceWasm).digest('hex') ||
+        createHash('sha256').update(wasm).digest('hex') !== demo.wasmSHA256 || abi.wasmSHA256 !== demo.wasmSHA256) throw new Error('Invalid bounded demo runtime artifacts.');
+  }
+  const sources = await verifySources(root, runtime, extractor, demo);
+  if (demoManifestURL && (!demo || demoAddress(demoManifestURL, undefined).protocol !== 'https:')) throw new Error('Published demo requires HTTPS assets and a verified demo runtime.');
   if (!Array.isArray(extractor.licenses) || !extractor.licenses.length || extractor.licenses.some(name => !/^[A-Za-z0-9_.-]+\.txt$/.test(name))) throw new Error('Invalid extractor license list');
   const stage = join(root, `.site-build-${randomUUID()}`);
   const web = join(root, 'web');
@@ -82,6 +99,8 @@ export async function buildSite({ root = project } = {}) {
   try {
     await mkdir(stage);
     for (const file of frontend) await copy(join(web, file), file);
+    if (demoManifestURL) await writeFile(join(stage, 'hd-demo/config.json'), JSON.stringify({ version: 1, manifestURL: demoManifestURL }) + '\n');
+    for (const file of prototype) await copy(join(web, 'prototype', file), `prototype/${file}`);
     for (const entry of await readdir(join(web, 'lib'), { withFileTypes: true })) {
       if (entry.name.endsWith('.js')) await copy(join(web, 'lib', entry.name), `lib/${entry.name}`);
     }
@@ -89,6 +108,10 @@ export async function buildSite({ root = project } = {}) {
     for (const file of ['Mansalva-Regular.ttf', 'OFL.txt', 'provenance.json']) await copy(join(web, 'assets/fonts', file), `assets/fonts/${file}`);
     for (const [bundle, files] of Object.entries(bundles)) {
       for (const file of files) await copy(join(web, 'public', bundle, file), `${bundle}/${file}`);
+    }
+    if (demo) {
+      for (const file of [...bundles.runtime, 'render-abi.json']) await copy(join(web, 'public/demo-runtime', file), `demo-runtime/${file}`);
+      for (const name of RUNTIME_LICENSES) await copy(join(web, 'public/runtime/LICENSES', name), `demo-runtime/LICENSES/${name}`);
     }
     for (const name of RUNTIME_LICENSES) await copy(join(web, 'public/runtime/LICENSES', name), `runtime/LICENSES/${name}`);
     for (const file of extractor.licenses) await copy(join(web, 'public/extractor', file), `extractor/${file}`);

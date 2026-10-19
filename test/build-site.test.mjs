@@ -15,8 +15,9 @@ async function fixture(t) {
     await mkdir(join(root, name, '..'), { recursive: true });
     await writeFile(join(root, name), data);
   };
-  for (const name of ['app.js', 'styles.css', 'player.html', 'player.js', 'lib/app.js', 'data/index.json', 'vendor/fflate-0.8.2.js', 'vendor/fflate-LICENSE', 'vendor/fflate-provenance.json', 'assets/fonts/Mansalva-Regular.ttf', 'assets/fonts/OFL.txt', 'assets/fonts/provenance.json']) await file(`web/${name}`);
+  for (const name of ['app.js', 'styles.css', 'player.html', 'player.js', 'lib/app.js', 'data/index.json', 'hd-demo/index.html', 'hd-demo/demo.css', 'hd-demo/demo.js', 'hd-demo/config.json', 'vendor/fflate-0.8.2.js', 'vendor/fflate-LICENSE', 'vendor/fflate-provenance.json', 'assets/fonts/Mansalva-Regular.ttf', 'assets/fonts/OFL.txt', 'assets/fonts/provenance.json']) await file(`web/${name}`);
   await file('web/index.html', '<html><aside><a data-source-link href="https://github.com/mihmosh/neverhood_online">Source &amp; licenses</a></aside><footer>Local game client</footer></html>');
+  for (const name of ['compositor.js', 'read-frame.js', 'room1.js', 'replacement-pack.js', 'render-abi.json', 'demo-cursor.js', 'room-archive.js', 'room-archive-cache.js']) await file(`web/prototype/${name}`);
   await file('web/public/runtime/runtime.json', JSON.stringify({ available: true, api: 'emscripten-global-module', engine: 'neverhood', module: 'scummvm.js', wasm: 'scummvm.wasm', engineData: ['neverhood.dat'], sourceRevision: 'a'.repeat(40) }));
   for (const name of ['scummvm.js', 'neverhood.dat', 'COPYING', 'COPYRIGHT', 'AUTHORS', ...RUNTIME_LICENSES.map(name => `LICENSES/${name}`)]) await file(`web/public/runtime/${name}`);
   const wasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]);
@@ -49,6 +50,9 @@ test('static packaging flattens artifact URLs and excludes private and developme
   }
   await walk(out);
   assert.ok(names.includes('runtime/scummvm.wasm'));
+  assert.ok(names.includes('prototype/replacement-pack.js'));
+  assert.ok(names.includes('hd-demo/index.html'));
+  assert.ok(names.includes('prototype/demo-cursor.js'));
   assert.ok(names.includes('extractor/innoextract.wasm'));
   assert.ok(names.includes('runtime/LICENSES/SDL.txt'));
   assert.ok(names.includes('lib/app.js'));
@@ -104,6 +108,31 @@ test('changed compiled artifacts require regenerating their corresponding-source
   const { root, file } = await fixture(t);
   await file('web/public/runtime/scummvm.js', 'changed');
   await assert.rejects(buildSite({ root }), /Compiled artifact does not match/);
+});
+
+test('demo runtime is optional, but publishing it requires matching ABI and corresponding-source hashes', async t => {
+  const { root, file } = await fixture(t);
+  const wasm = Buffer.from('0061736d01000000', 'hex'), hash = createHash('sha256').update(wasm).digest('hex');
+  const descriptor = { available: true, api: 'emscripten-global-module', engine: 'neverhood', demo: true, sourceRevision: 'a'.repeat(40),
+    module: 'scummvm.js', wasm: 'scummvm.wasm', engineData: ['neverhood.dat'], abi: 'render-abi.json', wasmSHA256: hash, sourceRuntimeSHA256: hash };
+  for (const name of ['scummvm.js', 'neverhood.dat', 'COPYING', 'COPYRIGHT', 'AUTHORS']) await file(`web/public/demo-runtime/${name}`);
+  await file('web/public/demo-runtime/scummvm.wasm', wasm);
+  await file('web/public/demo-runtime/runtime.json', JSON.stringify(descriptor));
+  await file('web/public/demo-runtime/render-abi.json', JSON.stringify({ wasmSHA256: hash }));
+  await assert.rejects(buildSite({ root }), /bindings/);
+  const sourcePath = join(root, 'web/public/sources/manifest.json');
+  const sources = JSON.parse(await readFile(sourcePath));
+  for (const name of ['scummvm.js', 'scummvm.wasm', 'neverhood.dat']) {
+    const bytes = await readFile(join(root, 'web/public/demo-runtime', name));
+    sources.binaries.push({ name: `demo-runtime/${name}`, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') });
+  }
+  await file('web/public/sources/manifest.json', JSON.stringify(sources));
+  const out = await buildSite({ root, demoManifestURL: 'https://assets.example.test/v1/manifest.json' });
+  assert.ok((await readFile(join(out, 'demo-runtime/scummvm.wasm'))).equals(wasm));
+  assert.equal(JSON.parse(await readFile(join(root, 'dist/hd-demo/config.json'))).manifestURL, 'https://assets.example.test/v1/manifest.json');
+  await assert.rejects(buildSite({ root, demoManifestURL: 'http://assets.example.test/v1/manifest.json' }), /HTTPS/);
+  await file('web/public/demo-runtime/render-abi.json', JSON.stringify({ wasmSHA256: '0'.repeat(64) }));
+  await assert.rejects(buildSite({ root }), /Invalid bounded demo/);
 });
 
 test('packaged output serves as static files without exposing the Node server or catch-all HTML', async t => {

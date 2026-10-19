@@ -1,11 +1,14 @@
 import { REQUIRED_FILES } from './lib/validation.js';
 import { openArchive } from './lib/storage.js';
+import { demoAssetURL, fetchDemoBytes, fetchDemoManifest } from './lib/demo-data.js';
 
 const nonce = new URL(location.href).searchParams.get('session');
+const prototypeRequested = new URL(location.href).searchParams.get('renderer') === 'room1-proxy';
+const demoRequested = new URL(location.href).searchParams.get('demo') === '1';
 const canvas = document.getElementById('canvas');
 const menu = document.getElementById('game-menu');
 menu.addEventListener('click', () => {
-  if (menu.hidden || controller.signal.aborted) return;
+  if (demoRequested || menu.hidden || controller.signal.aborted) return;
   canvas.focus();
   // SDL listens to DOM keyboard events; keep the original engine menu behavior.
   for (const type of ['keydown', 'keyup']) {
@@ -20,8 +23,10 @@ let resizeObserver;
 let syncing = Promise.resolve();
 let engineFrame;
 let windowStamp = '';
+let renderPrototype;
 
 function windowSize() {
+  if (renderPrototype?.preferNativeResolution?.()) return [640, 480];
   const width = Math.max(4, Math.floor(Math.min(innerWidth, innerHeight * 4 / 3) / 4) * 4);
   return [width, width * 3 / 4];
 }
@@ -45,9 +50,14 @@ function send(type, data = {}) {
   parent.postMessage({ channel: 'neverhood-player', nonce, type, ...data }, location.origin);
 }
 
+function engineExitError(code = 0) {
+  if (code) return new Error(`The game stopped (code ${code}).`);
+  if (demoRequested && ![2, 3].includes(window.Module?.getValue(Module._neverhood_demo_state, 'i32'))) return new Error('The demo stopped before reaching its completion boundary.');
+}
+
 function artifact(name) {
   if (typeof name !== 'string' || !/^[a-zA-Z0-9_.-]+$/.test(name)) throw new Error('Invalid player file.');
-  return new URL(`./runtime/${name}`, import.meta.url).href;
+  return new URL(`./${demoRequested ? 'demo-runtime' : 'runtime'}/${name}`, import.meta.url).href;
 }
 
 function sync(populate) {
@@ -58,6 +68,7 @@ function sync(populate) {
 function finish(error) {
   if (finishing) return finishing;
   controller.abort();
+  renderPrototype?.dispose();
   resizeObserver?.disconnect();
   cancelAnimationFrame(engineFrame);
   canvas.hidden = true;
@@ -72,9 +83,11 @@ function finish(error) {
   return finishing;
 }
 
-async function start(descriptor) {
+async function start(descriptor, demo) {
   const { signal } = controller;
   const status = (text, progress) => { if (!signal.aborted) send('status', { text, progress }); };
+  if (demoRequested && (descriptor.demo !== true || !demo?.manifestURL)) throw new Error('A bounded demo engine and demo data are required.');
+  const demoManifest = demoRequested ? await fetchDemoManifest(demo.manifestURL, descriptor.sourceRuntimeSHA256, signal) : null;
   status('Loading the game player...');
   await new Promise((resolve, reject) => {
     window.Module = {
@@ -85,22 +98,59 @@ async function start(descriptor) {
       print: text => console.info('[ScummVM]', text),
       printErr: text => console.warn('[ScummVM]', text),
       onRuntimeInitialized: resolve,
-      onExit: code => { finish(code ? new Error(`The game stopped (code ${code}).`) : null); },
+      onExit: code => { finish(engineExitError(code)); },
       onAbort: reason => { const error = new Error(`The game player stopped: ${String(reason).slice(0, 300)}`); reject(error); finish(error); },
     };
+    if (prototypeRequested) {
+      // Capture the exact instantiated bytes, not a second fetch that could race a deploy.
+      Module.instantiateWasm = (imports, receive) => {
+        (async () => {
+          const response = await fetch(artifact(descriptor.wasm), { signal });
+          if (!response.ok) throw new Error('Experimental player WASM download failed.');
+          const bytes = await response.arrayBuffer();
+          Module.renderPrototypeWasmSHA256 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), value => value.toString(16).padStart(2, '0')).join('');
+          if (demoRequested && Module.renderPrototypeWasmSHA256 !== descriptor.wasmSHA256) throw new Error('Demo engine SHA256 verification failed.');
+          const result = await WebAssembly.instantiate(bytes, imports);
+          receive(result.instance, result.module);
+        })().catch(error => { reject(error); finish(error); });
+        return {};
+      };
+    }
     const script = document.createElement('script');
     script.src = artifact(descriptor.module);
     script.onerror = () => reject(new Error('The game player could not be downloaded.'));
     document.head.append(script);
   });
   signal.throwIfAborted();
+  if (prototypeRequested) {
+    try {
+      const { createRoomPrototype } = await import('./prototype/room1.js');
+      const demoOptions = demoManifest ? {
+        abiURL: artifact(descriptor.abi), sourceRuntimeSHA256: descriptor.sourceRuntimeSHA256,
+        packs: Object.fromEntries(Object.entries(demoManifest.packs).map(([room, entry]) => [room, demoManifest.version === 2
+          ? { ...entry, url: demoAssetURL(entry.file, demoManifest.manifestURL) } : demoAssetURL(entry, demoManifest.manifestURL)])),
+        onStatus: status,
+        cursor: { manifestURL: demoAssetURL(demoManifest.cursor, demoManifest.manifestURL),
+          imageURL: new URL('sprite-sheet-128.png', demoAssetURL(demoManifest.cursor, demoManifest.manifestURL)).href },
+      } : undefined;
+      renderPrototype = await createRoomPrototype({ module: Module, canvas, wasmSHA256: Module.renderPrototypeWasmSHA256, signal, demo: demoOptions });
+      if (demoRequested) await renderPrototype.ready;
+      if (signal.aborted) { renderPrototype.dispose(); signal.throwIfAborted(); }
+    } catch (error) {
+      if (error.name === 'AbortError' || demoRequested) throw error;
+      console.warn('Original renderer retained:', error);
+      window.roomRendererPrototype = { stats: () => ({ status: 'disabled', lastError: error.message }) };
+    }
+  }
   const fs = Module.FS;
   if (!fs || !Module.IDBFS || typeof Module.callMain !== 'function') throw new Error('The game player is incomplete.');
   fs.mkdirTree('/game');
   fs.mkdirTree('/saves');
-  fs.mount(Module.IDBFS, { autoPersist: true }, '/saves');
-  mounted = true;
-  await sync(true);
+  if (!demoRequested) {
+    fs.mount(Module.IDBFS, { autoPersist: true }, '/saves');
+    mounted = true;
+    await sync(true);
+  }
   signal.throwIfAborted();
   fs.mkdirTree('/engine-data');
   for (const name of descriptor.engineData) {
@@ -108,26 +158,38 @@ async function start(descriptor) {
     if (!response.ok) throw new Error('A game player file is missing.');
     fs.writeFile(`/engine-data/${name}`, new Uint8Array(await response.arrayBuffer()));
   }
-  const files = await Promise.all(REQUIRED_FILES.map(openArchive));
-  const total = files.reduce((sum, file) => sum + file.size, 0);
-  let copied = 0;
-  for (let i = 0; i < REQUIRED_FILES.length; i++) {
-    signal.throwIfAborted();
-    const reader = files[i].stream().getReader();
-    const destination = fs.open(`/game/${REQUIRED_FILES[i]}`, 'w');
-    try {
-      for (;;) {
-        signal.throwIfAborted();
-        const { done, value } = await reader.read();
-        if (done) break;
-        fs.write(destination, value, 0, value.byteLength);
-        copied += value.byteLength;
-        status(`Opening your world: ${Math.floor(copied / total * 100)}%`, copied / total * 100);
+  if (demoManifest) {
+    let copied = 0;
+    for (const entry of demoManifest.files) {
+      const bytes = await fetchDemoBytes(demoAssetURL(entry.file, demoManifest.manifestURL), {
+        signal, limit: entry.bytes, expectedBytes: entry.bytes, sha256: entry.sha256,
+        onProgress: loaded => status(`Loading demo data: ${Math.floor((copied + loaded) / demoManifest.totalBytes * 100)}%`, (copied + loaded) / demoManifest.totalBytes * 100),
+      });
+      fs.writeFile(`/game/${entry.name}`, bytes);
+      copied += bytes.length;
+    }
+  } else {
+    const files = await Promise.all(REQUIRED_FILES.map(openArchive));
+    const total = files.reduce((sum, file) => sum + file.size, 0);
+    let copied = 0;
+    for (let i = 0; i < REQUIRED_FILES.length; i++) {
+      signal.throwIfAborted();
+      const reader = files[i].stream().getReader();
+      const destination = fs.open(`/game/${REQUIRED_FILES[i]}`, 'w');
+      try {
+        for (;;) {
+          signal.throwIfAborted();
+          const { done, value } = await reader.read();
+          if (done) break;
+          fs.write(destination, value, 0, value.byteLength);
+          copied += value.byteLength;
+          status(`Opening your world: ${Math.floor(copied / total * 100)}%`, copied / total * 100);
+        }
+      } finally {
+        await reader.cancel().catch(() => {});
+        reader.releaseLock();
+        fs.close(destination);
       }
-    } finally {
-      await reader.cancel().catch(() => {});
-      reader.releaseLock();
-      fs.close(destination);
     }
   }
   signal.throwIfAborted();
@@ -140,18 +202,27 @@ async function start(descriptor) {
   if (typeof Module._g_engine === 'number' && typeof Module.getValue === 'function') {
     observingEngine = true;
     let sawEngine = false;
+    let announced = false;
     const observeEngine = () => {
       if (signal.aborted) return;
       const active = Module.getValue(Module._g_engine, '*') !== 0;
       if (active) resizeWindow();
       if (active && !sawEngine) {
         sawEngine = true;
-        menu.hidden = false;
-        send('playing');
+        menu.hidden = demoRequested;
+        if (!demoRequested) { announced = true; send('playing'); }
       } else if (sawEngine && !active) {
         // The game's destructor has run. Dispose the whole session, not its launcher.
-        finish();
+        finish(engineExitError());
         return;
+      }
+      if (active && demoRequested) {
+        const state = window.roomRendererPrototype?.stats();
+        if (state?.pack?.cacheError) { finish(new Error(state.pack.cacheError)); return; }
+        if (!announced) {
+          if (Object.keys(state?.pack?.errors ?? {}).length || state?.errors) { finish(new Error('The HD demo assets could not be drawn. Please retry.')); return; }
+          if (state?.hdDraws > 0 && state.pack?.missKeys.length === 0) { announced = true; send('playing'); }
+        }
       }
       engineFrame = requestAnimationFrame(observeEngine);
     };
@@ -159,9 +230,9 @@ async function start(descriptor) {
   }
   try {
     Module.callMain(['--path=/game', '--extrapath=/engine-data', '--savepath=/saves', '--config=/tmp/neverhood.ini', '--no-fullscreen', '--filtering', '--stretch-mode=fit_force_aspect', `--window-size=${width},${height}`, 'neverhood']);
-    if (!observingEngine && !finishing && !signal.aborted) { menu.hidden = false; send('playing'); }
+    if (!observingEngine && !finishing && !signal.aborted) { menu.hidden = demoRequested; send('playing'); }
   } catch (error) {
-    if (error === 'unwind') { if (!observingEngine) { menu.hidden = false; send('playing'); } }
+    if (error === 'unwind') { if (!observingEngine) { menu.hidden = demoRequested; send('playing'); } }
     else throw error;
   }
   // Let SDL resize its own drawable and GL viewport; never resize the GL canvas directly.
@@ -178,7 +249,7 @@ window.addEventListener('message', event => {
   if (data.type === 'stop') finish();
   else if (data.type === 'start' && !started && !controller.signal.aborted) {
     started = true;
-    start(data.descriptor).catch(error => { if (error.name !== 'AbortError') finish(error); });
+    start(data.descriptor, data.demo).catch(error => { if (error.name !== 'AbortError') finish(error); });
   }
 });
 

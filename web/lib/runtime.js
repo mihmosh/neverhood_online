@@ -1,3 +1,5 @@
+import { fetchDemoManifest } from './demo-data.js';
+
 const base = new URL('../runtime/', import.meta.url);
 
 function artifactURL(name) {
@@ -5,7 +7,7 @@ function artifactURL(name) {
   return new URL(name, base).href;
 }
 
-function startRuntime(descriptor, { container, onStatus = () => {}, signal }) {
+function startRuntime(descriptor, { container, onStatus = () => {}, signal }, localHD = false, demo) {
   signal?.throwIfAborted();
   return new Promise((resolve, reject) => {
     const nonce = crypto.randomUUID();
@@ -14,10 +16,17 @@ function startRuntime(descriptor, { container, onStatus = () => {}, signal }) {
     frame.title = 'Neverhood game';
     frame.allow = 'autoplay; fullscreen';
     frame.src = new URL(`../player.html?session=${nonce}`, import.meta.url).href;
+    if (demo || localHD || new URL(location.href).searchParams.get('renderer') === 'room1-proxy') {
+      const url = new URL(frame.src);
+      url.searchParams.set('renderer', 'room1-proxy');
+      if (demo) url.searchParams.set('demo', '1');
+      if (new URL(location.href).searchParams.get('renderer-debug') === '1') url.searchParams.set('renderer-debug', '1');
+      frame.src = url.href;
+    }
     let settled = false;
     let initialized = false;
     let stopTimer;
-    const send = type => frame.contentWindow?.postMessage({ channel: 'neverhood-player', nonce, type, ...(type === 'start' ? { descriptor } : {}) }, location.origin);
+    const send = type => frame.contentWindow?.postMessage({ channel: 'neverhood-player', nonce, type, ...(type === 'start' ? { descriptor, ...(demo ? { demo } : {}) } : {}) }, location.origin);
     const finish = error => {
       if (settled) return;
       settled = true;
@@ -30,10 +39,10 @@ function startRuntime(descriptor, { container, onStatus = () => {}, signal }) {
     };
     const stop = () => {
       if (settled || stopTimer) return;
-      onStatus('Saving and returning to the site...', undefined, 'stopping');
+      onStatus(demo ? 'Leaving the demo...' : 'Saving and returning to the site...', undefined, 'stopping');
       send('stop');
       // A wedged WASM instance must not keep the library lock or audio alive.
-      stopTimer = setTimeout(() => finish(new Error('The player had to stop before saving finished. Your latest progress may not have been saved.')), 8000);
+      stopTimer = setTimeout(() => finish(new Error(demo ? 'The demo player had to be stopped.' : 'The player had to stop before saving finished. Your latest progress may not have been saved.')), 8000);
     };
     const receive = event => {
       if (event.origin !== location.origin || event.source !== frame.contentWindow) return;
@@ -61,6 +70,25 @@ function startRuntime(descriptor, { container, onStatus = () => {}, signal }) {
   });
 }
 
+export async function discoverDemoRuntime({ manifestURL } = {}) {
+  try {
+    if (!manifestURL) throw new Error('The HD demo has not been published yet.');
+    const demoBase = new URL('../demo-runtime/', import.meta.url);
+    const response = await fetch(new URL('runtime.json', demoBase), { cache: 'no-cache' });
+    if (!response.ok) throw new Error('The demo engine build is not installed.');
+    const descriptor = await response.json();
+    if (!descriptor.available || descriptor.demo !== true || descriptor.api !== 'emscripten-global-module' || descriptor.engine !== 'neverhood' ||
+        descriptor.module !== 'scummvm.js' || descriptor.wasm !== 'scummvm.wasm' || descriptor.abi !== 'render-abi.json' ||
+        JSON.stringify(descriptor.engineData) !== '["neverhood.dat"]' ||
+        !/^[a-f0-9]{64}$/.test(descriptor.wasmSHA256) || !/^[a-f0-9]{64}$/.test(descriptor.sourceRuntimeSHA256)) throw new Error('The demo engine descriptor is incompatible.');
+    const manifest = await fetchDemoManifest(manifestURL, descriptor.sourceRuntimeSHA256);
+    return { available: true, downloadBytes: manifest.totalAssetBytes,
+      start: options => startRuntime(descriptor, options, false, { manifestURL: manifest.manifestURL }) };
+  } catch (error) {
+    return { available: false, reason: error.message || 'The HD demo is unavailable.' };
+  }
+}
+
 export async function discoverRuntime() {
   try {
     const response = await fetch(new URL('runtime.json', base), { cache: 'no-store' });
@@ -72,7 +100,14 @@ export async function discoverRuntime() {
     if (!Array.isArray(descriptor.engineData) || !descriptor.engineData.includes('neverhood.dat')) throw new Error('The engine data descriptor is missing.');
     const artifacts = await Promise.all([descriptor.module, descriptor.wasm, ...descriptor.engineData].map(name => fetch(artifactURL(name), { method: 'HEAD', cache: 'no-store' })));
     if (artifacts.some(artifact => !artifact.ok)) throw new Error('Artifacts are missing.');
-    return { available: true, start: options => startRuntime(descriptor, options) };
+    let localHD = false;
+    if (['127.0.0.1', 'localhost', '[::1]'].includes(location.hostname)) {
+      try {
+        const pack = await fetch('/__private-room-pack/room-pack.json', { method: 'HEAD', cache: 'no-store', credentials: 'omit' });
+        localHD = pack.ok;
+      } catch { /* Local HD is optional; original playback remains available. */ }
+    }
+    return { available: true, start: options => startRuntime(descriptor, options, localHD) };
   } catch {
     return { available: false, reason: 'The engine is unavailable or its adapter is not ready.' };
   }

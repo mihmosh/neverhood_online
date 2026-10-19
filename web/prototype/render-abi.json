@@ -1,0 +1,936 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Version-pinned read-only first-room debug adapter, not a production API",
+  "sourceRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
+  "emsdk": "4.0.10",
+  "compilerVersion": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 4.0.10 (b7dc6e5747465580df5984e723b9d1f10d8e804b)\nCopyright (C) 2025 the Emscripten authors (see AUTHORS.txt)\nThis is free and open source software under the MIT license.\nThere is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+  "buildConfigSHA256": "551bc6b120d726723da52742eb64d9d1f29ae2f18b237b9e3af759ccddf68227",
+  "target": "wasm32-unknown-emscripten",
+  "pointerSize": 4,
+  "littleEndian": true,
+  "wasmBytes": 8082356,
+  "wasmSHA256": "31bdb5fa1afcdf80a6895e2fe5c87a5a999a245af85de7326df20f0756e0d83c",
+  "heapU8ExportPresent": false,
+  "heapU8ExportEvidence": null,
+  "generatedJsMemoryViewEvidence": "function updateMemoryViews(){var b=wasmMemory.buffer;HEAP8=new Int8Array(b);HEAP16=new Int16Array(b);HEAPU8=new Uint8Array(b);HEAPU16=new Uint16Array(b);HEAP32=new Int32Array(b);HEAPU32=new Uint32Array(b);HEAPF32=new Float32Array(b);HEAPF64=new Float64Array(b);HEAP64=new BigInt64Array(b);HEAPU64=new BigUint64Array(b)}",
+  "generatedJsHeapDeclarationEvidence": "var HEAP8,HEAPU8,HEAP16,HEAPU16,HEAP32,HEAPU32,HEAPF32,HEAPF64;",
+  "heapAccess": {
+    "expression": "globalThis.HEAPU8",
+    "refresh": "Re-read for every synchronous snapshot because memory growth replaces typed-array views",
+    "scope": "Existing classic Emscripten script in the game iframe, not the parent page"
+  },
+  "enginePointer": {
+    "export": "Module._g_engine",
+    "indirections": 1,
+    "baseType": "Engine",
+    "derivedType": "Neverhood::NeverhoodEngine",
+    "baseOffset": 0
+  },
+  "firstRoom": {
+    "room": 1001,
+    "module": 1000,
+    "scene": 0,
+    "normalSceneType": 0,
+    "checks": [
+      "Engine and Screen pointers are nonzero and all reads are heap-bounds checked",
+      "GameModule._moduleNum == 1000",
+      "GameModule._prevChildObject == 0 (menu swaps child without changing module number)",
+      "GameModule._restoreGameRequested == false and _restartGameRequested == false and _mainMenuRequested == false",
+      "GameModule inherited Module._childObject is nonzero; interpret that child as Module1000 only after preceding checks",
+      "Module1000._sceneNum == 0 and inherited Module._sceneType == 0",
+      "Module1000 inherited Module._childObject is nonzero and _done == false",
+      "Screen._smackerDecoder == 0 and _fullRefresh == false and _yOffset == 0",
+      "Screen._renderQueue size == 0; completed _prevRenderQueue has a nonzero bounded size <= capacity",
+      "Reconstructed native indexed pixels exactly match Screen._backScreen before presenting an external frame"
+    ],
+    "evidence": [
+      {
+        "path": "engines/neverhood/modules/module1000.cpp",
+        "lines": [
+          50,
+          57
+        ],
+        "meaning": "Module1000 scene zero constructs Scene1001"
+      },
+      {
+        "path": "engines/neverhood/gamemodule.cpp",
+        "lines": [
+          455,
+          457
+        ],
+        "meaning": "createModule records active module number"
+      },
+      {
+        "path": "engines/neverhood/gamemodule.cpp",
+        "lines": [
+          827,
+          844
+        ],
+        "meaning": "Menus save original child in _prevChildObject; module number alone cannot exclude menus"
+      },
+      {
+        "path": "engines/neverhood/module.h",
+        "lines": [
+          39,
+          42
+        ],
+        "meaning": "Normal scene enum is zero; Smacker is one"
+      }
+    ]
+  },
+  "frameQueue": {
+    "completed": "_prevRenderQueue",
+    "pending": "_renderQueue",
+    "pointerLifetime": "Borrowed surfaces and palette belong to engine; never retain pointers or heap views across asynchronous work or memory growth. Snapshot synchronously at a stable completed frame boundary.",
+    "validity": "Only normal queued drawing swaps queues. Full-refresh/video paths return before swap. After transitions a nonzero previous queue is not proof that its borrowed surface pointers are live. Require all gate checks and exact native indexed-pixel comparison; otherwise fall back.",
+    "palette": {
+      "entries": 256,
+      "stride": 4,
+      "rgbOffsets": [
+        0,
+        1,
+        2
+      ]
+    },
+    "evidence": [
+      {
+        "path": "engines/neverhood/screen.cpp",
+        "lines": [
+          52,
+          60
+        ],
+        "meaning": "Full-refresh bypasses queue processing and swap"
+      },
+      {
+        "path": "engines/neverhood/screen.cpp",
+        "lines": [
+          92,
+          104
+        ],
+        "meaning": "Completed drawing queue becomes previous queue; pending queue is cleared"
+      },
+      {
+        "path": "engines/neverhood/screen.cpp",
+        "lines": [
+          163,
+          171
+        ],
+        "meaning": "Palette is 256 four-byte entries; RGB are first three bytes"
+      },
+      {
+        "path": "engines/neverhood/neverhood.cpp",
+        "lines": [
+          228,
+          241
+        ],
+        "meaning": "Engine updates/draws/screens before yielding in delayMillis"
+      },
+      {
+        "path": "engines/neverhood/neverhood.h",
+        "lines": [
+          69,
+          99
+        ],
+        "meaning": "NeverhoodEngine derives from Engine; layout confirms base at offset zero"
+      }
+    ]
+  },
+  "cursor": {
+    "source": "Module1000 child Scene._mouseCursor -> Sprite._surface SharedPtr._pointer -> BaseSurface._surface",
+    "position": "NeverhoodEngine._mouseX/_mouseY in logical coordinates",
+    "hotspot": "negative Sprite._drawOffset.x/y; index zero is transparent; backend clips at screen bounds",
+    "parity": "Separate backend cursor pass, excluded from native backbuffer and scene comparison",
+    "palette": "Engine constructor pushes empty cursor palette (disabled); Neverhood never enables a separate cursor palette. Use Screen._paletteData RGB.",
+    "evidence": [
+      {
+        "path": "engines/neverhood/mouse.cpp",
+        "lines": [
+          91,
+          101,
+          182,
+          187
+        ],
+        "meaning": "Visibility follows BaseSurface; original animated 32x32 surface and negative draw-offset hotspot are passed to CursorMan"
+      },
+      {
+        "path": "engines/engine.cpp",
+        "lines": [
+          188,
+          191
+        ],
+        "meaning": "Engine dummy cursor palette disables distinct cursor palette"
+      },
+      {
+        "path": "backends/graphics/opengl/opengl-graphics.cpp",
+        "lines": [
+          1915,
+          1918
+        ],
+        "meaning": "Current OpenGL backend uses game palette when distinct cursor palette is disabled"
+      }
+    ]
+  },
+  "records": {
+    "Neverhood::NeverhoodEngine": {
+      "size": 8360,
+      "alignment": 4,
+      "fields": {
+        "_gameDescription": {
+          "offset": 108,
+          "type": "const ADGameDescription *"
+        },
+        "_rnd": {
+          "offset": 112,
+          "type": "Common::RandomSource *"
+        },
+        "_mouseX": {
+          "offset": 116,
+          "type": "int16"
+        },
+        "_mouseY": {
+          "offset": 118,
+          "type": "int16"
+        },
+        "_buttonState": {
+          "offset": 120,
+          "type": "uint16"
+        },
+        "_gameState": {
+          "offset": 124,
+          "type": "struct Neverhood::GameState"
+        },
+        "_gameVars": {
+          "offset": 132,
+          "type": "GameVars *"
+        },
+        "_screen": {
+          "offset": 136,
+          "type": "Screen *"
+        },
+        "_res": {
+          "offset": 140,
+          "type": "ResourceMan *"
+        },
+        "_gameModule": {
+          "offset": 144,
+          "type": "GameModule *"
+        },
+        "_staticData": {
+          "offset": 148,
+          "type": "StaticData *"
+        },
+        "_soundMan": {
+          "offset": 152,
+          "type": "SoundMan *"
+        },
+        "_audioResourceMan": {
+          "offset": 156,
+          "type": "AudioResourceMan *"
+        },
+        "_isSaveAllowed": {
+          "offset": 160,
+          "type": "_Bool"
+        },
+        "_updateSound": {
+          "offset": 161,
+          "type": "_Bool"
+        },
+        "_enableMusic": {
+          "offset": 162,
+          "type": "_Bool"
+        },
+        "_nhcOffsetFont": {
+          "offset": 163,
+          "type": "_Bool"
+        },
+        "_subFont": {
+          "offset": 164,
+          "type": "SubtitleGlyph[256]"
+        },
+        "_haveSubtitles": {
+          "offset": 8356,
+          "type": "_Bool"
+        }
+      },
+      "bases": {
+        "Engine": 0
+      }
+    },
+    "Neverhood::Scene": {
+      "size": 336,
+      "alignment": 4,
+      "fields": {
+        "_parentModule": {
+          "offset": 96,
+          "type": "Module *"
+        },
+        "_entities": {
+          "offset": 100,
+          "type": "class Common::Array<class Neverhood::Entity *>"
+        },
+        "_surfaces": {
+          "offset": 112,
+          "type": "class Common::Array<class Common::SharedPtr<class Neverhood::BaseSurface> >"
+        },
+        "_klaymen": {
+          "offset": 124,
+          "type": "Klaymen *"
+        },
+        "_background": {
+          "offset": 128,
+          "type": "Background *"
+        },
+        "_palette": {
+          "offset": 132,
+          "type": "Palette *"
+        },
+        "_smackerPlayer": {
+          "offset": 136,
+          "type": "SmackerPlayer *"
+        },
+        "_messageList": {
+          "offset": 140,
+          "type": "MessageList *"
+        },
+        "_messageList2": {
+          "offset": 144,
+          "type": "MessageList *"
+        },
+        "_messageListStatus": {
+          "offset": 148,
+          "type": "int"
+        },
+        "_messageListCount": {
+          "offset": 152,
+          "type": "uint"
+        },
+        "_messageListIndex": {
+          "offset": 156,
+          "type": "uint"
+        },
+        "_doConvertMessages": {
+          "offset": 160,
+          "type": "_Bool"
+        },
+        "_canAcceptInput": {
+          "offset": 161,
+          "type": "_Bool"
+        },
+        "_isKlaymenBusy": {
+          "offset": 162,
+          "type": "_Bool"
+        },
+        "_isMessageListBusy": {
+          "offset": 163,
+          "type": "_Bool"
+        },
+        "_mouseCursor": {
+          "offset": 164,
+          "type": "Mouse *"
+        },
+        "_mouseClickPos": {
+          "offset": 168,
+          "type": "struct Neverhood::NPoint"
+        },
+        "_mouseClicked": {
+          "offset": 172,
+          "type": "_Bool"
+        },
+        "_mouseCursorWasVisible": {
+          "offset": 173,
+          "type": "_Bool"
+        },
+        "_rectType": {
+          "offset": 176,
+          "type": "int"
+        },
+        "_rectList": {
+          "offset": 180,
+          "type": "RectList *"
+        },
+        "_dataResource": {
+          "offset": 184,
+          "type": "class Neverhood::DataResource"
+        },
+        "_hitRectList": {
+          "offset": 296,
+          "type": "class Common::Array<struct Neverhood::HitRect>"
+        },
+        "_hitRects": {
+          "offset": 308,
+          "type": "HitRectList *"
+        },
+        "_collisionSprites": {
+          "offset": 312,
+          "type": "class Common::Array<class Neverhood::Sprite *>"
+        },
+        "_backgroundFileHash": {
+          "offset": 324,
+          "type": "uint32"
+        },
+        "_cursorFileHash": {
+          "offset": 328,
+          "type": "uint32"
+        },
+        "_messageValue": {
+          "offset": 332,
+          "type": "int"
+        }
+      },
+      "bases": {
+        "Neverhood::Entity": 0
+      }
+    },
+    "Neverhood::Mouse": {
+      "size": 412,
+      "alignment": 4,
+      "fields": {
+        "_mouseType": {
+          "offset": 340,
+          "type": "MouseType"
+        },
+        "_mouseCursorResource": {
+          "offset": 344,
+          "type": "class Neverhood::MouseCursorResource"
+        },
+        "_frameNum": {
+          "offset": 392,
+          "type": "int"
+        },
+        "_mouseRect": {
+          "offset": 396,
+          "type": "struct Neverhood::NRect"
+        },
+        "_x1": {
+          "offset": 404,
+          "type": "int16"
+        },
+        "_x2": {
+          "offset": 406,
+          "type": "int16"
+        },
+        "_type": {
+          "offset": 408,
+          "type": "int"
+        }
+      },
+      "bases": {
+        "Neverhood::StaticSprite": 0
+      }
+    },
+    "Neverhood::StaticSprite": {
+      "size": 340,
+      "alignment": 4,
+      "fields": {
+        "_spriteResource": {
+          "offset": 308,
+          "type": "class Neverhood::SpriteResource"
+        }
+      },
+      "bases": {
+        "Neverhood::Sprite": 0
+      }
+    },
+    "Neverhood::Sprite": {
+      "size": 308,
+      "alignment": 4,
+      "fields": {
+        "_spriteUpdateCb": {
+          "offset": 96,
+          "type": "void (Sprite::*)(void)"
+        },
+        "_spriteUpdateCbName": {
+          "offset": 104,
+          "type": "class Common::String"
+        },
+        "_filterXCb": {
+          "offset": 136,
+          "type": "int16 (Sprite::*)(int16)"
+        },
+        "_filterYCb": {
+          "offset": 144,
+          "type": "int16 (Sprite::*)(int16)"
+        },
+        "_surface": {
+          "offset": 152,
+          "type": "class Common::SharedPtr<class Neverhood::BaseSurface>"
+        },
+        "_x": {
+          "offset": 160,
+          "type": "int16"
+        },
+        "_y": {
+          "offset": 162,
+          "type": "int16"
+        },
+        "_doDeltaX": {
+          "offset": 164,
+          "type": "_Bool"
+        },
+        "_doDeltaY": {
+          "offset": 165,
+          "type": "_Bool"
+        },
+        "_needRefresh": {
+          "offset": 166,
+          "type": "_Bool"
+        },
+        "_drawOffset": {
+          "offset": 168,
+          "type": "struct Neverhood::NDrawRect"
+        },
+        "_collisionBounds": {
+          "offset": 176,
+          "type": "struct Neverhood::NRect"
+        },
+        "_collisionBoundsOffset": {
+          "offset": 184,
+          "type": "struct Neverhood::NDrawRect"
+        },
+        "_flags": {
+          "offset": 192,
+          "type": "uint16"
+        },
+        "_dataResource": {
+          "offset": 196,
+          "type": "class Neverhood::DataResource"
+        }
+      },
+      "bases": {
+        "Neverhood::Entity": 0
+      }
+    },
+    "Common::SharedPtr<Neverhood::BaseSurface>": {
+      "size": 8,
+      "alignment": 4,
+      "fields": {
+        "_pointer": {
+          "offset": 0,
+          "type": "class Neverhood::BaseSurface *"
+        },
+        "_tracker": {
+          "offset": 4,
+          "type": "BasePtrTrackerInternal *"
+        }
+      },
+      "bases": {}
+    },
+    "Neverhood::BaseSurface": {
+      "size": 88,
+      "alignment": 4,
+      "fields": {
+        "_vm": {
+          "offset": 4,
+          "type": "NeverhoodEngine *"
+        },
+        "_priority": {
+          "offset": 8,
+          "type": "int"
+        },
+        "_visible": {
+          "offset": 12,
+          "type": "_Bool"
+        },
+        "_name": {
+          "offset": 16,
+          "type": "class Common::String"
+        },
+        "_surface": {
+          "offset": 48,
+          "type": "Graphics::Surface *"
+        },
+        "_drawRect": {
+          "offset": 52,
+          "type": "struct Neverhood::NDrawRect"
+        },
+        "_sysRect": {
+          "offset": 60,
+          "type": "struct Neverhood::NDrawRect"
+        },
+        "_clipRect": {
+          "offset": 68,
+          "type": "struct Neverhood::NRect"
+        },
+        "_clipRects": {
+          "offset": 76,
+          "type": "NRect *"
+        },
+        "_clipRectsCount": {
+          "offset": 80,
+          "type": "uint"
+        },
+        "_transparent": {
+          "offset": 84,
+          "type": "_Bool"
+        },
+        "_version": {
+          "offset": 85,
+          "type": "byte"
+        }
+      },
+      "bases": {}
+    },
+    "Neverhood::NDrawRect": {
+      "size": 8,
+      "alignment": 2,
+      "fields": {
+        "x": {
+          "offset": 0,
+          "type": "int16"
+        },
+        "y": {
+          "offset": 2,
+          "type": "int16"
+        },
+        "width": {
+          "offset": 4,
+          "type": "int16"
+        },
+        "height": {
+          "offset": 6,
+          "type": "int16"
+        }
+      },
+      "bases": {}
+    },
+    "Neverhood::Screen": {
+      "size": 52,
+      "alignment": 4,
+      "fields": {
+        "_vm": {
+          "offset": 0,
+          "type": "NeverhoodEngine *"
+        },
+        "_microTiles": {
+          "offset": 4,
+          "type": "MicroTileArray *"
+        },
+        "_backScreen": {
+          "offset": 8,
+          "type": "Graphics::Surface *"
+        },
+        "_smackerDecoder": {
+          "offset": 12,
+          "type": "Video::SmackerDecoder *"
+        },
+        "_savedSmackerDecoder": {
+          "offset": 16,
+          "type": "Video::SmackerDecoder *"
+        },
+        "_ticks": {
+          "offset": 20,
+          "type": "int32"
+        },
+        "_frameDelay": {
+          "offset": 24,
+          "type": "int32"
+        },
+        "_savedFrameDelay": {
+          "offset": 28,
+          "type": "int32"
+        },
+        "_paletteData": {
+          "offset": 32,
+          "type": "byte *"
+        },
+        "_paletteChanged": {
+          "offset": 36,
+          "type": "_Bool"
+        },
+        "_yOffset": {
+          "offset": 38,
+          "type": "int16"
+        },
+        "_savedYOffset": {
+          "offset": 40,
+          "type": "int16"
+        },
+        "_fullRefresh": {
+          "offset": 42,
+          "type": "_Bool"
+        },
+        "_renderQueue": {
+          "offset": 44,
+          "type": "RenderQueue *"
+        },
+        "_prevRenderQueue": {
+          "offset": 48,
+          "type": "RenderQueue *"
+        }
+      },
+      "bases": {}
+    },
+    "Common::Array<Neverhood::RenderItem>": {
+      "size": 12,
+      "alignment": 4,
+      "fields": {
+        "_capacity": {
+          "offset": 0,
+          "type": "size_type"
+        },
+        "_size": {
+          "offset": 4,
+          "type": "size_type"
+        },
+        "_storage": {
+          "offset": 8,
+          "type": "struct Neverhood::RenderItem *"
+        }
+      },
+      "bases": {}
+    },
+    "Neverhood::RenderItem": {
+      "size": 24,
+      "alignment": 4,
+      "fields": {
+        "_surface": {
+          "offset": 0,
+          "type": "const Graphics::Surface *"
+        },
+        "_shadowSurface": {
+          "offset": 4,
+          "type": "const Graphics::Surface *"
+        },
+        "_destX": {
+          "offset": 8,
+          "type": "int16"
+        },
+        "_destY": {
+          "offset": 10,
+          "type": "int16"
+        },
+        "_srcX": {
+          "offset": 12,
+          "type": "int16"
+        },
+        "_srcY": {
+          "offset": 14,
+          "type": "int16"
+        },
+        "_width": {
+          "offset": 16,
+          "type": "int16"
+        },
+        "_height": {
+          "offset": 18,
+          "type": "int16"
+        },
+        "_transparent": {
+          "offset": 20,
+          "type": "_Bool"
+        },
+        "_version": {
+          "offset": 21,
+          "type": "byte"
+        },
+        "_refresh": {
+          "offset": 22,
+          "type": "_Bool"
+        },
+        "_alphaColor": {
+          "offset": 23,
+          "type": "byte"
+        }
+      },
+      "bases": {}
+    },
+    "Graphics::Surface": {
+      "size": 24,
+      "alignment": 4,
+      "fields": {
+        "w": {
+          "offset": 0,
+          "type": "int16"
+        },
+        "h": {
+          "offset": 2,
+          "type": "int16"
+        },
+        "pitch": {
+          "offset": 4,
+          "type": "int32"
+        },
+        "pixels": {
+          "offset": 8,
+          "type": "void *"
+        },
+        "format": {
+          "offset": 12,
+          "type": "struct Graphics::PixelFormat"
+        }
+      },
+      "bases": {}
+    },
+    "Graphics::PixelFormat": {
+      "size": 9,
+      "alignment": 1,
+      "fields": {
+        "bytesPerPixel": {
+          "offset": 0,
+          "type": "byte"
+        },
+        "rLoss": {
+          "offset": 1,
+          "type": "byte"
+        },
+        "gLoss": {
+          "offset": 2,
+          "type": "byte"
+        },
+        "bLoss": {
+          "offset": 3,
+          "type": "byte"
+        },
+        "aLoss": {
+          "offset": 4,
+          "type": "byte"
+        },
+        "rShift": {
+          "offset": 5,
+          "type": "byte"
+        },
+        "gShift": {
+          "offset": 6,
+          "type": "byte"
+        },
+        "bShift": {
+          "offset": 7,
+          "type": "byte"
+        },
+        "aShift": {
+          "offset": 8,
+          "type": "byte"
+        }
+      },
+      "bases": {}
+    },
+    "Neverhood::GameModule": {
+      "size": 168,
+      "alignment": 4,
+      "fields": {
+        "_moduleNum": {
+          "offset": 120,
+          "type": "int"
+        },
+        "_prevChildObject": {
+          "offset": 124,
+          "type": "Entity *"
+        },
+        "_prevModuleNum": {
+          "offset": 128,
+          "type": "int"
+        },
+        "_restoreGameRequested": {
+          "offset": 132,
+          "type": "_Bool"
+        },
+        "_restartGameRequested": {
+          "offset": 133,
+          "type": "_Bool"
+        },
+        "_canRequestMainMenu": {
+          "offset": 134,
+          "type": "_Bool"
+        },
+        "_mainMenuRequested": {
+          "offset": 135,
+          "type": "_Bool"
+        },
+        "_currentCheat": {
+          "offset": 136,
+          "type": "class Common::String"
+        }
+      },
+      "bases": {
+        "Neverhood::Module": 0
+      }
+    },
+    "Neverhood::Module": {
+      "size": 120,
+      "alignment": 4,
+      "fields": {
+        "_childObject": {
+          "offset": 96,
+          "type": "Entity *"
+        },
+        "_parentModule": {
+          "offset": 100,
+          "type": "Module *"
+        },
+        "_done": {
+          "offset": 104,
+          "type": "_Bool"
+        },
+        "_moduleResult": {
+          "offset": 108,
+          "type": "uint32"
+        },
+        "_sceneType": {
+          "offset": 112,
+          "type": "SceneType"
+        },
+        "_navigationAreaType": {
+          "offset": 116,
+          "type": "int"
+        }
+      },
+      "bases": {
+        "Neverhood::Entity": 0
+      }
+    },
+    "Neverhood::Module1000": {
+      "size": 128,
+      "alignment": 4,
+      "fields": {
+        "_sceneNum": {
+          "offset": 120,
+          "type": "int"
+        },
+        "_musicFileHash": {
+          "offset": 124,
+          "type": "uint32"
+        }
+      },
+      "bases": {
+        "Neverhood::Module": 0
+      }
+    },
+    "Neverhood::GameState": {
+      "size": 8,
+      "alignment": 4,
+      "fields": {
+        "sceneNum": {
+          "offset": 0,
+          "type": "int"
+        },
+        "which": {
+          "offset": 4,
+          "type": "int"
+        }
+      },
+      "bases": {}
+    }
+  },
+  "commands": [
+    {
+      "cwd": "/home/mosha/neverhood/scripts/.build/neverhood-web",
+      "command": "\"/home/mosha/neverhood/scummvm/dists/emscripten/emsdk-4.0.10/upstream/emscripten/em++\" -Wall -Wshadow -W -Wno-unused-parameter -Wno-empty-body -fno-operator-names -std=c++11 -pedantic -Wglobal-constructors -Wframe-larger-than=307200 -Wno-undefined-var-template -Wno-pragma-pack -Wno-address-of-packed-member -Werror=newline-eof -O2 -Werror=return-type -Wno-long-long -Wno-multichar -Wno-unknown-pragmas -Wno-reorder -Wpointer-arith -Wcast-qual -Wnon-virtual-dtor -Wwrite-strings -fno-exceptions -Wno-conversion -Wno-shorten-64-to-32 -Wno-four-char-constants -Wno-nested-anon-types -DHAVE_CONFIG_H -DEMSCRIPTEN -DSDL_BACKEND -DUSE_SDL3 -DPOSIX -DDATA_PATH=\\\"/data\\\" -DPLUGIN_DIRECTORY=\\\"/data/plugins\\\" -DENABLE_NEVERHOOD=STATIC_PLUGIN -I. -I/home/mosha/neverhood/scummvm -I/home/mosha/neverhood/scummvm/engines -sUSE_SDL=3  -Xclang -fdump-record-layouts -fsyntax-only \"/home/mosha/neverhood/scummvm/engines/neverhood/screen.cpp\""
+    },
+    {
+      "cwd": "/home/mosha/neverhood/scripts/.build/neverhood-web",
+      "command": "\"/home/mosha/neverhood/scummvm/dists/emscripten/emsdk-4.0.10/upstream/emscripten/em++\" -Wall -Wshadow -W -Wno-unused-parameter -Wno-empty-body -fno-operator-names -std=c++11 -pedantic -Wglobal-constructors -Wframe-larger-than=307200 -Wno-undefined-var-template -Wno-pragma-pack -Wno-address-of-packed-member -Werror=newline-eof -O2 -Werror=return-type -Wno-long-long -Wno-multichar -Wno-unknown-pragmas -Wno-reorder -Wpointer-arith -Wcast-qual -Wnon-virtual-dtor -Wwrite-strings -fno-exceptions -Wno-conversion -Wno-shorten-64-to-32 -Wno-four-char-constants -Wno-nested-anon-types -DHAVE_CONFIG_H -DEMSCRIPTEN -DSDL_BACKEND -DUSE_SDL3 -DPOSIX -DDATA_PATH=\\\"/data\\\" -DPLUGIN_DIRECTORY=\\\"/data/plugins\\\" -DENABLE_NEVERHOOD=STATIC_PLUGIN -I. -I/home/mosha/neverhood/scummvm -I/home/mosha/neverhood/scummvm/engines -sUSE_SDL=3  -Xclang -fdump-record-layouts -fsyntax-only \"/home/mosha/neverhood/scummvm/engines/neverhood/gamemodule.cpp\""
+    },
+    {
+      "cwd": "/home/mosha/neverhood/scripts/.build/neverhood-web",
+      "command": "\"/home/mosha/neverhood/scummvm/dists/emscripten/emsdk-4.0.10/upstream/emscripten/em++\" -Wall -Wshadow -W -Wno-unused-parameter -Wno-empty-body -fno-operator-names -std=c++11 -pedantic -Wglobal-constructors -Wframe-larger-than=307200 -Wno-undefined-var-template -Wno-pragma-pack -Wno-address-of-packed-member -Werror=newline-eof -O2 -Werror=return-type -Wno-long-long -Wno-multichar -Wno-unknown-pragmas -Wno-reorder -Wpointer-arith -Wcast-qual -Wnon-virtual-dtor -Wwrite-strings -fno-exceptions -Wno-conversion -Wno-shorten-64-to-32 -Wno-four-char-constants -Wno-nested-anon-types -DHAVE_CONFIG_H -DEMSCRIPTEN -DSDL_BACKEND -DUSE_SDL3 -DPOSIX -DDATA_PATH=\\\"/data\\\" -DPLUGIN_DIRECTORY=\\\"/data/plugins\\\" -DENABLE_NEVERHOOD=STATIC_PLUGIN -I. -I/home/mosha/neverhood/scummvm -I/home/mosha/neverhood/scummvm/engines -sUSE_SDL=3  -Xclang -fdump-record-layouts -fsyntax-only \"/home/mosha/neverhood/scummvm/engines/neverhood/modules/module1000.cpp\""
+    },
+    {
+      "cwd": "/home/mosha/neverhood/scripts/.build/neverhood-web",
+      "command": "\"/home/mosha/neverhood/scummvm/dists/emscripten/emsdk-4.0.10/upstream/emscripten/em++\" -Wall -Wshadow -W -Wno-unused-parameter -Wno-empty-body -fno-operator-names -std=c++11 -pedantic -Wglobal-constructors -Wframe-larger-than=307200 -Wno-undefined-var-template -Wno-pragma-pack -Wno-address-of-packed-member -Werror=newline-eof -O2 -Werror=return-type -Wno-long-long -Wno-multichar -Wno-unknown-pragmas -Wno-reorder -Wpointer-arith -Wcast-qual -Wnon-virtual-dtor -Wwrite-strings -fno-exceptions -Wno-conversion -Wno-shorten-64-to-32 -Wno-four-char-constants -Wno-nested-anon-types -DHAVE_CONFIG_H -DEMSCRIPTEN -DSDL_BACKEND -DUSE_SDL3 -DPOSIX -DDATA_PATH=\\\"/data\\\" -DPLUGIN_DIRECTORY=\\\"/data/plugins\\\" -DENABLE_NEVERHOOD=STATIC_PLUGIN -I. -I/home/mosha/neverhood/scummvm -I/home/mosha/neverhood/scummvm/engines -sUSE_SDL=3  -Xclang -fdump-record-layouts -fsyntax-only \"/home/mosha/neverhood/scummvm/engines/neverhood/mouse.cpp\""
+    },
+    {
+      "cwd": "/home/mosha/neverhood/scripts/.build/neverhood-web",
+      "command": "\"/home/mosha/neverhood/scummvm/dists/emscripten/emsdk-4.0.10/upstream/emscripten/em++\" -Wall -Wshadow -W -Wno-unused-parameter -Wno-empty-body -fno-operator-names -std=c++11 -pedantic -Wglobal-constructors -Wframe-larger-than=307200 -Wno-undefined-var-template -Wno-pragma-pack -Wno-address-of-packed-member -Werror=newline-eof -O2 -Werror=return-type -Wno-long-long -Wno-multichar -Wno-unknown-pragmas -Wno-reorder -Wpointer-arith -Wcast-qual -Wnon-virtual-dtor -Wwrite-strings -fno-exceptions -Wno-conversion -Wno-shorten-64-to-32 -Wno-four-char-constants -Wno-nested-anon-types -DHAVE_CONFIG_H -DEMSCRIPTEN -DSDL_BACKEND -DUSE_SDL3 -DPOSIX -DDATA_PATH=\\\"/data\\\" -DPLUGIN_DIRECTORY=\\\"/data/plugins\\\" -DENABLE_NEVERHOOD=STATIC_PLUGIN -I. -I/home/mosha/neverhood/scummvm -I/home/mosha/neverhood/scummvm/engines -sUSE_SDL=3  -Xclang -fdump-record-layouts -fsyntax-only \"/home/mosha/neverhood/scummvm/engines/neverhood/scene.cpp\""
+    }
+  ]
+}

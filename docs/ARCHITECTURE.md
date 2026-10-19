@@ -143,7 +143,72 @@ disposes a wedged frame and warns if saving could not complete. The canvas uses
 the whole viewport without a top toolbar; fullscreen controls float in available
 letterbox margins, with a minimal corner fallback if there is no margin.
 
+## Private Asset Catalog
+
+Offline Node tools range-read the original archives without loading the entire
+game into memory. Every physical entry, archive checksum, timestamp, extension
+pointer and alias is retained. DCL payloads are decoded independently in the
+project's JavaScript tooling, outside the unchanged engine source.
+
+SQLite stores normalized provenance, decoded frames, palettes, logical aliases,
+raster variants, explicit scene associations and replacement jobs. Large payloads
+live in immutable SHA-256-addressed files, not database BLOB columns. A JSONL index
+is an interchange snapshot refreshed by extraction/association; SQLite remains
+authoritative for later job changes.
+
+Frame IDs include requested/resolved provenance, animation list and ordinal;
+nonunique animation message hashes are metadata only. Runtime variants reproduce
+aligned surfaces, zero padding and frame-rectangle flips. Scene associations
+record constructor capacities and active palettes when archive metadata alone
+is insufficient. For room 1001, the background and flipped lever CRCs match the
+live renderer, including its padded 72x73 lever surface.
+
+PNG previews with embedded palettes do not establish scene-correct transparency
+or colors. Job preparation explicitly chooses the scene palette and alpha mode,
+verifies indexed raster SHA/CRC, and emits a matching padded PNG. Replacement
+registration checks expected 4x dimensions, PNG framing/CRCs and alpha presence;
+only explicit owner-reviewed jobs enter the private runtime map. These checks
+do not certify perceptual fidelity or prove a model preserved every alpha pixel.
+
+Default outputs remain under ignored `private-assets/`, with a required private
+marker, symlink checks and source/public/build-path refusal. The public build does
+not copy this workspace; source packaging skips private/marker-bearing trees and
+database/media files. CI audits Git and public trees, but does not perform an
+artwork-similarity scan. All media processing is local and models are not run.
+
 ## Future HD Replacements
+
+The opt-in `?renderer=room1-proxy` experiment reads the completed render queue from
+the exact stock WASM identified by SHA-256. Clang layouts are generated from
+existing human-authored translation units with `-fsyntax-only`; no C++ probe,
+overlay or engine source changes are used. The runtime hash is captured from the
+actual instantiated bytes, avoiding a second-fetch deployment race.
+
+The adapter gates module 1000/scene 0, rejects menu swaps, pending restores,
+video/full-refresh modes, incomplete queues, unsupported surfaces and invalid
+heap ranges. It refreshes the existing global HEAPU8 after memory growth. It must
+not retain borrowed heap views across asynchronous work.
+
+The authentic mouse is not in the scene render queue: Neverhood sends it through
+CursorMan to a separate backend pass. The proxy reads its bounded original indexed
+surface, visibility, position and hotspot through additional compiler layouts,
+then draws a transparent input-pass-through cursor canvas above the scene/HD output.
+It follows the game palette, preserves clipping, hides over lab UI and on blur,
+and yields entirely to the original backend in fallback modes. Cursor failure
+restores the whole original frame; scene pixel comparisons exclude cursor pixels.
+
+An independent indexed compositor is checked against the 640x480 native back
+buffer. Only exact matches may replace the visual output. A separate Canvas2D
+compositor retains logical coordinates, original input, ordered layers and masks.
+Private 4x PNG replacements bypass the low-resolution output. Content/shape/palette
+fingerprints identify observed rasters, not semantic resource IDs. CRC collisions
+are checked against captured bytes; mismatches fail back to the original.
+
+Limits include 8 MiB of interned indexed rasters, bounded decoded canvases, 64 MiB
+of replacement textures and 2048 catalog entries. The 1x displayed-pixel oracle
+is an explicit diagnostic readback, not a per-frame GPU readback. Other engine
+rendering continues normally. This is a prototype of one room, not a supported
+generic rendering or memory API; a future engine-side bridge should replace it.
 
 Game logic remains at 640x480. An optional pack maps resources and animation
 frames to HD textures without changing timing, offsets, collisions or events.

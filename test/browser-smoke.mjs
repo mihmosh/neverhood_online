@@ -114,6 +114,7 @@ async function quit(frame) {
   await page.mouse.click(x, y, { delay: 60 });
   await page.locator('#game').waitFor({ state: 'hidden', timeout: 30000 });
   await page.waitForFunction(() => !document.getElementById('play').disabled);
+  await page.waitForFunction(() => document.activeElement === document.getElementById('play'));
   assert.equal(await page.locator('#playframe').count(), 0);
   assert.equal(await page.locator('#play').isEnabled(), true);
   assert.equal(await page.locator('#play').evaluate(button => document.activeElement === button), true);
@@ -154,6 +155,7 @@ async function checkPlayerControls(frame) {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.locator('#fullscreen').click();
   await page.waitForFunction(() => Boolean(document.fullscreenElement));
+  await page.waitForFunction(() => document.getElementById('fullscreen').getAttribute('aria-label') === 'Leave full screen');
   assert.equal(await page.locator('#fullscreen').getAttribute('aria-label'), 'Leave full screen');
   await page.locator('#fullscreen').click();
   await page.waitForFunction(() => !document.fullscreenElement);

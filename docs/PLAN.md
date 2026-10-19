@@ -25,7 +25,7 @@ neither an official release nor a remaster.
 
 ## Verified Scope
 
-The unit suite currently has 63 tests covering import transactions, ZIP framing,
+The unit suite currently has 97 tests covering import transactions, ZIP framing,
 legacy filename decoding, CRC and size checks, source discovery, static packaging,
 public-source integrity, server isolation and related error handling.
 
@@ -60,8 +60,112 @@ runtime output. These checks do not constitute an independent security or legal 
 2. Replace complete MEMFS resource copies with bounded seekable access from OPFS.
 3. Expand browser/device coverage and improve accessible input and touch handling.
 4. Design versioned offline caching and safe runtime updates without losing saves.
-5. Explore an optional one-room HD rendering prototype while keeping logic at
-   640x480. This requires a renderer extension, not just larger replacement PNGs.
+5. Use the opt-in first-room compositor to evaluate a supported engine-side
+   resource/frame bridge before extending HD replacements to other scenes.
+
+## Separate Restoration Tasks
+
+As of 2026-10-18, restoration has two independent work briefs:
+
+1. [HD backgrounds and sprites](ROOM_HD_RESTORATION.md): restore room layers and
+   sprite sequences for existing gameplay. This does not depend on 3D recovery.
+2. [World reconstruction and HD video](WORLD_3D_VIDEO.md): validate location geometry
+   and compare direct versus geometry-guided video restoration. Geometry and video
+   have separate success criteria; a complete playable remake is not the pilot.
+
+The [sprite upscaling research prompt](SPRITE_UPSCALING_RESEARCH_PROMPT.md) supports
+Task 1. The status sections below retain prior evidence; these work briefs do not
+authorize model execution, media uploads, cloud spending or publication.
+
+## First-Room Prototype Status
+
+The stock engine and binary remain unchanged. A compiler-derived, exact-WASM
+read-only adapter feeds a separate compositor for module 1000/scene 0. It retains
+the original renderer for validation and fallback, not as a final architecture.
+Initial real runs reconstructed more than 300 frames with zero indexed differences,
+zero sampled presented-RGBA differences, and seven observed lever rasters during
+actual interaction. A synthetic private PNG retained independent adjacent 4x pixels.
+
+No AI art was generated and no complete HD animation pack exists yet. Semantic
+asset IDs, video, palette effects across rooms, production performance and a
+stable human-maintained engine bridge remain separate work. Private layouts and
+raster fingerprints must not be mistaken for an upstream rendering API.
+
+## Private Asset Extraction
+
+The local English archive set (638122574 bytes) was fully inventoried and extracted:
+2750 physical records, 2666 payloads, 84 aliases, 2748 selected logical resources,
+8192 indexed frames and 551 Smacker video resources. No extraction/image-decode
+errors were reported. There are 7111 embedded-palette PNGs and 1081 frames whose
+scene palette is unresolved; explicit scene associations add further colored views.
+Original sound/music payloads are retained, but 322 are not identified by ffprobe
+and are not mislabeled as ordinary audio files.
+
+The approximately 1.1 GiB workspace, SQLite catalog and media remain private.
+Native background/lever raster and palette fingerprints were cross-checked.
+Two real first-room jobs are prepared, not AI-processed or approved. Candidate
+outputs require visual review before private mapping export.
+
+## Video To 3D Assessment
+
+The actual video inventory has 551 resources / 550 unique payloads and approximately
+3995 seconds (66.6 minutes) of footage. Probed source dimensions are 512 clips at
+320x240, 24 at 320x200 and 15 at 448x240, at roughly 12-15 fps. This is not a
+continuous calibrated scan and the total includes material not useful for world geometry.
+
+Physical clay sets make a coherent reconstruction plausible, but do not supply
+digital meshes. Fixed cameras give little background triangulation; pans without
+translation do not establish depth. Moving characters, highlights, cuts, separate
+sets and changed world states must not be merged as one static capture. Invisible
+surfaces and global scale/connectivity remain inference or manual design work.
+
+Recommended private pilot:
+1. Select one static set and a shot with real camera translation; include relevant
+   still backgrounds, and inspect making-of footage separately if it reveals angles.
+2. Decode original frames and choose distinct keyframes; mask moving characters.
+   Do not use generative upscale/interpolation as measured geometric evidence.
+3. Compare COLMAP with a license-reviewed learned camera/depth initializer.
+4. Evaluate held-out, genuinely different views and camera/reprojection consistency.
+5. Prefer a 2.5D/depth or limited-view splat when evidence is insufficient. A clean
+   editable mesh needs topology/UV cleanup and missing geometry in Blender.
+6. Keep characters/rigs and major environment-state transformations separate.
+
+A complete playable free-camera world is a remake, not an automatic conversion.
+No model weights were downloaded or trained and no footage was uploaded. Tool/checkpoint
+licenses and rights to derived game assets require separate review.
+
+Primary technical references: [COLMAP](https://colmap.github.io/tutorial.html),
+[VGGT](https://github.com/facebookresearch/vggt), [gsplat](https://github.com/nerfstudio-project/gsplat),
+[NeRF](https://www.matthewtancik.com/nerf). VGGT checkpoints have differing terms;
+the original INRIA 3DGS implementation and several research models restrict
+commercial use. Apache-2.0 gsplat code does not clear rights to game-derived assets.
+
+## Remote Evaluation Preparation
+
+Local assessment sources and offline evidence live under ignored
+`private-research/`, not in the website. The pinned HD fork, BasicVSR++, SeedVR,
+FlashVSR, Upscale-A-Video, COLMAP and gsplat code were downloaded. Restricted or
+gated reconstruction components retain metadata/licenses only; no license gate
+was accepted. No model checkpoint payloads were downloaded.
+
+The private root has component manifests, file-level SHA-256 inventory, an
+independently verified transfer archive, original-frame candidate metadata,
+three manually selected-case templates, model-specific environment drafts and
+a read-only future-host preflight. GPU inference, installation, cloud resources
+and game-media uploads are not performed by preparation tools.
+
+Intended GPU targets are an RTX3090 or a full AWS L4, each nominally 24 GiB.
+The current workstation remains a GTX1650/4 GiB. The AWS G6 plan records
+g6.4xlarge as a 16-vCPU/64-GiB host candidate, without provisioning, price or
+availability claims. Run preflight and a short representative benchmark before
+assuming VRAM fit or throughput. Separate environments are required across
+legacy MMCV, diffusion and reconstruction stacks.
+
+Checkpoint downloads should occur directly on the approved GPU host, using
+pinned official revisions/file hashes and only after exact license review.
+The complete original corpus stays in `private-assets/`; preparation references
+it but does not silently copy/upload it. Select reviewed clips with fixed camera,
+camera translation, and puzzle-critical details rather than three random files.
 
 Any graphics experiment must respect game rights and upstream contribution rules.
 No original or upscaled game asset pack is included or promised for distribution.

@@ -1,5 +1,14 @@
 # Third-Party Notices
 
+## Private Asset Extraction
+
+`tools/assets/dcl.mjs` is an altered JavaScript implementation based on the format
+and tables of Mark Adler's blast 1.3, copyright 2003, 2012, 2013 Mark Adler. Its
+zlib-style notice is retained verbatim in that source file; this is not the
+original implementation. See [upstream blast](https://github.com/madler/zlib/tree/master/contrib/blast).
+The tool extracts a user's private game data; its source/license inclusion does
+not grant distribution rights to extracted media or derived artwork.
+
 Neverhood Online integrates existing open-source software. This index identifies
 the bundled components and their retained notices; it does not replace their
 license texts, remove attribution or relicense their code. Copyright remains

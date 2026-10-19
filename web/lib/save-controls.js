@@ -38,6 +38,7 @@ export function createSaveControls({ onBusy, isBlocked }) {
   let plan = null;
   let importing = false;
   let saveCount = 0;
+  let refreshing;
 
   function status(text, error = false, dialog = false) {
     const target = $(dialog ? 'save-dialog-status' : 'save-status');
@@ -83,14 +84,23 @@ export function createSaveControls({ onBusy, isBlocked }) {
     return result;
   }
 
-  async function refresh() {
-    if (busy || isBlocked()) return;
-    setBusy(true);
-    try {
-      const result = await loadList();
-      status(result.files.length ? `${result.files.length} saved game${result.files.length === 1 ? '' : 's'} in this browser.` : 'No saved games in this browser yet.');
-    } catch (error) { status(error.message || 'Saved games could not be read. Please try again.', true); }
-    finally { setBusy(false); }
+  function refresh() {
+    if (refreshing) return refreshing;
+    if (busy || isBlocked()) return Promise.resolve();
+    // Exit/focus callers must await an existing read before restoring button focus.
+    refreshing = (async () => {
+      const focused = document.activeElement;
+      setBusy(true);
+      try {
+        const result = await loadList();
+        status(result.files.length ? `${result.files.length} saved game${result.files.length === 1 ? '' : 's'} in this browser.` : 'No saved games in this browser yet.');
+      } catch (error) { status(error.message || 'Saved games could not be read. Please try again.', true); }
+      finally {
+        setBusy(false);
+        if (focused !== document.body && focused?.isConnected && !focused.disabled && document.activeElement === document.body) focused.focus();
+      }
+    })().finally(() => { refreshing = undefined; });
+    return refreshing;
   }
 
   function cancelReview() {

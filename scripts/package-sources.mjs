@@ -22,7 +22,7 @@ const json = value => `${JSON.stringify(value, null, 2)}\n`;
 const archives = [];
 const files = [];
 const inventory = [];
-const excluded = /(^|\/)(\.git|node_modules|__pycache__|\.DS_Store)(\/|$)|\.(o|a|wasm|pyc|blb|exe|dll|sav|sve|\d{3})$/i;
+const excluded = /(^|\/)(\.git|node_modules|__pycache__|\.DS_Store|private-assets|asset-workspace|private-research)(\/|$)|\.(o|a|wasm|pyc|blb|exe|dll|sav|sve|sqlite|sqlite3|sqlite-wal|sqlite-shm|db|db-wal|db-shm|smk|safetensors|ckpt|pth|pt|onnx|\d{3})$/i;
 let previousManifest;
 let previousInventory;
 try {
@@ -34,6 +34,10 @@ try {
 
 async function walk(directory) {
   const result = [];
+  try { await fs.lstat(path.join(directory, '.private-assets-no-public')); return result; }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  try { await fs.lstat(path.join(directory, '.private-research-no-public')); return result; }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
   for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
     const name = path.join(directory, entry.name);
     if (excluded.test(name)) continue;
@@ -179,7 +183,7 @@ try {
       if (name.isFile() && !excluded.test(name.name)) projectFiles.push(path.join(root, directory, name.name));
     }
   }
-  for (const directory of ['tools/extractor-deps', 'web/lib', 'web/vendor', 'web/assets', 'web/data', 'web/test', 'test', 'docs', '.github']) projectFiles.push(...await walk(path.join(root, directory)));
+  for (const directory of ['tools/extractor-deps', 'tools/assets', 'tools/evaluation', 'web/lib', 'web/prototype', 'web/hd-demo', 'web/vendor', 'web/assets', 'web/data', 'web/test', 'test', 'docs', '.github']) projectFiles.push(...await walk(path.join(root, directory)));
   for (const name of ['package.json', 'vercel.json', 'server.mjs', 'README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'THIRD_PARTY_NOTICES.md', '.gitignore', '.gitattributes']) projectFiles.push(path.join(root, name));
   const projectEntries = projectFiles.map(name => [name, path.relative(root, name)]);
   for (const [source, destination] of [
@@ -188,6 +192,13 @@ try {
     ['scripts/.build/neverhood-web/config.h', 'build-records/runtime-config.h'],
     ['scripts/.build/neverhood-web/config.mk', 'build-records/runtime-config.mk'],
   ]) projectEntries.push([path.join(root, source), destination]);
+  let demoRuntime;
+  try { demoRuntime = JSON.parse(await fs.readFile(path.join(root, 'web/public/demo-runtime/runtime.json'))); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (demoRuntime) {
+    projectEntries.push([path.join(root, 'web/public/demo-runtime/runtime.json'), 'build-records/demo-runtime.json']);
+    projectEntries.push([path.join(root, 'web/public/demo-runtime/render-abi.json'), 'build-records/demo-render-abi.json']);
+  }
   await archive('project-build-sources', projectEntries);
 
   const runtimeScript = await fs.readFile(path.join(root, 'scripts/build-runtime.sh'), 'utf8');
@@ -219,7 +230,9 @@ printf '%s\\n' 'Built scripts/.build/neverhood-web/scummvm.{js,wasm} and scripts
   await publish('REBUILD.sh', Buffer.from(rebuild));
   await publish('inventory.json', Buffer.from(json({ version: 1, members: inventory })));
   const binaryRecords = [];
-  for (const name of ['runtime/scummvm.js', 'runtime/scummvm.wasm', 'runtime/neverhood.dat', 'extractor/innoextract.js', 'extractor/innoextract.wasm']) {
+  const binaryNames = ['runtime/scummvm.js', 'runtime/scummvm.wasm', 'runtime/neverhood.dat', 'extractor/innoextract.js', 'extractor/innoextract.wasm'];
+  if (demoRuntime) binaryNames.push('demo-runtime/scummvm.js', 'demo-runtime/scummvm.wasm', 'demo-runtime/neverhood.dat');
+  for (const name of binaryNames) {
     const data = await fs.readFile(path.join(root, 'web/public', name));
     binaryRecords.push({ name, bytes: data.length, sha256: hash(data) });
   }

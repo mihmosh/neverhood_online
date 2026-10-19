@@ -58,14 +58,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 1245564,
-      "sha256": "0163288d31242a0c8f4b472d9eb28e1d21a8e29d345bfbc5e91a54493b66a0e8",
+      "bytes": 1380932,
+      "sha256": "824b33fe41dc18ab737acb470c544c3858edf518498a39c82089c134913aac6b",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 1245564,
-      "archiveSha256": "0163288d31242a0c8f4b472d9eb28e1d21a8e29d345bfbc5e91a54493b66a0e8"
+      "archiveBytes": 1380932,
+      "archiveSha256": "824b33fe41dc18ab737acb470c544c3858edf518498a39c82089c134913aac6b"
     }
   ],
   "files": [
@@ -126,14 +126,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 1245564,
-      "sha256": "0163288d31242a0c8f4b472d9eb28e1d21a8e29d345bfbc5e91a54493b66a0e8",
+      "bytes": 1380932,
+      "sha256": "824b33fe41dc18ab737acb470c544c3858edf518498a39c82089c134913aac6b",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 1245564,
-      "archiveSha256": "0163288d31242a0c8f4b472d9eb28e1d21a8e29d345bfbc5e91a54493b66a0e8"
+      "archiveBytes": 1380932,
+      "archiveSha256": "824b33fe41dc18ab737acb470c544c3858edf518498a39c82089c134913aac6b"
     },
     {
       "name": "REBUILD.sh",
@@ -142,8 +142,8 @@
     },
     {
       "name": "inventory.json",
-      "bytes": 6499468,
-      "sha256": "c070fafb02af6e3aabbe41fa37c14c00af1ecbead7cb4598aff19c35c0eb3484"
+      "bytes": 6512743,
+      "sha256": "2904630d6c934d36335b1b37342c3d444a52163b3d266a8775064abef21e7184"
     },
     {
       "name": "README.txt",
@@ -151,7 +151,7 @@
       "sha256": "f06d01adde91a93098abccb8ebcc038c341051d3cea4773e5c2311fa6326bc72"
     }
   ],
-  "totalBytes": 38944098,
+  "totalBytes": 39092741,
   "chunkMaximumBytes": 16777216,
   "runtimeRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
   "extractorVersion": "1.9",
@@ -183,6 +183,21 @@
       "name": "extractor/innoextract.wasm",
       "bytes": 818370,
       "sha256": "c023c6e908fa35e1831af8202213f4835410f611ca0993d80b41f6a668068186"
+    },
+    {
+      "name": "demo-runtime/scummvm.js",
+      "bytes": 220898,
+      "sha256": "946ab67f7d8dcea0d69962fab781b3702c0cee7ff6dca92edc2e1b822d9d167b"
+    },
+    {
+      "name": "demo-runtime/scummvm.wasm",
+      "bytes": 7983824,
+      "sha256": "868c53fe1b050cb14e2e45a0c44ac2886e00baef447b67196a6c411c66f9ec3c"
+    },
+    {
+      "name": "demo-runtime/neverhood.dat",
+      "bytes": 23804,
+      "sha256": "b86cb788237ace2988f7a8b7b02fddd213f29e2cac4e19764e6e3b29342894c6"
     }
   ],
   "dependencyFilesChecked": 495

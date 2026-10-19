@@ -104,6 +104,70 @@ INSTALLER_BIN="/path/to/your/installer/setup-1.bin" \
 node test/browser-installer-smoke.mjs
 ```
 
+## First-Room Render Experiment
+
+```sh
+npm run prototype:abi
+PLAYWRIGHT_MODULE="$(npm root -g)/playwright" \
+GAME_DATA_DIR="/path/to/your/installed-game" \
+SCREENSHOT_PATH=/tmp/neverhood-room1.png \
+node test/browser-room1.mjs
+```
+
+Generating layouts requires the pinned existing WASM build, SDK and upstream
+checkout. It compiles only existing source translation units for layout data,
+without source edits, objects or dependency output. Normal builds use the committed
+metadata; the layout-dump comparison test skips when local compiler dumps are absent.
+
+The real-browser test compares all native indexed pixels, explicitly checks the
+presented 1x RGBA output, exercises Klaymen/lever input and raster changes, and
+loads a synthetic private 4x PNG. Two adjacent output pixels must retain distinct
+colors impossible through a 640x480 intermediate. It also checks runtime-hash
+rejection, original/proxy switching, menu fallback and normal Quit. Synthetic PNGs
+prove the pipeline, not AI image quality. No original game images are committed.
+
+## Private Assets And Mapping
+
+```sh
+npm run assets:extract -- --init-private --input "/path/to/your/DATA"
+npm run assets:extract -- --input "/path/to/your/DATA"
+npm run assets:map -- inspect
+npm run assets:audit
+```
+
+The second extraction validates and resumes content-addressed output. Tests use
+synthetic archives and a private temporary SQLite catalog, never committed game
+media. They cover DCL bounds, bitmap/RLE decoding, animation ordinals, PNG CRCs,
+alias failures, corruption repair, private path refusal, padded/flipped rasters,
+contextual capacities/palettes and approval-gated replacement registration.
+
+Real archive validation found no extraction or image-decode errors. Background
+pixel CRC 1bd38d80 / palette a1e6ba93 and lever CRC 78605358 on a padded 72x73
+flipped raster match live engine observations. Native cursor tests compare every
+cursor pixel at four positions (including edges), hotspot 3,7, three animation
+frames, mobile alignment, UI hiding, HD ordering and injected read-failure fallback.
+Cursor pixels remain separate from the scene's exact 1x comparison.
+
+SQLite needs Node 22.13+; its experimental warning is expected. ffprobe is optional
+for extraction but was available for the real video inventory. Native sound/music
+probe failures are metadata limitations, not discarded payloads. Source/public
+audits are filename/boundary checks, not perceptual recognition of copyrighted art.
+
+## Private Evaluation Kit
+
+`private-research/README.md` is the local entry point after source downloads. It is
+not committed or required by the app. `evaluation:inputs` records exact Smacker
+headers/timing and a manual selection template; `evaluation:bundle` inventories
+downloaded code/metadata and creates a local transfer archive. Neither uploads
+anything or runs models. Git internals, credentials and virtual environments are
+excluded. Source symlinks must remain within the portable workspace.
+
+`npm run evaluation:verify` checks every inventoried file. The kit also contains
+`verify-inventory.py`, usable after extraction with Python's standard library.
+The real bundle was extracted independently and all 16885 files verified.
+The future-host preflight and license/environment plans are private planning
+artifacts, not a claim of a tested CUDA environment or benchmark result.
+
 ## Save Transfer And Recovery
 
 The save regression uses six local native ScummVM files, `neverhood.000` through

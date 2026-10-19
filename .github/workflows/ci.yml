@@ -26,5 +26,7 @@ jobs:
           node-version: '22'
       - name: Run tests
         run: npm test
+      - name: Check private asset boundaries
+        run: npm run assets:audit
       - name: Build self-contained static site
         run: npm run build

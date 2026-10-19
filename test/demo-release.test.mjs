@@ -1,0 +1,54 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { prepareDemoRelease } from '../scripts/prepare-demo-release.mjs';
+import { validateRoomArchive } from '../web/prototype/room-archive.js';
+import { REQUIRED_FILES } from '../web/lib/validation.js';
+
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+const runtimeSHA256 = 'a'.repeat(64);
+function webp() {
+  const bytes = Buffer.alloc(30);
+  bytes.write('RIFF'); bytes.writeUInt32LE(22, 4); bytes.write('WEBPVP8X', 8); bytes.writeUInt32LE(10, 16);
+  bytes.writeUIntLE(2559, 24, 3); bytes.writeUIntLE(1919, 27, 3);
+  return bytes;
+}
+
+test('release emits deterministic single-room ZIPs, no loose HD images, and a pinned v2 delivery manifest', async t => {
+  const root = await mkdtemp('/tmp/kilo/demo-release-');
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const put = async (file, bytes) => { await mkdir(join(root, file, '..'), { recursive: true }); await writeFile(join(root, file), bytes); };
+  const gameFiles = REQUIRED_FILES.map(name => ({ name, file: name, bytes: 16, sha256: hash(Buffer.alloc(16)) }));
+  for (const file of gameFiles) await put(`source-game/${file.name}`, Buffer.alloc(16));
+  await put('source-game/manifest.json', JSON.stringify({ files: gameFiles, mode: 'synthetic' }));
+  await put('runtime.json', JSON.stringify({ demo: true, wasmSHA256: 'b'.repeat(64), sourceRuntimeSHA256: runtimeSHA256 }));
+  const image = webp();
+  for (const [prefix, room] of [['source-room1', 'Scene1001'], ['source-room2', 'Scene1002']]) {
+    const images = ['gemini', 'realesrnet'].map((name, index) => ({ id: String(index + 1).repeat(64), file: `images/${name}.webp`, format: 'webp', width: 2560, height: 1920, sha256: hash(image) }));
+    const pack = { version: 2, private: true, scale: 4, room, runtimeSHA256, sourceBinding: 'synthetic', images, entries: [],
+      backgrounds: images.map((entry, index) => ({ id: index ? 'realesrnet' : 'gemini', label: index ? 'RealESRNet' : 'Gemini',
+        key: '640x480-640-12345678-p12345678-0', image: entry.id, width: 2560, height: 1920, scale: 4,
+        crop: { x: 0, y: 0, width: 2560, height: 1920 }, flipX: false })) };
+    await put(`${prefix}/room-pack.json`, JSON.stringify(pack));
+    for (const entry of images) await put(`${prefix}/${entry.file}`, image);
+  }
+  await put('source-cursor/cursor.json', JSON.stringify({ imageSHA256: hash(image) }));
+  await put('source-cursor/sprite-sheet-128.png', image);
+  const options = { gameManifest: join(root, 'source-game/manifest.json'), room1: join(root, 'source-room1'),
+    room2: join(root, 'source-room2'), cursor: join(root, 'source-cursor'), runtime: join(root, 'runtime.json') };
+  const manifest = await prepareDemoRelease({ ...options, output: join(root, 'release1') });
+  const duplicate = await prepareDemoRelease({ ...options, output: join(root, 'release2') });
+  assert.equal(manifest.version, 2);
+  assert.deepEqual(manifest, duplicate);
+  assert.deepEqual((await readdir(join(root, 'release1'))).sort(), ['.private-assets-no-public', 'cursor', 'game', 'manifest.json', 'room1.zip', 'room2.zip']);
+  for (const [room, entry] of Object.entries(manifest.packs)) {
+    const bytes = await readFile(join(root, 'release1', entry.file));
+    assert.equal(bytes.length, entry.bytes); assert.equal(hash(bytes), entry.sha256);
+    assert.deepEqual(bytes, await readFile(join(root, 'release2', entry.file)));
+    const pack = await validateRoomArchive(bytes, { runtimeSHA256, room });
+    assert.equal(pack.backgrounds.size, 1); assert.ok(pack.backgrounds.has('gemini')); assert.equal(pack.files.size, 1);
+  }
+  await assert.rejects(prepareDemoRelease({ ...options, output: join(root, 'release1') }), /already exists/);
+});

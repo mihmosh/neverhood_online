@@ -137,8 +137,10 @@ Missing previews do not block the game. Mouse, touch and keyboard reveal the
 captures; their character poses differ. The page also records the Gemini,
 RealESRNet, Blender and separate Topaz video experiments and their limitations.
 The Topaz study has a click-to-load `youtube-nocookie.com` player: no YouTube
-requests are made before Play. A credentialless iframe preserves the isolated
-game page; unsupported browsers retain a direct YouTube link. Starting the game
+requests are made before Play. Only the HD demo landing page opts out of COEP
+so ordinary YouTube iframes work without credentialless-browser support. The
+demo runtime is single-threaded and does not require SharedArrayBuffer; the
+normal BYO page and player retain their isolation headers. Starting the game
 removes the video player to prevent overlapping audio.
 
 ## Experimental First-Room Renderer

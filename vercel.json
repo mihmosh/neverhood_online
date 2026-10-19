@@ -21,6 +21,10 @@
     {
       "source": "/extractor/innoextract.wasm",
       "headers": [{ "key": "Content-Type", "value": "application/wasm" }]
+    },
+    {
+      "source": "/hd-demo/:path*",
+      "headers": [{ "key": "Cross-Origin-Embedder-Policy", "value": "unsafe-none" }]
     }
   ]
 }

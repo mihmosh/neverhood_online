@@ -12,12 +12,6 @@ export function initVideo(root = document) {
   button.addEventListener('click', () => {
     if (host.childElementCount) return;
     const frame = root.createElement('iframe');
-    // Credentialless embeds preserve the isolated WASM page without requiring YouTube to opt into COEP.
-    if (!('credentialless' in frame)) {
-      status.textContent = 'This browser cannot embed YouTube on the isolated game page. Use the YouTube link below.';
-      return;
-    }
-    frame.credentialless = true;
     frame.title = 'The Neverhood: Topaz video upscale experiment';
     frame.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
     frame.allowFullscreen = true;

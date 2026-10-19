@@ -26,12 +26,12 @@ function fixture(supported = true) {
   return { root, play: elements.get('demo-video-play'), host: elements.get('demo-video-host'), status: elements.get('demo-video-status'), created: () => created };
 }
 
-test('video makes no iframe before click and uses a credentialless no-cookie embed with an embedder referrer', () => {
+test('video makes no iframe before click and uses a no-cookie embed with an embedder referrer', () => {
   const f = fixture(), reset = initVideo(f.root);
   assert.equal(f.created(), 0);
   f.play.dispatchEvent(new Event('click'));
   const [frame] = f.host.children;
-  assert.equal(frame.credentialless, true);
+  assert.equal(frame.credentialless, false);
   assert.equal(new URL(frame.src).origin, 'https://www.youtube-nocookie.com');
   assert.equal(new URL(frame.src).pathname, '/embed/-U8jjMIlVU4');
   assert.equal(new URL(frame.src).searchParams.get('autoplay'), '1');
@@ -43,11 +43,11 @@ test('video makes no iframe before click and uses a credentialless no-cookie emb
   assert.match(f.status.textContent, /only after/);
 });
 
-test('unsupported browsers retain the direct link without weakening page isolation', () => {
+test('browsers without credentialless iframe support also receive the embedded player', () => {
   const f = fixture(false); initVideo(f.root);
   f.play.dispatchEvent(new Event('click'));
-  assert.equal(f.host.children.length, 0); assert.equal(f.play.hidden, false);
-  assert.match(f.status.textContent, /YouTube link/);
+  assert.equal(f.host.children.length, 1); assert.equal(f.play.hidden, true);
+  assert.match(f.host.children[0].src, /youtube-nocookie/);
 });
 
 test('iframe load failures allow retry and stale iframe errors cannot remove a new player', () => {

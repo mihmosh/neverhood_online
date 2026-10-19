@@ -166,4 +166,6 @@ test('Vercel uses the static output directory and sets worker isolation headers'
   const headers = config.headers.find(rule => rule.source === '/(.*)').headers;
   assert.ok(headers.some(header => header.key === 'Cross-Origin-Opener-Policy' && header.value === 'same-origin'));
   assert.ok(headers.some(header => header.key === 'Cross-Origin-Embedder-Policy' && header.value === 'require-corp'));
+  const exceptions = config.headers.filter(rule => rule.headers.some(header => header.key === 'Cross-Origin-Embedder-Policy' && header.value === 'unsafe-none'));
+  assert.deepEqual(exceptions.map(rule => rule.source), ['/hd-demo/:path*']);
 });

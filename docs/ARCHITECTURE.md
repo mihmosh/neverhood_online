@@ -250,8 +250,13 @@ the client rejects a full-file 200 response to a Range request.
 
 Static dependency closure remains explicitly qualified for dynamic references and
 unresolved edges. These checks are not a complete playthrough or physical-device
-certification. An unexpected unready native read has a bounded terminal failure,
-never invented bytes. The previous full-download release remains available at
+certification. An unexpected native cache miss now waits in the same read until
+the independent byte worker supplies verified bytes; network failures retry rather
+than aborting the native session. A preinitialized compositor-promoted OffscreenCanvas
+is painted by that worker to show animated loading while the game thread waits.
+Normal DOM input is blocked during this synchronous wait; queued gameplay input
+from the loading interval is discarded. No false EOF or failed-stack retry is used.
+The previous full-download release remains available at
 `full-game-lossless-v1` as the reference path, not a silent fallback.
 
 ### Earlier Transport Experiments

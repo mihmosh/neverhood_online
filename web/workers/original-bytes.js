@@ -6,7 +6,27 @@ let writes = Promise.resolve();
 let protectedHashes = new Set(), cacheKeys = [], storedKeys = new Set();
 const queue = [], pending = new Map();
 const stats = { networkBytes: 0, networkRequests: 0, cacheHits: 0, corruptions: 0 };
+let loadingCanvas, loadingContext, loadingTimer;
+const waits = new Map();
 const digest = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), n => n.toString(16).padStart(2, '0')).join('');
+
+function drawLoading() {
+  if (!loadingContext) return;
+  const ctx = loadingContext, { width, height } = loadingCanvas;
+  ctx.clearRect(0, 0, width, height);
+  if (!waits.size) return;
+  const job = waits.values().next().value, x = width / 2, y = height / 2;
+  ctx.fillStyle = 'rgba(26, 19, 9, 0.91)'; ctx.fillRect(0, 0, width, height);
+  const angle = performance.now() / 350;
+  ctx.strokeStyle = '#d69340'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(x, y - 40, 22, angle, angle + Math.PI * 1.5); ctx.stroke();
+  ctx.fillStyle = '#f7ebd0'; ctx.textAlign = 'center'; ctx.font = '600 22px sans-serif';
+  ctx.fillText('Loading game data', x, y + 16);
+  ctx.font = '15px sans-serif';
+  ctx.fillText(job.error ? 'Data is not ready yet. Retrying without restarting the game...' : 'The game will continue when the required data is verified.', x, y + 48, Math.max(1, width - 32));
+  ctx.font = '13px monospace'; ctx.fillText(`${job.name} / block ${job.index + 1}`, x, y + 78);
+  if (job.sab) Atomics.add(new Int32Array(job.sab, 0, 8), 3, 1);
+}
 
 async function boundedBytes(response, length) {
   const declared = response.headers.get('Content-Length');
@@ -71,7 +91,10 @@ async function block(name, number) {
     }
     response = await fetch(new URL(file.url, address), { headers: { Range: `bytes=${start}-${end}` },
       credentials: 'omit', redirect: 'error', signal: AbortSignal.timeout(15000) });
-    if (response.status !== 206 || response.headers.get('Content-Range') !== `bytes ${start}-${end}/${file.bytes}`) throw new Error('Original server did not honor the exact byte range.');
+    if (response.status !== 206 || response.headers.get('Content-Range') !== `bytes ${start}-${end}/${file.bytes}`) {
+      await response.body?.cancel().catch(() => {});
+      throw new Error('Original server did not honor the exact byte range.');
+    }
     const bytes = await boundedBytes(response, length);
     stats.networkBytes += bytes.length; stats.networkRequests++;
     if (bytes.length !== length || await digest(bytes) !== key) throw new Error('Original block SHA256 mismatch.');
@@ -84,8 +107,21 @@ async function block(name, number) {
 
 async function run(job) {
   const header = job.sab && new Int32Array(job.sab, 0, 8);
+  if (header && job.wait) { waits.set(job.sab, job); drawLoading(); }
   try {
-    const bytes = await block(job.name, job.index);
+    let bytes, attempts = 0;
+    for (;;) {
+      try { bytes = await block(job.name, job.index); break; }
+      catch (error) {
+        if (!job.wait) throw error;
+        attempts++;
+        job.error = String(error.message || error); drawLoading();
+        postMessage({ event: 'waiting', id: job.id, name: job.name, index: job.index,
+          attempts, error: String(error.message || error), stats, cacheError });
+        if (header) Atomics.store(header, 2, attempts);
+        await new Promise(resolve => setTimeout(resolve, Math.min(5000, 250 * 2 ** Math.min(attempts, 4))));
+      }
+    }
     if (header) {
       new Uint8Array(job.sab, 32).set(bytes);
       header[1] = bytes.length;
@@ -100,7 +136,7 @@ async function run(job) {
       new Uint8Array(job.sab, 32).set(bytes); header[1] = bytes.length;
       Atomics.store(header, 0, -1);
     } else postMessage({ id: job.id, error: String(error.message || error), stats, cacheError });
-  } finally { active--; drain(); }
+  } finally { if (header) { waits.delete(job.sab); drawLoading(); } active--; drain(); }
 }
 
 function drain() {
@@ -108,7 +144,14 @@ function drain() {
 }
 
 self.onmessage = async ({ data }) => {
-  if (data.type === 'init') {
+  if (data.type === 'loading-canvas') {
+    loadingCanvas = data.canvas;
+    loadingContext = loadingCanvas.getContext('2d', { alpha: true, desynchronized: true });
+    if (loadingTimer) clearInterval(loadingTimer);
+    loadingTimer = setInterval(drawLoading, 100); drawLoading();
+  } else if (data.type === 'loading-size' && loadingCanvas) {
+    loadingCanvas.width = data.width; loadingCanvas.height = data.height; drawLoading();
+  } else if (data.type === 'init') {
     try {
       index = validateOriginalFiles(data.index, data.address);
       address = data.address;

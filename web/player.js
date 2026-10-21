@@ -206,7 +206,8 @@ async function start(descriptor, demo) {
     renderPrototype?.prefetchRooms?.(originalStreaming.neighborHDRooms()).catch(error => status(error.message, undefined, 'background'));
     const gate = event => {
       const state = originalStreaming.stats();
-      if (!state.preparing) return;
+      const duringWait = event.timeStamp >= state.waitStartedAt && event.timeStamp <= state.waitFinishedAt;
+      if (!state.preparing && !state.waiting && !duringWait) return;
       event.preventDefault(); event.stopImmediatePropagation();
       if (state.prefetchError) originalStreaming.retry().catch(error => status(`Room preparation failed: ${error.message}. Click to retry.`, undefined, 'background'));
       status('Preparing the nearby original room data. Input will resume when it is verified.', undefined, 'background');

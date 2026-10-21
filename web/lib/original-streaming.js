@@ -15,6 +15,19 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
   const nativeRoom = createNativeRoomReader(module, await abiResponse.json());
   signal?.throwIfAborted();
   const worker = new Worker(new URL('../workers/original-bytes.js', import.meta.url), { type: 'module' });
+  if (typeof OffscreenCanvas !== 'function' || typeof HTMLCanvasElement.prototype.transferControlToOffscreen !== 'function') {
+    worker.terminate(); throw new Error('This browser cannot display the game-data loading screen.');
+  }
+  const loadingCanvas = document.createElement('canvas');
+  loadingCanvas.id = 'original-streaming-loading'; loadingCanvas.setAttribute('aria-hidden', 'true');
+  loadingCanvas.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:2147483647;pointer-events:none;will-change:transform;transform:translateZ(0)';
+  loadingCanvas.width = Math.min(1280, innerWidth); loadingCanvas.height = Math.min(960, innerHeight);
+  document.body.append(loadingCanvas);
+  const offscreen = loadingCanvas.transferControlToOffscreen();
+  // The byte worker paints this already-composited layer while a native read waits.
+  worker.postMessage({ type: 'loading-canvas', canvas: offscreen }, [offscreen]);
+  const resizeLoading = () => worker.postMessage({ type: 'loading-size', width: Math.min(1280, innerWidth), height: Math.min(960, innerHeight) });
+  addEventListener('resize', resizeLoading);
   const pending = new Map(), memory = new Map(), reads = new Map();
   const stats = { mode: 'room-streaming', indexBytes: bytes.length, memoryBytes: 0, maxMemoryBytes: 0,
     memoryHits: 0, synchronousMisses: 0, maxReadMs: 0, maxWaitMs: 0, reads: 0, readyRooms: [], terminal: false };
@@ -32,6 +45,10 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
     if (disposed) return;
     Object.assign(stats, data.stats ?? {});
     if (data.cacheError) stats.cacheError = data.cacheError;
+    if (data.event === 'waiting') {
+      if (data.id > (stats.completedReadID ?? 0)) { stats.waitingError = data.error; stats.waitingAttempts = data.attempts; }
+      return;
+    }
     const entry = pending.get(data.id);
     if (!entry) return;
     clearTimeout(entry.timer);
@@ -41,6 +58,7 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
   const dispose = () => {
     if (disposed) return;
     disposed = true; generation++; worker.terminate(); memory.clear(); stats.memoryBytes = 0;
+    removeEventListener('resize', resizeLoading); loadingCanvas.remove();
     for (const entry of pending.values()) { clearTimeout(entry.timer); entry.reject(new Error('Original streaming session closed.')); }
     pending.clear(); signal?.removeEventListener('abort', dispose);
   };
@@ -84,22 +102,25 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
     }
     throw error;
   };
-  const readBlock = (name, number, deadline) => {
+  const readBlock = (name, number) => {
     if (disposed || stats.terminal) throw new Error('Original streaming session is terminal.');
     const hash = index.files[name].hashes[number], cached = memory.get(hash);
     if (cached) { stats.memoryHits++; memory.delete(hash); memory.set(hash, cached); return cached; }
     stats.synchronousMisses++;
     stats.lastMiss = { name, index: number, room: currentRoom };
     const started = performance.now(), sab = new SharedArrayBuffer(ORIGINAL_BLOCK_BYTES + 32), header = new Int32Array(sab, 0, 8);
-    worker.postMessage({ type: 'read', name, index: number, sab });
-    let spins = 0, state;
-    while ((state = Atomics.load(header, 0)) === 0) {
-      if ((++spins & 1023) === 0 && performance.now() >= deadline) return fail(new Error(`Original block was not ready (${name}:${number}). Retry the session; no partial read was returned.`));
-    }
+    const readID = ++serial;
+    stats.waiting = true; stats.waitStartedAt = started;
+    worker.postMessage({ type: 'read', id: readID, name, index: number, sab, wait: true });
+    let state;
+    while ((state = Atomics.load(header, 0)) === 0) { /* Preserve this native call until verified bytes arrive. */ }
     stats.maxWaitMs = Math.max(stats.maxWaitMs, performance.now() - started);
+    stats.waiting = false; stats.waitFinishedAt = performance.now(); stats.completedReadID = readID;
+    stats.loadingFrames = (stats.loadingFrames ?? 0) + Atomics.load(header, 3);
+    stats.waitingAttempts = Atomics.load(header, 2); stats.waitingError = undefined;
     if (state !== 1) return fail(new Error(new TextDecoder().decode(new Uint8Array(sab, 32, header[1]))));
     const bytes = new Uint8Array(sab, 32, header[1]).slice();
-    try { retain(hash, bytes); } catch (error) { return fail(error); }
+    try { retain(hash, bytes); } catch { stats.uncachedDemandBlocks = (stats.uncachedDemandBlocks ?? 0) + 1; }
     return bytes;
   };
   const setRoom = async id => {

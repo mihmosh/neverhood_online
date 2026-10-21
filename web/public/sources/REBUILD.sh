@@ -28,6 +28,21 @@ emmake make -f "$ROOT/scripts/runtime.mk" -j "$JOBS"
 
 
 cd "$ROOT"
+# Optional historical binary; the current full-game prototype uses the stock build above.
+if [[ "${REBUILD_LEGACY_DEMO:-0}" == 1 ]]; then
+  BUILD="$ROOT/scripts/.build/neverhood-demo-web"
+  mkdir -p "$BUILD"
+  cp -a "$ROOT/scripts/.build/neverhood-web/." "$BUILD/"
+  (
+    cd "$BUILD"
+    emconfigure "$SOURCE/configure" \
+      --host=wasm32-unknown-emscripten --build=wasm32-unknown-emscripten \
+      --disable-all-engines --enable-engine=neverhood \
+      --disable-detection-full --disable-debug --disable-cloud --disable-tts
+  )
+  node "$ROOT/scripts/demo-runtime-overlays.mjs"
+  make -C "$BUILD" -f "$ROOT/scripts/demo-runtime.mk" -j "$JOBS"
+fi
 BUILD="$ROOT/scripts/.build/extractor"
 mkdir -p "$BUILD/prefix"
 set +u

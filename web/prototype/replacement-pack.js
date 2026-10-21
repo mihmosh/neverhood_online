@@ -1,7 +1,7 @@
-import { demoAddress, fetchDemoBytes } from '../lib/demo-data.js';
+import { demoAddress, fetchDemoBytes, validPaletteProof as proofShape } from '../lib/demo-data.js';
 
 // Private candidates retain their local-only loader; demo delivery is explicit.
-export const PACK_LIMITS = Object.freeze({ files: 8192, entries: 8192, manifest: 4 * 1024 ** 2,
+export const PACK_LIMITS = Object.freeze({ files: 8192, entries: 8192, manifest: 16 * 1024 ** 2,
   fileBytes: 32 * 1024 ** 2, encodedBytes: 512 * 1024 ** 2, cacheBytes: 96 * 1024 ** 2, maxCacheBytes: 192 * 1024 ** 2,
   pixels: 16 * 1024 ** 2, dimension: 8192, concurrent: 2, encodedCacheBytes: 32 * 1024 ** 2 });
 
@@ -20,6 +20,20 @@ const decodeBitmap = (file, entry) => {
   const crop = resource(entry).crop;
   return crop ? createImageBitmap(file, crop.x, crop.y, crop.width, crop.height) : createImageBitmap(file);
 };
+
+export function paletteProofMatches(proof, palette) {
+  if (!proofShape(proof) || !(palette instanceof Uint8Array) || palette.length !== 1024) return false;
+  for (let offset = 0; offset < proof.indices.length; offset++) {
+    for (let channel = 0; channel < 3; channel++) {
+      if (palette[proof.indices[offset] * 4 + channel] !== parseInt(proof.rgb.slice(offset * 6 + channel * 2, offset * 6 + channel * 2 + 2), 16)) return false;
+    }
+  }
+  return true;
+}
+
+const paletteIndependentKey = key => typeof key === 'string' && keyPattern.test(key) ? key.replace(/-p[a-f0-9]{8}-/, '-') : undefined;
+const replacementIdentity = entry => JSON.stringify([entry.file, resource(entry).sha256, entry.width, entry.height,
+  entry.crop ? [entry.crop.x, entry.crop.y, entry.crop.width, entry.crop.height] : null, entry.flipX ?? false]);
 
 function dimensions(key) {
   const match = typeof key === 'string' && keyPattern.exec(key);
@@ -98,8 +112,12 @@ export async function loadReplacementPack(selection, { runtimeSHA256, signal, de
 }
 
 export function validateReplacementManifest(manifest, runtimeSHA256) {
-  if (!manifest || ![1, 2].includes(manifest.version) || manifest.private !== true || manifest.scale !== 4 || !['Scene1001', 'Scene1002'].includes(manifest.room)) fail('unsupported manifest schema');
+  if (!manifest || ![1, 2].includes(manifest.version) || manifest.private !== true || manifest.scale !== 4 ||
+      !(manifest.version === 2 && manifest.lossless === true ? validPackRoom(manifest.room) : ['Scene1001', 'Scene1002'].includes(manifest.room))) fail('unsupported manifest schema');
   const shared = manifest.version === 2;
+  const proofs = manifest.paletteProofs;
+  if (proofs !== undefined && (!shared || manifest.lossless !== true || !proofs || typeof proofs !== 'object' || Array.isArray(proofs) ||
+      Object.keys(proofs).length > PACK_LIMITS.entries || Object.entries(proofs).some(([id, proof]) => !hashPattern.test(id) || !proofShape(proof)))) fail('invalid paletteProofs');
   if (shared && (!Array.isArray(manifest.images) || !manifest.images.length || manifest.images.length > PACK_LIMITS.files - 1)) fail('unsupported image resource schema');
   if (!hashPattern.test(manifest.runtimeSHA256) || manifest.runtimeSHA256 !== runtimeSHA256) fail('runtime SHA256 mismatch');
   if (!(typeof manifest.sourceBinding === 'string' && manifest.sourceBinding.length ||
@@ -112,8 +130,9 @@ export function validateReplacementManifest(manifest, runtimeSHA256) {
   const descriptors = [];
   const images = new Map(), referenced = new Set();
   if (shared) for (const image of manifest.images) {
-    if (!image || !hashPattern.test(image.id) || images.has(image.id) || image.format !== 'webp' ||
-        !validPath(image.file) || !image.file.endsWith('.webp') || usedFiles.has(image.file) || !hashPattern.test(image.sha256) ||
+    const format = manifest.lossless === true ? 'png' : 'webp';
+    if (!image || !hashPattern.test(image.id) || images.has(image.id) || image.format !== format ||
+        !validPath(image.file) || !image.file.endsWith(`.${format}`) || usedFiles.has(image.file) || !hashPattern.test(image.sha256) ||
         ![image.width, image.height].every(value => Number.isSafeInteger(value) && value > 0 && value <= PACK_LIMITS.dimension) ||
         image.width * image.height > PACK_LIMITS.pixels || image.crop !== undefined) fail('invalid/duplicate image resource');
     const value = { id: image.id, file: image.file, format: image.format, sha256: image.sha256, width: image.width, height: image.height };
@@ -121,6 +140,9 @@ export function validateReplacementManifest(manifest, runtimeSHA256) {
   }
   const add = (entry, background) => {
     if (!entry || typeof entry !== 'object') fail('invalid entry');
+    if (entry.paletteProof !== undefined && (!shared || manifest.lossless !== true ||
+        typeof entry.paletteProof !== 'string' || !hashPattern.test(entry.paletteProof) ||
+        !proofs || !Object.hasOwn(proofs, entry.paletteProof))) fail('invalid or missing paletteProof reference');
     const expected = dimensions(entry.key);
     if (entry.scale !== 4 || entry.width !== expected.width || entry.height !== expected.height ||
         entry.width > PACK_LIMITS.dimension || entry.height > PACK_LIMITS.dimension ||
@@ -168,6 +190,8 @@ export function validateReplacementManifest(manifest, runtimeSHA256) {
   }
   return { entries, backgrounds, descriptors };
 }
+
+export const validPackRoom = room => typeof room === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,95}$/.test(room);
 
 async function fetchBytes(url, limit, signal, remote = false) {
   checkAbort(signal);
@@ -228,7 +252,7 @@ async function loadArchivePack(address, { runtimeSHA256, signal, onChange, cache
   checkAbort(signal);
   if (!archive || !Number.isSafeInteger(archive.bytes) || archive.bytes < 22 || archive.bytes > ROOM_ARCHIVE_LIMITS.bytes ||
       !hashPattern.test(archive.sha256)) fail('archive requires pinned bytes and SHA256');
-  if (!['Scene1001', 'Scene1002'].includes(room)) fail('archive requires an expected room');
+  if (!validPackRoom(room)) fail('archive requires an expected room');
   if (!Number.isSafeInteger(cacheBytes) || cacheBytes < 1 || cacheBytes > PACK_LIMITS.maxCacheBytes) fail('invalid cache budget');
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -251,16 +275,16 @@ async function loadArchivePack(address, { runtimeSHA256, signal, onChange, cache
         return result;
       } });
     files = validated.files;
-    const decode = data => {
+    const decode = (data, entry) => {
       checkAbort(controller.signal);
       if (validated.read) return validated.read(data).then(bytes => {
         checkAbort(controller.signal);
-        return createImageBitmap(new Blob([bytes], { type: 'image/webp' }));
+        return createImageBitmap(new Blob([bytes], { type: resource(entry).format === 'png' ? 'image/png' : 'image/webp' }));
       }).catch(error => {
         if (!controller.signal.aborted) { cacheError = error.message; onChange(); }
         throw error;
       });
-      return createImageBitmap(new Blob([data], { type: 'image/webp' }));
+      return createImageBitmap(new Blob([data], { type: resource(entry).format === 'png' ? 'image/png' : 'image/webp' }));
     };
     const pack = new ReplacementPack({ ...validated, decode, onChange, cacheBytes,
       encodedBytes: validated.persistent ? 0 : archive.bytes, signal });
@@ -338,6 +362,13 @@ export class ReplacementPack {
     this.hints = new Map(); this.prefetching = new Set();
     this.bytes = 0; this.active = 0; this.disposed = false; this.background = 'original';
     this.hits = []; this.misses = [];
+    this.paletteCandidates = new Map();
+    for (const entry of [...entries.values(), ...backgrounds.values()]) {
+      if (entry.paletteProof === undefined) continue;
+      const shape = paletteIndependentKey(entry.key);
+      if (!this.paletteCandidates.has(shape)) this.paletteCandidates.set(shape, new Set());
+      this.paletteCandidates.get(shape).add(entry.key);
+    }
     this.abort = () => this.dispose(); this.signal = signal;
     signal?.addEventListener('abort', this.abort, { once: true });
     if (signal?.aborted) this.dispose();
@@ -350,13 +381,33 @@ export class ReplacementPack {
     this.onChange();
   }
 
+  entryFor(key) {
+    const background = this.backgrounds.get(this.background);
+    return background?.key === key ? background : this.entries.get(key);
+  }
+
+  resolveKey(rawKey, palette) {
+    if (this.disposed) return undefined;
+    const exact = this.entryFor(rawKey);
+    if (exact && exact.paletteProof === undefined) return rawKey;
+    let canonical, identity;
+    for (const key of this.paletteCandidates.get(paletteIndependentKey(rawKey)) ?? []) {
+      const entry = this.entryFor(key);
+      if (!entry || entry.paletteProof === undefined || !paletteProofMatches(this.manifest.paletteProofs?.[entry.paletteProof], palette)) continue;
+      const candidate = replacementIdentity(entry);
+      // Even an exact palette CRC cannot disambiguate conflicting proved replacements.
+      if (canonical !== undefined && candidate !== identity) return undefined;
+      if (canonical === undefined) { canonical = key; identity = candidate; }
+    }
+    return canonical;
+  }
+
   observe(keys) {
     const result = new Map();
     this.wanted.clear(); this.queue.clear(); this.hits = []; this.misses = [];
     if (this.disposed) return result;
-    const background = this.backgrounds.get(this.background);
     for (const key of new Set(keys)) {
-      const entry = background?.key === key ? background : this.entries.get(key);
+      const entry = this.entryFor(key);
       if (!entry) { this.misses.push(key); continue; }
       this.wanted.set(entry.file, entry);
       const value = this.cache.get(entry.file);

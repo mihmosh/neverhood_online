@@ -80,6 +80,30 @@ test('normal HD reads skip reference allocation but retain all surface bounds ch
   assert.throws(() => reader.read({ reference: false }), /heap range/);
 });
 
+test('all-room reading uses Module base fields without reading another subclass as Module1000', t => {
+  const { heap, p, l, u32 } = fixture(t), before = heap.slice();
+  u32(p.game + l.game._moduleNum, 3000);
+  u32(p.room + l.roomModule._sceneNum, 0xffffffff);
+  const expected = heap.slice();
+  const reader = new RenderFrameReader({ _g_engine: 100 }, abi, { allRooms: true });
+  const frame = reader.read();
+  assert.equal(frame.available, true);
+  assert.equal(frame.room, 'Module3000');
+  assert.deepEqual(composeIndexed(frame.items), frame.reference);
+  assert.deepEqual(heap, expected);
+  assert.notDeepEqual(heap, before);
+  u32(p.scene + l.scene._mouseCursor, 0);
+  assert.equal(reader.read().available, true);
+  assert.equal(reader.read().cursor, undefined);
+  u32(p.room + l.module._sceneType, 2);
+  assert.equal(reader.read().available, false);
+  u32(p.room + l.module._sceneType, 0);
+  for (const module of [999, 1001, 3100, 0xffffffff]) {
+    u32(p.game + l.game._moduleNum, module);
+    assert.equal(reader.read().available, false);
+  }
+});
+
 test('native cursor preserves indexed frames, engine position, negative-offset hotspot and visibility outside scene parity', t => {
   const { reader, heap, l, p, i16 } = fixture(t);
   const frame = reader.read();

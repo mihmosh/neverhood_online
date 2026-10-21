@@ -41,6 +41,26 @@ test('archive demo manifests pin one unique ZIP per room, its length and SHA256'
   }
 });
 
+test('full-game delivery extends the same ZIP room registry using unambiguous background keys', () => {
+  const value = manifest();
+  Object.assign(value, { version: 2, fullGame: true, packs: {}, rooms: {} });
+  for (const [index, room] of ['Scene1001-base', 'Scene1402-state', 'Scene2810-statues'].entries()) {
+    value.packs[room] = { file: `rooms/${room}.zip`, bytes: 64, sha256: 'b'.repeat(64) };
+    value.rooms[room] = { backgroundKeys: [`640x480-640-${index.toString(16).padStart(8, '0')}-p12345678-opaque`] };
+  }
+  assert.equal(Object.keys(validateDemoManifest(value, runtimeSHA256).packs).length, 3);
+  for (const change of [m => { delete m.rooms; }, m => { m.version = 1; },
+    m => { m.rooms['Scene1402-state'].backgroundKeys = m.rooms['Scene1001-base'].backgroundKeys; },
+    m => { m.rooms['Scene1402-state'].backgroundKeys = []; },
+    m => { m.packs['../evil'] = m.packs['Scene1001-base']; },
+    m => { m.rooms['Scene1402-state'].backgroundKeys = ['unknown']; }]) {
+    const invalid = structuredClone(value); change(invalid);
+    assert.throws(() => validateDemoManifest(invalid, runtimeSHA256));
+  }
+  delete value.fullGame;
+  assert.throws(() => validateDemoManifest(value, runtimeSHA256), /Incomplete/);
+});
+
 test('demo URL policy allows HTTPS releases but never opens private loopback delivery cross-origin', () => {
   const location = new URL('http://127.0.0.1:4191/hd-demo/');
   assert.equal(demoAddress('/__private-demo/manifest.json', location).origin, location.origin);
@@ -143,9 +163,10 @@ test('private local demo serves only release-listed resources to same-origin loo
   assert.equal((await fetch(`http://127.0.0.1:${preview.address().port}/__private-demo/manifest.json`)).status, 404);
 });
 
-test('demo player keeps saves ephemeral and imports confined to the ordinary player', async () => {
+test('bounded demo keeps saves ephemeral while the unchanged full-game player persists progress', async () => {
   const source = await readFile(new URL('../web/player.js', import.meta.url), 'utf8');
-  assert.match(source, /if \(!demoRequested\)\s*\{\s*fs\.mount\(Module\.IDBFS/);
+  assert.match(source, /if \(!demoRequested \|\| fullGameSession\)\s*\{\s*fs\.mount\(Module\.IDBFS/);
+  assert.match(source, /if \(fullGameSession\)\s*\{\s*const stock = await discoverRuntime\(\)/);
   assert.match(source, /if \(demoManifest\)/);
   assert.match(source, /expectedBytes: entry\.bytes, sha256: entry\.sha256/);
 });

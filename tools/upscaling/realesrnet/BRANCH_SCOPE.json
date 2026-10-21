@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "purpose": "Orchestrator review inventory; not an automatic staging, deployment or paid-run command",
+  "canonicalSource": "tools/upscaling/realesrnet/",
+  "language": "English",
+  "selectedMethod": "RealESRNet_x4plus per-frame RGB, FP32, native 4x",
+  "ownedAreas": ["batch/", "aws/", "benchmarks/", "configs/", "experiments/"],
+  "sharedDependencies": [
+    "tools/assets/",
+    "tools/upscaling/configs/manifest.md",
+    "tools/upscaling/masks/README.md",
+    "tools/upscaling/references/",
+    "scripts/package-sources.mjs",
+    "scripts/check-private-assets.mjs"
+  ],
+  "sharedIntegrationChangesToReview": [
+    ".gitignore",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md",
+    "tools/upscaling/README.md",
+    "tools/upscaling/configs/README.md",
+    "test/upscaling-aws.test.mjs",
+    "test/upscaling-docs.test.mjs",
+    "web/public/sources/inventory.json",
+    "web/public/sources/manifest.json",
+    "web/public/sources/project-build-sources.tar.xz"
+  ],
+  "notOwnedDoNotOverwrite": [
+    "tools/hd-cursor/",
+    "tools/upscaling/gemini/",
+    "tools/upscaling/static/",
+    "test/gemini-*",
+    "test/upscaling-static-*"
+  ],
+  "privateLocalBatchWorkspace": "private-assets/upscaling/full-game-v1/",
+  "privateLocalAwsState": "private-assets/upscaling/aws/",
+  "cloudChangesDuringThisPackagingTask": false,
+  "newInferenceDuringThisPackagingTask": false,
+  "publicAssetReleaseChanged": false,
+  "commitOrPushPerformed": false
+}

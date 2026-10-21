@@ -62,7 +62,7 @@ export async function loadRoomArchiveCache({ archive, room, runtimeSHA256, signa
       manifest = parseJSON(bytes);
       if (manifest.version !== 2 || manifest.room !== room) throw new Error('Invalid cached manifest');
       validated = validateReplacementManifest(manifest, runtimeSHA256);
-      if (!validated.backgrounds.has('gemini') || marker.files.length !== validated.descriptors.length) throw new Error('Invalid cached membership');
+      if ((!validated.backgrounds.has('gemini') && manifest.lossless !== true) || marker.files.length !== validated.descriptors.length) throw new Error('Invalid cached membership');
       const expected = new Set([key('complete'), key('room-pack.json')]);
       let total = 0;
       const sizes = new Map();
@@ -100,7 +100,7 @@ export async function loadRoomArchiveCache({ archive, room, runtimeSHA256, signa
       onProgress(0, result.files.size, 'cache');
       for (const [path, bytes] of result.files) {
         signal?.throwIfAborted();
-        await stage.put(key('images/' + path), new Response(bytes, { headers: { 'content-type': 'image/webp' } }));
+        await stage.put(key('images/' + path), new Response(bytes, { headers: { 'content-type': path.endsWith('.png') ? 'image/png' : 'image/webp' } }));
         sizes.set(path, bytes.byteLength);
         signal?.throwIfAborted();
         onProgress(++stored, result.files.size, 'cache');

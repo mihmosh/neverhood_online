@@ -8,6 +8,7 @@ const report = { transitionInjection: false, fullGameplayRoute: false, naturalEx
 let page, frame;
 try {
   page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.route('**/hd-demo/config.json', route => route.fulfill({ json: { version: 1, manifestURL: '/__private-demo/manifest.json' } }));
   page.on('pageerror', error => report.errors.push(error.message));
   page.on('response', response => { if (response.status() >= 400) report.httpErrors.push(response.url()); });
   await page.goto(`${process.env.TEST_ORIGIN || 'http://127.0.0.1:4191'}/hd-demo/`);

@@ -1,0 +1,2 @@
+# Host Python only; Blender supplies its own bpy, bmesh and NumPy.
+Pillow==12.1.1

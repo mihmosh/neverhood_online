@@ -1,7 +1,8 @@
 export class RenderFrameReader {
-  constructor(module, abi) {
+  constructor(module, abi, { allRooms = false } = {}) {
     if (abi?.schemaVersion !== 1 || abi.pointerSize !== 4 || !abi.littleEndian || !abi.records) throw new Error('Unsupported render-adapter layout.');
     this.module = module;
+    this.allRooms = allRooms;
     this.abi = abi;
     const record = name => {
       const value = abi.records[name];
@@ -38,14 +39,16 @@ export class RenderFrameReader {
     const game = ptr(engine + layout.engine._gameModule);
     if (!game) return { available: false, reason: 'Waiting for the game module.' };
     range(game, layout.game.size);
-    if (uint(game + layout.game._moduleNum) !== 1000 || ptr(game + layout.game._prevChildObject) || byte(game + layout.game._restoreGameRequested) || byte(game + layout.game._restartGameRequested) || byte(game + layout.game._mainMenuRequested)) return { available: false, reason: 'Original renderer: outside Module1000 or a menu is active.' };
+    const moduleNum = uint(game + layout.game._moduleNum);
+    const supported = this.allRooms ? moduleNum >= 1000 && moduleNum <= 3000 && moduleNum % 100 === 0 : moduleNum === 1000;
+    if (!supported || ptr(game + layout.game._prevChildObject) || byte(game + layout.game._restoreGameRequested) || byte(game + layout.game._restartGameRequested) || byte(game + layout.game._mainMenuRequested)) return { available: false, reason: 'Original renderer: outside a supported module or a menu is active.' };
     const roomModule = ptr(game + layout.module._childObject);
     if (!roomModule) return { available: false, reason: 'Waiting for room 1001 or 1002 to finish loading.' };
-    range(roomModule, layout.roomModule.size);
-    const sceneNum = uint(roomModule + layout.roomModule._sceneNum);
-    if (sceneNum > 1 || uint(roomModule + layout.module._sceneType) !== 0 || byte(roomModule + layout.module._done) || !ptr(roomModule + layout.module._childObject)) return { available: false, reason: 'Original renderer: this is not room 1001 or 1002.' };
+    range(roomModule, this.allRooms ? layout.module.size : layout.roomModule.size);
+    const sceneNum = this.allRooms ? undefined : uint(roomModule + layout.roomModule._sceneNum);
+    if ((!this.allRooms && sceneNum > 1) || uint(roomModule + layout.module._sceneType) !== 0 || byte(roomModule + layout.module._done) || !ptr(roomModule + layout.module._childObject)) return { available: false, reason: 'Original renderer: outside an ordinary supported scene.' };
     this.inRoom = true;
-    this.room = sceneNum === 0 ? 'Scene1001' : 'Scene1002';
+    this.room = this.allRooms ? `Module${moduleNum}` : sceneNum === 0 ? 'Scene1001' : 'Scene1002';
     if (ptr(screen + layout.screen._smackerDecoder) || byte(screen + layout.screen._fullRefresh) || short(screen + layout.screen._yOffset) !== 0) return { available: false, room: this.room, reason: 'Original renderer: video or a special screen mode is active.' };
     const pending = ptr(screen + layout.screen._renderQueue);
     range(pending, layout.array.size);
@@ -109,6 +112,7 @@ export class RenderFrameReader {
     const scene = ptr(roomModule + layout.module._childObject);
     range(scene, layout.scene.size);
     const mouse = ptr(scene + layout.scene._mouseCursor);
+    if (this.allRooms && !mouse) return { available: true, room: this.room, tick: uint(screen + layout.screen._ticks), items, palette: heap.subarray(palette, palette + 1024), reference, engine, screen };
     if (!mouse) return { available: false, room: this.room, reason: 'Original renderer: cursor is unavailable.' };
     range(mouse, layout.mouse.size);
     const shared = mouse + layout.sprite._surface;

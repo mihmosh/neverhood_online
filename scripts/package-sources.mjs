@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Run locally after building both binaries; deployment only copies the outputs.
+// Package sources for the reviewed binaries; deployment only copies the outputs.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
+import { privateAssetPaths } from './check-private-assets.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'web/public/sources');
@@ -22,7 +23,8 @@ const json = value => `${JSON.stringify(value, null, 2)}\n`;
 const archives = [];
 const files = [];
 const inventory = [];
-const excluded = /(^|\/)(\.git|node_modules|__pycache__|\.DS_Store|private-assets|asset-workspace|private-research)(\/|$)|\.(o|a|wasm|pyc|blb|exe|dll|sav|sve|sqlite|sqlite3|sqlite-wal|sqlite-shm|db|db-wal|db-shm|smk|safetensors|ckpt|pth|pt|onnx|\d{3})$/i;
+const excluded = /(^|\/)(\.git|node_modules|__pycache__|\.DS_Store|\.env(?!\.example(?:\/|$))(?:\.[^/]*)?|\.venv|\.cache|\.pytest_cache|private-assets|asset-workspace|private-research)(\/|$)|\.(o|a|wasm|pyc|blb|exe|dll|sav|sve|sqlite|sqlite3|sqlite-wal|sqlite-shm|db|db-wal|db-shm|smk|safetensors|ckpt|pth|pt|onnx|gguf|\d{3})$/i;
+const privateUpscaling = /(^|\/)tools\/(?:upscaling|hd-cursor)\/(?:(?:.*\/)?(?:data|models|outputs|runs|results|cache)(\/|$)|infra-state\.json$)/i;
 let previousManifest;
 let previousInventory;
 try {
@@ -40,7 +42,7 @@ async function walk(directory) {
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
     const name = path.join(directory, entry.name);
-    if (excluded.test(name)) continue;
+    if (excluded.test(name) || privateUpscaling.test(name)) continue;
     if (entry.isDirectory()) result.push(...await walk(name));
     else if (entry.isFile()) result.push(name);
     else throw new Error(`Unexpected non-regular source input: ${name}`);
@@ -81,7 +83,7 @@ try {
     const stage = path.join(temporary, component);
     await fs.mkdir(stage);
     for (const [source, destination] of entries.sort((a, b) => a[1].localeCompare(b[1], 'en'))) {
-      if (excluded.test(destination) || destination.startsWith('/') || destination.split('/').includes('..')) {
+      if (excluded.test(destination) || privateUpscaling.test(destination) || destination.startsWith('/') || destination.split('/').includes('..')) {
         throw new Error(`Forbidden archive member: ${destination}`);
       }
       const contents = await fs.readFile(source);
@@ -183,9 +185,15 @@ try {
       if (name.isFile() && !excluded.test(name.name)) projectFiles.push(path.join(root, directory, name.name));
     }
   }
-  for (const directory of ['tools/extractor-deps', 'tools/assets', 'tools/evaluation', 'web/lib', 'web/prototype', 'web/hd-demo', 'web/vendor', 'web/assets', 'web/data', 'web/test', 'test', 'docs', '.github']) projectFiles.push(...await walk(path.join(root, directory)));
-  for (const name of ['package.json', 'vercel.json', 'server.mjs', 'README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'THIRD_PARTY_NOTICES.md', '.gitignore', '.gitattributes']) projectFiles.push(path.join(root, name));
-  const projectEntries = projectFiles.map(name => [name, path.relative(root, name)]);
+  for (const directory of ['tools/extractor-deps', 'tools/assets', 'tools/evaluation', 'tools/upscaling', 'tools/hd-cursor', 'web/lib', 'web/prototype', 'web/hd-demo', 'web/vendor', 'web/assets', 'web/data', 'web/test', 'test', 'docs', '.github']) projectFiles.push(...await walk(path.join(root, directory)));
+   for (const name of ['package.json', 'vercel.json', 'server.mjs', 'README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'THIRD_PARTY_NOTICES.md', '.gitignore', '.gitattributes']) projectFiles.push(path.join(root, name));
+   try {
+     const example = path.join(root, '.env.example'), info = await fs.lstat(example);
+     if (!info.isFile() || info.isSymbolicLink()) throw new Error('Environment example must be a regular file.');
+     projectFiles.push(example);
+   } catch (error) { if (error.code !== 'ENOENT') throw error; }
+   const projectEntries = projectFiles.filter(name => !privateAssetPaths([path.relative(root, name)]).length)
+     .map(name => [name, path.relative(root, name)]);
   for (const [source, destination] of [
     ['web/public/runtime/runtime.json', 'build-records/runtime.json'],
     ['web/public/extractor/extractor.json', 'build-records/extractor.json'],
@@ -222,6 +230,21 @@ printf '%s\\n' '${sdlTag}' > "$SDK/upstream/emscripten/cache/ports/sdl3/.emscrip
 BUILD="$ROOT/scripts/.build/neverhood-web"
 ${runtimeScript.slice(runtimeScript.indexOf('set +u'), runtimeScript.indexOf('# Deliberate allowlist:'))}
 cd "$ROOT"
+# Optional historical binary; the current full-game prototype uses the stock build above.
+if [[ "\${REBUILD_LEGACY_DEMO:-0}" == 1 ]]; then
+  BUILD="$ROOT/scripts/.build/neverhood-demo-web"
+  mkdir -p "$BUILD"
+  cp -a "$ROOT/scripts/.build/neverhood-web/." "$BUILD/"
+  (
+    cd "$BUILD"
+    emconfigure "$SOURCE/configure" \\
+      --host=wasm32-unknown-emscripten --build=wasm32-unknown-emscripten \\
+      --disable-all-engines --enable-engine=neverhood \\
+      --disable-detection-full --disable-debug --disable-cloud --disable-tts
+  )
+  node "$ROOT/scripts/demo-runtime-overlays.mjs"
+  make -C "$BUILD" -f "$ROOT/scripts/demo-runtime.mk" -j "$JOBS"
+fi
 BUILD="$ROOT/scripts/.build/extractor"
 mkdir -p "$BUILD/prefix"
 ${extractorScript.slice(extractorScript.indexOf('set +u')).replace(/^node .*package-extractor.*$/m, '')}
@@ -257,7 +280,8 @@ CMake 3.16+, Ninja, make and a native C++ compiler for optional data tools)
 3. Copy downloaded REBUILD.sh into that restored root; run:
    JOBS=4 bash REBUILD.sh
    This installs the standard Emscripten SDK 4.0.10 from upstream, restores the
-   supplied Emscripten/SDL source trees into it, and compiles both binaries using
+   supplied Emscripten/SDL source trees into it, and compiles the stock runtime
+   and extractor using
    the original recipes and flags. No private downloads or game data are needed.
    SDK compiler executables, LLVM and Node are standard build tools downloaded
    by upstream setup, deliberately not in these source archives.
@@ -272,7 +296,15 @@ CMake 3.16+, Ninja, make and a native C++ compiler for optional data tools)
    It extracts tables from a particular original nhc.exe (MD5 checked in source),
    so regenerating neverhood.dat additionally needs that legitimately obtained
    upstream input, which is NOT included. Rebuilding either WASM does not need it;
-   use the unchanged upstream neverhood.dat supplied in this package.
+    use the unchanged upstream neverhood.dat supplied in this package.
+5. Optional historical bounded two-room binary, also listed in the manifest:
+   REBUILD_LEGACY_DEMO=1 JOBS=4 bash REBUILD.sh
+   This additionally generates the five legacy external overlays and builds
+   scripts/.build/neverhood-demo-web/scummvm.js and scummvm.wasm. It does not
+   modify upstream source files and does not require a .git checkout. The
+   Git-based provenance/packaging helpers are deliberately not invoked here.
+   The current full-game prototype uses the stock runtime from step 4, not this
+   historical restricted binary. No new engine build is needed to deploy it.
 
 VERSIONS AND SCOPE
 ScummVM ${revision}, GPL-3.0-or-later: full Neverhood
@@ -300,7 +332,9 @@ All upstream notices/licenses remain in their source trees. Project build
 scripts retain their SPDX notices. Build flags, dependency URLs/original archive
 hashes and configuration are in build-records/{runtime,extractor}.json and
 runtime-config.{h,mk}; scripts/runtime.mk contains exact external linker changes.
-Original ScummVM source files are unmodified; no source overlay is used.
+The default full-game runtime uses original ScummVM sources without overlays.
+The separately retained historical bounded demo uses the five overlays recorded
+in build-records/demo-runtime.json; their generator and linker recipe are included.
 Build-record configurations retain original absolute build paths as provenance;
 REBUILD.sh regenerates them for your directory rather than using those paths.
 

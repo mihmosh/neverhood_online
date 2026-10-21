@@ -22,6 +22,7 @@
 *.pth
 *.pt
 *.onnx
+*.gguf
 *.sqlite
 *.sqlite3
 *.sqlite-wal
@@ -48,3 +49,28 @@
 /scripts/.build/
 /node_modules/
 *.log
+__pycache__/
+*.pyc
+
+# CDN releases are published explicitly, never through Git or the static-site tree.
+# Upscaling/cursor source is public; local inference and artwork workspaces are not.
+/tools/upscaling/infra-state.json
+/tools/upscaling/**/.venv/
+/tools/upscaling/**/.cache/
+/tools/upscaling/**/cache/
+/tools/upscaling/**/.pytest_cache/
+/tools/upscaling/**/__pycache__/
+/tools/upscaling/**/data/
+/tools/upscaling/**/models/
+/tools/upscaling/**/outputs/
+/tools/upscaling/**/runs/
+/tools/upscaling/**/results/
+/tools/hd-cursor/**/data/
+/tools/hd-cursor/**/models/
+/tools/hd-cursor/**/runs/
+/tools/hd-cursor/**/results/
+/tools/hd-cursor/**/.cache/
+/tools/hd-cursor/**/cache/
+/tools/hd-cursor/**/.venv/
+/tools/hd-cursor/**/.pytest_cache/
+/tools/hd-cursor/**/outputs/

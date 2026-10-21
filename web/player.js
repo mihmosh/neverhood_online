@@ -2,14 +2,16 @@ import { REQUIRED_FILES } from './lib/validation.js';
 import { openArchive } from './lib/storage.js';
 import { demoAssetURL, fetchDemoBytes, fetchDemoManifest } from './lib/demo-data.js';
 import { createDemoProgress } from './lib/demo-progress.js';
+import { discoverRuntime } from './lib/runtime.js';
 
 const nonce = new URL(location.href).searchParams.get('session');
 const prototypeRequested = new URL(location.href).searchParams.get('renderer') === 'room1-proxy';
 const demoRequested = new URL(location.href).searchParams.get('demo') === '1';
+let fullGameSession = false;
 const canvas = document.getElementById('canvas');
 const menu = document.getElementById('game-menu');
 menu.addEventListener('click', () => {
-  if (demoRequested || menu.hidden || controller.signal.aborted) return;
+  if ((demoRequested && !fullGameSession) || menu.hidden || controller.signal.aborted) return;
   canvas.focus();
   // SDL listens to DOM keyboard events; keep the original engine menu behavior.
   for (const type of ['keydown', 'keyup']) {
@@ -53,12 +55,12 @@ function send(type, data = {}) {
 
 function engineExitError(code = 0) {
   if (code) return new Error(`The game stopped (code ${code}).`);
-  if (demoRequested && ![2, 3].includes(window.Module?.getValue(Module._neverhood_demo_state, 'i32'))) return new Error('The demo stopped before reaching its completion boundary.');
+  if (demoRequested && !fullGameSession && ![2, 3].includes(window.Module?.getValue(Module._neverhood_demo_state, 'i32'))) return new Error('The demo stopped before reaching its completion boundary.');
 }
 
 function artifact(name) {
   if (typeof name !== 'string' || !/^[a-zA-Z0-9_.-]+$/.test(name)) throw new Error('Invalid player file.');
-  return new URL(`./${demoRequested ? 'demo-runtime' : 'runtime'}/${name}`, import.meta.url).href;
+  return new URL(`./${demoRequested && !fullGameSession ? 'demo-runtime' : 'runtime'}/${name}`, import.meta.url).href;
 }
 
 function sync(populate) {
@@ -91,8 +93,15 @@ async function start(descriptor, demo) {
   status(demoRequested ? 'Loading the demo manifest...' : 'Loading the game player...', 0);
   if (demoRequested && (descriptor.demo !== true || !demo?.manifestURL)) throw new Error('A bounded demo engine and demo data are required.');
   const demoManifest = demoRequested ? await fetchDemoManifest(demo.manifestURL, descriptor.sourceRuntimeSHA256, signal) : null;
+  fullGameSession = demoManifest?.fullGame === true;
+  if (fullGameSession) {
+    const stock = await discoverRuntime();
+    if (!stock.available) throw new Error('The unchanged full-game runtime is unavailable.');
+    descriptor = { ...stock.descriptor, wasmSHA256: demoManifest.sourceRuntimeSHA256,
+      sourceRuntimeSHA256: demoManifest.sourceRuntimeSHA256 };
+  }
   const startup = demoManifest ? createDemoProgress({ nativeBytes: demoManifest.totalBytes,
-    roomBytes: demoManifest.packs.Scene1001.bytes ?? 29 * 1024 ** 2 }, status) : null;
+    roomBytes: demoManifest.packs.Scene1001?.bytes ?? 0 }, status) : null;
   const announcePlaying = () => {
     if (playing || signal.aborted) return;
     startup?.('ready', 1, 'Enjoy Neverhood!');
@@ -139,7 +148,8 @@ async function start(descriptor, demo) {
     try {
       const { createRoomPrototype } = await import('./prototype/room1.js');
       const demoOptions = demoManifest ? {
-        abiURL: artifact(descriptor.abi), sourceRuntimeSHA256: descriptor.sourceRuntimeSHA256,
+        fullGame: fullGameSession, rooms: demoManifest.rooms,
+        abiURL: fullGameSession ? new URL('./prototype/render-abi.json', import.meta.url).href : artifact(descriptor.abi), sourceRuntimeSHA256: descriptor.sourceRuntimeSHA256,
         packs: Object.fromEntries(Object.entries(demoManifest.packs).map(([room, entry]) => [room, demoManifest.version === 2
           ? { ...entry, url: demoAssetURL(entry.file, demoManifest.manifestURL) } : demoAssetURL(entry, demoManifest.manifestURL)])),
         onStatus: status,
@@ -150,7 +160,7 @@ async function start(descriptor, demo) {
       } : undefined;
       renderPrototype = await createRoomPrototype({ module: Module, canvas, wasmSHA256: Module.renderPrototypeWasmSHA256, signal, demo: demoOptions });
       if (demoRequested) await renderPrototype.ready;
-      if (demoRequested) startup('verify', 1, 'HD room 1 and cursor ready.');
+      if (demoRequested) startup('verify', 1, fullGameSession ? 'Room archive loader and cursor ready.' : 'HD room 1 and cursor ready.');
       if (signal.aborted) { renderPrototype.dispose(); signal.throwIfAborted(); }
     } catch (error) {
       if (error.name === 'AbortError' || demoRequested) throw error;
@@ -162,7 +172,7 @@ async function start(descriptor, demo) {
   if (!fs || !Module.IDBFS || typeof Module.callMain !== 'function') throw new Error('The game player is incomplete.');
   fs.mkdirTree('/game');
   fs.mkdirTree('/saves');
-  if (!demoRequested) {
+  if (!demoRequested || fullGameSession) {
     fs.mount(Module.IDBFS, { autoPersist: true }, '/saves');
     mounted = true;
     await sync(true);
@@ -181,7 +191,7 @@ async function start(descriptor, demo) {
         signal, limit: entry.bytes, expectedBytes: entry.bytes, sha256: entry.sha256,
         onProgress: loaded => startup('native', (copied + loaded) / demoManifest.totalBytes, 'Loading original game data...'),
       });
-      fs.writeFile(`/game/${entry.name}`, bytes);
+      fs.writeFile(`/game/${entry.name}`, bytes, { canOwn: fullGameSession });
       copied += bytes.length;
       startup('native', copied / demoManifest.totalBytes, 'Verifying original game data...');
     }
@@ -227,14 +237,14 @@ async function start(descriptor, demo) {
       if (active) resizeWindow();
       if (active && !sawEngine) {
         sawEngine = true;
-        menu.hidden = demoRequested;
-        if (!demoRequested) { announced = true; announcePlaying(); }
+        menu.hidden = demoRequested && !fullGameSession;
+        if (!demoRequested || fullGameSession) { announced = true; announcePlaying(); }
       } else if (sawEngine && !active) {
         // The game's destructor has run. Dispose the whole session, not its launcher.
         finish(engineExitError());
         return;
       }
-      if (active && demoRequested) {
+      if (active && demoRequested && !fullGameSession) {
         const state = window.roomRendererPrototype?.stats();
         if (!announced && state?.pack?.cacheError) { finish(new Error(state.pack.cacheError)); return; }
         if (!announced) {

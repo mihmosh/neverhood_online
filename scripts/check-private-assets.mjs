@@ -4,10 +4,12 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const forbidden = /(^|\/)(original game|extracted|private-assets|asset-workspace|private-research|saves|save-backups|scummvm)(\/|$)|(^|\/)\.private-(assets|research)-no-public$|\.(blb|exe|bin|zip|smk|sav|sve|sqlite|sqlite3|sqlite-wal|sqlite-shm|db|db-wal|db-shm|safetensors|ckpt|pth|pt|onnx|\d{3})$/i;
+const forbidden = /(^|\/)(original game|extracted|private-assets|asset-workspace|private-research|saves|save-backups|scummvm)(\/|$)|(^|\/)\.private-(assets|research)-no-public$|\.(blb|exe|bin|nhc|zip|7z|rar|smk|sav|sve|sqlite|sqlite3|sqlite-wal|sqlite-shm|db|db-wal|db-shm|safetensors|ckpt|pth|pt|onnx|gguf|blend\d*|\d{3})$/i;
+const credentials = /(^|\/)\.env(?:$|\.(?!example(?:\/|$))[^/]+(?:\/|$))/i;
+const workspace = /(^|\/)tools\/(?:upscaling|hd-cursor)\/(?:(?:.*\/)?(?:data|models|outputs|runs|results|cache|\.venv|\.cache|\.pytest_cache|__pycache__)(\/|$)|infra-state\.json$)/i;
 
 export function privateAssetPaths(paths) {
-  return paths.filter(path => forbidden.test(path));
+  return paths.filter(path => forbidden.test(path) || credentials.test(path) || workspace.test(path));
 }
 
 export async function checkPrivateAssets(root = project) {
@@ -21,7 +23,7 @@ export async function checkPrivateAssets(root = project) {
         const path = `${prefix}/${entry.name}`;
         if (entry.isSymbolicLink()) throw new Error(`Public content must not contain symlinks: ${path}`);
         if (entry.isDirectory()) await walk(join(directory, entry.name), path);
-        else if (forbidden.test(path)) bad.push(path);
+        else if (privateAssetPaths([path]).length) bad.push(path);
       }
     };
     await walk(base, name);

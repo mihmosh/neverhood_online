@@ -1,7 +1,8 @@
 # Roadmap And Verification
 
-Neverhood Online is an experimental browser client for a user's own copy of
-The Neverhood. The game engine is ScummVM, not a new implementation. This is
+Neverhood Online is an experimental browser client with a local BYO importer
+and a separate externally delivered Original/HD prototype. The game engine is
+ScummVM, not a new implementation. This is
 neither an official release nor a remaster.
 
 ## Available Now
@@ -22,10 +23,14 @@ neither an official release nor a remaster.
   atomic pre-import backups and stale-confirmation protection.
 - Build a self-contained static site from the repository without an SDK or secrets.
 - Serve matching source archives, hashes, build materials and third-party notices.
+- Run the HD prototype on the unchanged stock full-game runtime, with 134 room/state
+  PNG ZIPs selected through one original-to-HD table and cached on room entry.
+- Retain all seven original BLBs and original cutscene/navigation videos through
+  S3/CloudFront while their upscaling remains in progress.
 
 ## Verified Scope
 
-The unit suite currently has 97 tests covering import transactions, ZIP framing,
+The automated suite covers import transactions, ZIP framing,
 legacy filename decoding, CRC and size checks, source discovery, static packaging,
 public-source integrity, server isolation and related error handling.
 
@@ -35,6 +40,14 @@ legacy-encoded names, bundled DirectX/Visual C++ installers, storage after reloa
 the first room, Escape menu, live resizing, Quit/replay and removal. Missing BIN,
 cancellation and quota failures preserved the preceding library in fault tests.
 Browser checks observed no game upload requests or uncaught page errors.
+
+Separate full-game HD checks passed the natural Scene1001 -> Scene1002 ->
+Scene1004 route, beyond the old demo boundary, on desktop Chromium and emulated
+mobile touch. Each entered room fetched its ZIP; a warm launch fetched none.
+Native indexed parity passed. The external release's seven original archives
+were verified byte-for-byte over HTTPS, retaining 551 Smacker resources. These
+checks do not establish a full playthrough, all HD bindings or physical-device
+compatibility, and do not verify the separately deployed public frontend.
 
 Matching source archives were extracted and compiled. The extractor rebuild was
 byte-identical; runtime exports were preserved without claiming byte-identical
@@ -48,11 +61,14 @@ runtime output. These checks do not constitute an independent security or legal 
   still need coverage. Browser data is not a substitute for external backups.
 - Game launch copies the library into MEMFS; substantial RAM is needed.
 - Installer and ZIP imports use temporary disk space in addition to the final library.
-- Desktop Chromium is the primary tested target. Touch, Firefox and Safari need
-  separate verification. Responsive onboarding is not proof of mobile gameplay.
+- Desktop Chromium is the primary tested target. Focused emulated-mobile touch
+  checks passed; physical devices, mobile import, Firefox and Safari still need
+  separate verification. Responsive onboarding alone is not gameplay evidence.
 - Only stored/deflated ZIP is supported; encrypted ZIP, ZIP64, RAR and 7z are not.
 - Not every repack or installer format is supported.
-- Offline operation, HD resources and widescreen scenes are not implemented.
+- Offline operation and widescreen scene reconstruction are not implemented.
+  Experimental HD delivery exists, but full palette/state/static coverage and
+  video upscaling are not complete. Native output remains the fallback.
 
 ## Next Milestones
 
@@ -60,8 +76,9 @@ runtime output. These checks do not constitute an independent security or legal 
 2. Replace complete MEMFS resource copies with bounded seekable access from OPFS.
 3. Expand browser/device coverage and improve accessible input and touch handling.
 4. Design versioned offline caching and safe runtime updates without losing saves.
-5. Use the opt-in first-room compositor to evaluate a supported engine-side
-   resource/frame bridge before extending HD replacements to other scenes.
+5. Extend verified external HD bindings, reviewed static candidates and natural
+   gameplay-route coverage without changing the current engine. Preserve the
+   original videos until restoration candidates are separately accepted.
 
 ## Separate Restoration Tasks
 
@@ -78,6 +95,9 @@ Task 1. The status sections below retain prior evidence; these work briefs do no
 authorize model execution, media uploads, cloud spending or publication.
 
 ## First-Room Prototype Status
+
+The following paragraphs preserve the original first-room experiment. They are
+historical evidence, not the current full-game delivery status above.
 
 The stock engine and binary remain unchanged. A compiler-derived, exact-WASM
 read-only adapter feeds a separate compositor for module 1000/scene 0. It retains

@@ -37,6 +37,20 @@ test('STORE archive preserves v2 manifest, shared bindings, and zero-copy encode
   assert.equal(result.entries.get(key(1)).imageResource, result.entries.get(key(2)).imageResource);
 });
 
+test('lossless opt-in uses the same v2 room ZIP validation for other rooms and PNG bytes', async () => {
+  const value = fixture(), bytes = Buffer.alloc(33);
+  [0x89504e47, 0x0d0a1a0a, 13, 0x49484452, 4, 4].forEach((n, i) => bytes.writeUInt32BE(n, i * 4));
+  Object.assign(value.manifest, { lossless: true, room: 'Scene1402-native-state', backgrounds: [] });
+  value.manifest.images = [{ ...value.manifest.images[0], file: 'images/frame.png', format: 'png', sha256: digest(bytes) }];
+  const archive = zip([{ path: 'room-pack.json', bytes: JSON.stringify(value.manifest), method: 0 },
+    { path: 'images/frame.png', bytes, method: 0 }]);
+  const result = await validateRoomArchive(archive, { runtimeSHA256, room: value.manifest.room });
+  assert.equal(result.entries.size, 2);
+  assert.deepEqual(Buffer.from(result.files.get('images/frame.png')), bytes);
+  await assert.rejects(validateRoomArchive(archive, { runtimeSHA256, room: '../evil' }), /room/);
+  await assert.rejects(validateRoomArchive(archive, { runtimeSHA256, room: 'Scene1403' }), /match/);
+});
+
 test('rejects duplicates, unsafe paths, directories, compression, encryption, CRC, truncation, and overlaps', async () => {
   const value = fixture();
   const variants = [

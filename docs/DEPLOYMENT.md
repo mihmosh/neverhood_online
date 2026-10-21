@@ -51,6 +51,41 @@ npm run verify:deployment -- https://neverhood-online.vercel.app
 This uses only public GET requests and does not upload game data. A successful
 Vercel build status alone does not prove that the deployed requests work.
 
+## Current HD Prototype Release
+
+The current source prototype uses the unchanged full-game runtime, not the
+historical bounded two-room binary. `web/hd-demo/config.json` selects the existing
+S3/CloudFront release. A Vercel build may explicitly select it with:
+
+```text
+NEVERHOOD_DEMO_MANIFEST_URL=https://d3gutt3a0gjwwo.cloudfront.net/full-game-lossless-v1/manifest.json
+```
+
+Use Node.js 22.x, `npm run build` and output `dist`; no AWS credentials belong in
+Vercel. The environment setting was reported changed, but that alone does not
+verify a new public frontend deployment. Deploy the updated sources, new
+scripts/tests and regenerated corresponding-source artifacts together. Do not
+deploy only the changed variable against old two-room frontend code.
+
+This external release has 134 room/state lossless PNG ZIPs and all seven original
+BLBs (638,122,574 bytes). The shared originals retain 551 Smacker resources,
+including original cutscene and navigation media, without transcoding. HD video
+work remains in progress; it must not cause those originals to be omitted.
+Whole-original HTTPS verification is separate from a full playthrough or a check
+of the public Vercel frontend:
+
+```sh
+node scripts/verify-demo-videos.mjs \
+  --originals private-assets/upscaling/full-game-v1/original-files.json \
+  --release https://d3gutt3a0gjwwo.cloudfront.net/full-game-lossless-v1/manifest.json
+```
+
+Publish only the explicitly prepared release under `releases/hd-demo/`, with
+verified assets first and its manifest last. Do not expose private `sources/`,
+`results/`, catalogs, model inputs or credentials. Keep immutable versioned keys
+unchanged. The native BLBs are shared startup data; HD room ZIPs load on entry and
+are cached. This is not original-game streaming or proof of complete HD coverage.
+
 ## Git Deployment Owner
 
 Deployments for this project use the GitHub owner `mihmosh`. Vercel checks the
@@ -73,7 +108,9 @@ only to this project's commit command rather than changing global Git settings.
 Only the client, verified ScummVM/innoextract artifacts and vendored ZIP decoder, with required licenses
 and corresponding source under the GPL. Review the runtime file allowlist before
 publication: upstream build scripts can include demos and other data.
-This project does not distribute game files.
+These exclusions apply to the static frontend deployment. The separate external
+asset release intentionally distributes original game files and selected derived
+media; this operational choice does not establish redistribution rights.
 
 Never publish the entire workspace. `original game/`, `extracted/`, user packs
 and saves stay outside the document root. Builds must not automatically copy
@@ -99,13 +136,14 @@ The included `server.mjs` is for development and listens only on
 
 ## Prepublication Checks
 
-1. Deployment contains no original game resources or secrets.
+1. Static frontend deployment contains no original game resources or secrets; the separate authorized asset release contains only its explicitly selected files.
 2. The exact upstream version, complete corresponding source and build instructions are available.
 3. Required third-party runtime license notices have been reviewed.
 4. Users can see that this is not an official release.
 5. Import, relaunch, data clearing, quota denial and save export have been checked.
 6. The site does not promise permanent storage or support for arbitrary installers.
 7. Modified runtime publication complies with GPL requirements.
+8. The current external release preserves the complete original BLBs and videos while HD cutscene/navigation work is unfinished; check hashes, CORS and room-cache behavior separately from frontend build success.
 
 ## Untrusted Files
 

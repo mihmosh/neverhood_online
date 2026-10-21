@@ -1,7 +1,7 @@
 import { RenderFrameReader } from './read-frame.js';
 import { composeIndexed, indicesToRGBA, paintFrame } from './compositor.js';
 import { updateCRC32 } from '../lib/zip-validation.js';
-import { loadReplacementPack, loadReplacementPackURL } from './replacement-pack.js';
+import { loadReplacementPack, loadReplacementPackURL, validPackRoom, paletteProofMatches } from './replacement-pack.js';
 import { loadDemoCursor, demoCursorOrdinal } from './demo-cursor.js';
 import { demoAddress, fetchDemoBytes } from '../lib/demo-data.js';
 
@@ -9,12 +9,12 @@ const crc = bytes => ((updateCRC32(0xffffffff, bytes) ^ 0xffffffff) >>> 0).toStr
 
 export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, demo }) {
   if (demo && (!demo.abiURL || !/^[a-f0-9]{64}$/.test(demo.sourceRuntimeSHA256) ||
-      !demo.packs?.Scene1001 || !demo.packs?.Scene1002)) throw new Error('Incomplete demo renderer configuration.');
+      (demo.fullGame ? !demo.rooms || !Object.keys(demo.packs ?? {}).length : !demo.packs?.Scene1001 || !demo.packs?.Scene1002))) throw new Error('Incomplete demo renderer configuration.');
   const debug = !demo && new URL(location.href).searchParams.get('renderer-debug') === '1';
   let abi;
   if (demo) {
     const address = new URL(demo.abiURL, location.href);
-    if (address.origin !== location.origin || address.pathname !== '/demo-runtime/render-abi.json' || address.username || address.password || address.search || address.hash) throw new Error('Demo ABI must be the same-origin compiled artifact.');
+    if (address.origin !== location.origin || address.pathname !== (demo.fullGame ? '/prototype/render-abi.json' : '/demo-runtime/render-abi.json') || address.username || address.password || address.search || address.hash) throw new Error('Demo ABI must be the same-origin compiled artifact.');
     const bytes = await fetchDemoBytes(address.href, { signal, limit: 256 * 1024 });
     abi = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
   } else {
@@ -23,7 +23,18 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     abi = await response.json();
   }
   if (abi.wasmSHA256 !== wasmSHA256) throw new Error('Render prototype disabled: this WASM build does not match its layout.');
-  const reader = new RenderFrameReader(module, abi);
+  const reader = new RenderFrameReader(module, abi, { allRooms: demo?.fullGame === true });
+  const roomKeys = new Map();
+  const roomBindings = new Map();
+  if (demo?.fullGame) for (const [room, value] of Object.entries(demo.rooms)) for (const key of value.backgroundKeys) {
+    if (roomKeys.has(key)) throw new Error('Ambiguous room background.');
+    roomKeys.set(key, room);
+  }
+  if (demo?.fullGame) for (const [room, value] of Object.entries(demo.rooms)) for (const binding of value.backgroundBindings ?? []) {
+    const raster = binding.key.replace(/-p[a-f0-9]{8}-/, '-');
+    const candidates = roomBindings.get(raster) ?? [];
+    candidates.push({ room, palette: binding.palette }); roomBindings.set(raster, candidates);
+  }
   const output = document.createElement('canvas');
   output.id = 'room-proxy-canvas';
   output.setAttribute('aria-hidden', 'true');
@@ -147,6 +158,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
   const stats = { frames: 0, engineFrames: 0, verified: 0, mismatches: 0, errors: 0, hdFrames: 0, hdDraws: 0, maxDifference: 0, layers: 0, status: 'waiting', lastError: '', cpuMs: 0, meanCpuMs: 0, peakCpuMs: 0, leverVariants: 0, outputWidth: 640, outputHeight: 480, reusedSurfaces: 0, hashedSourceBytes: 0, rasterMs: 0, verifyMs: 0, paintMs: 0 };
 
   const original = reason => {
+    if (demo?.fullGame) stats.hdDraws = 0;
     output.hidden = true;
     cursorCanvas.hidden = true;
     cursorViewport.hidden = true;
@@ -223,6 +235,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     diagnostics: debug, activeRoom, engineIntervals: [...engineIntervals],
     packEnabled, packLoading, pack: pack?.stats() ?? null, cursor: cursorState ? { ...cursorState } : null });
   const paintCursor = frame => {
+    if (!frame.cursor) { cursorCanvas.hidden = true; cursorViewport.hidden = true; cursorState = null; return; }
     const { source, visible, x, y, hotspotX, hotspotY } = frame.cursor;
     if (!canvasRect) {
       canvasRect = canvas.getBoundingClientRect();
@@ -238,7 +251,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     const rect = canvasRect;
     const rgba = cursorImage.data;
     const rasterHash = crc(source.pixels);
-    const ordinal = demoCursor ? demoCursorOrdinal(demoCursor, frame) : -1;
+    const ordinal = demoCursor ? demoCursorOrdinal(demoCursor, frame, { allRooms: demo?.fullGame === true }) : -1;
     const pixelsKey = `${rasterHash}:${crc(frame.palette)}:${ordinal}`;
     if (pixelsKey !== cursorPixelsKey) {
       const size = ordinal >= 0 ? 128 : 32;
@@ -272,11 +285,31 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
   const update = () => {
     if (disposed) return;
     try {
-      let frame = reader.read({ reference: debug || (mode === 'proxy' && packEnabled && (parityRequired || stats.frames % 120 === 0)) });
-      const room = frame.room ?? reader.room ?? null;
+      let frame = reader.read({ reference: demo?.fullGame || debug || (mode === 'proxy' && packEnabled && (parityRequired || stats.frames % 120 === 0)) });
+      let room = frame.room ?? reader.room ?? null;
+      if (demo?.fullGame) {
+        surfaceSnapshots.clear();
+        const colors = frame.available ? crc(frame.palette) : undefined;
+        const matched = new Set();
+        for (const item of (frame.items ?? []).filter(item => !item.transparent)) {
+          const raster = `${item.source.width}x${item.source.height}-${item.source.pitch}-${crc(item.source.pixels)}`;
+          const candidates = roomBindings.get(`${raster}-opaque`);
+          if (candidates) {
+            for (const candidate of candidates) if (paletteProofMatches(candidate.palette, frame.palette)) matched.add(candidate.room);
+          } else {
+            const room = roomKeys.get(`${raster}-p${colors}-opaque`);
+            if (room) matched.add(room);
+          }
+        }
+        room = matched.size === 1 ? [...matched][0] : null;
+      }
       if (room !== activeRoom) {
         if (activeRoom && roomPacks.has(activeRoom)) Object.assign(roomPacks.get(activeRoom), { enabled: packEnabled });
         pack?.observe([]); pack?.prefetch([]);
+        if (demo?.fullGame && activeRoom) {
+          const previous = roomPacks.get(activeRoom);
+          previous?.controller?.abort(); previous?.pack?.dispose(); roomPacks.delete(activeRoom);
+        }
         activeRoom = room;
         parityRequired = true;
         const state = roomPacks.get(room);
@@ -291,11 +324,11 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
         original('Original renderer: changing rooms.');
         syncControls();
         if (demo && waitingRoom && waitingRoom !== room) finishRoomLoading();
-        if (demo && room === 'Scene1002' && demoHD && !state?.pack) {
+        if (demo && (demo.fullGame || room === 'Scene1002') && room && demoHD && !state?.pack) {
           waitingRoom = room;
-          demo.onStatus?.('Preparing HD room 2...', undefined, 'room-loading');
+          demo.onStatus?.(`Preparing HD ${demo.fullGame ? room : 'room 2'}...`, undefined, 'room-loading');
         }
-        if (room && (demo ? !state?.pack : !state) && !debug && (demo || ['127.0.0.1', 'localhost'].includes(location.hostname))) {
+        if (room && (demo ? demo.packs[room] && !state?.pack : !state) && !debug && (demo || ['127.0.0.1', 'localhost'].includes(location.hostname))) {
           installPack(demo ? demo.packs[room] : room === 'Scene1002' ? '/__private-room-pack/room2/room-pack.json' : '/__private-room-pack/room-pack.json', true, room).catch(() => {});
         }
       }
@@ -347,9 +380,10 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
           const items = frame.items.map(item => {
             const address = item.source.address;
             const source = snapshotSurface(item, frame.tick);
-            const key = `${source.rasterKey}-p${colors}-${item.transparent ? item.alphaColor : 'opaque'}`;
-            if (!debug && packEnabled && pack) {
-              nextKeys.push(...pack.nextKeys(key));
+             const key = `${source.rasterKey}-p${colors}-${item.transparent ? item.alphaColor : 'opaque'}`;
+             const packKey = demo?.fullGame ? pack?.resolveKey(key, frame.palette) ?? key : key;
+             if (!debug && packEnabled && pack) {
+               nextKeys.push(...pack.nextKeys(packKey));
             }
             const captured = catalog.get(key);
             if (captured && !captured.palette.every((value, i) => value === frame.palette[i])) throw new Error('Palette-key collision: original renderer retained.');
@@ -362,7 +396,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
             if (!variants.has(address) && variants.size >= 512) variants.delete(variants.keys().next().value);
             variants.set(address, known);
             if (source.width === 72 && source.height === 73) stats.leverVariants = Math.max(stats.leverVariants, known.size);
-            return { ...item, source, key, shadow: item.shadow ? intern(item.shadow) : undefined };
+             return { ...item, source, key: packKey, shadow: item.shadow ? intern(item.shadow) : undefined };
           });
           stats.rasterMs = performance.now() - start;
           latestDraws = items.map(item => ({ key: item.key, sourceWidth: item.source.width, sourceHeight: item.source.height, destX: item.destX, destY: item.destY, width: item.width, height: item.height, shadow: Boolean(item.shadow) }));
@@ -380,7 +414,10 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
           if (differences) {
             pack?.observe([]);
             stats.mismatches++;
-            if (!debug) { mode = 'original'; if (demo) demoHD = false; surfaceSnapshots.clear(); syncControls(); }
+            if (!debug) {
+              if (!demo?.fullGame) { mode = 'original'; if (demo) demoHD = false; }
+              parityRequired = true; surfaceSnapshots.clear(); syncControls();
+            }
             original(`Original fallback: ${differences} indexed pixels differ`);
             finishRoomLoading();
           } else {
@@ -401,7 +438,8 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
               const count = items.filter(item => !item.shadow && activeReplacements.has(item.key)).length;
               stats.hdDraws = count;
               if (count) stats.hdFrames++;
-              if (waitingRoom === activeRoom && !parityRequired && count && pack?.stats().missKeys.length === 0) finishRoomLoading();
+               const pending = pack?.stats();
+               if (waitingRoom === activeRoom && !parityRequired && count && (demo?.fullGame ? !pending?.pendingLoads && !pending?.queuedLoads : pending?.missKeys.length === 0)) finishRoomLoading();
               output.hidden = false;
               canvas.style.opacity = '0';
             } else { pack?.observe([]); original(`${activeRoom} / original selected`); }
@@ -455,7 +493,8 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     }
   };
   const installPack = async (files, automatic = false, room = activeRoom ?? 'Scene1001') => {
-    if (!['Scene1001', 'Scene1002'].includes(room)) throw new Error('Unsupported private pack room.');
+    if (!(demo?.fullGame ? validPackRoom(room) && demo.packs[room] : ['Scene1001', 'Scene1002'].includes(room))) throw new Error('Unsupported private pack room.');
+    const roomLabel = demo?.fullGame ? room : 'room 2';
     const previous = roomPacks.get(room);
     if (automatic && previous?.loading && !previous.controller.signal.aborted) return previous.promise;
     previous?.controller?.abort(); previous?.pack?.dispose();
@@ -478,7 +517,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
         onProgress: (loaded, total, phase) => {
           if (!demo || disposed || controller.signal.aborted) return;
           if (room === 'Scene1001' && !backgroundStarted) demo.onStartupProgress?.(loaded, total, phase);
-          else demo.onStatus?.(phase === 'download' ? 'Downloading HD room 2...' : 'Verifying HD room 2 and preparing its cache...',
+          else demo.onStatus?.(phase === 'download' ? `Downloading HD ${roomLabel}...` : `Verifying HD ${roomLabel} and preparing its cache...`,
             phase === 'download' && total ? Math.min(95, loaded / total * 95) : undefined,
             waitingRoom === room ? 'room-loading' : 'background');
         },
@@ -486,11 +525,11 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
         onChange: () => { if (!disposed && activeRoom === room && roomPacks.get(room) === state) tick = undefined; } });
       if (disposed || controller.signal.aborted || roomPacks.get(room) !== state) { loaded.dispose(); return; }
       if (loaded.manifest.room !== room) { loaded.dispose(); throw new Error('Private pack does not match the active room.'); }
-      if (demo && !loaded.backgrounds.has('gemini')) { loaded.dispose(); throw new Error('Demo HD requires a Gemini background.'); }
+       if (demo && !demo.fullGame && !loaded.backgrounds.has('gemini')) { loaded.dispose(); throw new Error('Demo HD requires a Gemini background.'); }
       state.pack = loaded; state.loading = false; state.enabled = automatic;
-      if (demo && room === 'Scene1002') demo.onStatus?.('HD room 2 is ready.', 100, 'background');
+       if (demo && (demo.fullGame || room === 'Scene1002')) demo.onStatus?.(`HD ${roomLabel} is ready.`, 100, 'background');
       if (automatic) {
-        const background = demo ? 'gemini' : loaded.backgrounds.has('gemini') ? 'gemini' : loaded.backgrounds.keys().next().value;
+        const background = loaded.backgrounds.has('gemini') ? 'gemini' : loaded.backgrounds.keys().next().value;
         if (background) loaded.selectBackground(background);
       }
       if (activeRoom !== room) return loaded.stats();
@@ -512,8 +551,8 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
         packLoading = false;
         find('proxy-pack-status').textContent = error.message;
       }
-      if (demo && room === 'Scene1002') {
-        demo.onStatus?.('HD room 2 could not be prepared. It will retry on room entry.', undefined, 'background');
+      if (demo && (demo.fullGame || room === 'Scene1002')) {
+        demo.onStatus?.(`HD ${roomLabel} could not be prepared. It will retry on room entry.`, undefined, 'background');
         if (waitingRoom === room) finishRoomLoading();
       }
       throw error;
@@ -534,7 +573,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
   };
   const selectPackBackground = id => {
     if (!pack) throw new Error('Load a private pack first.');
-    if (demo && id !== 'gemini') throw new Error('Demo HD requires the Gemini background.');
+    if (demo && !demo.fullGame && id !== 'gemini') throw new Error('Demo HD requires the Gemini background.');
     pack.selectBackground(id); find('proxy-pack-background').value = id;
     syncControls();
     tick = undefined;
@@ -550,9 +589,9 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     mode = viewControl.value === 'hd' ? 'proxy' : 'original';
     if (demo) demoHD = mode === 'proxy';
     if (demo && !demoHD) finishRoomLoading();
-    if (demo && demoHD && activeRoom === 'Scene1002' && !pack) {
+    if (demo && demoHD && activeRoom && (demo.fullGame ? demo.packs[activeRoom] : activeRoom === 'Scene1002') && !pack) {
       waitingRoom = activeRoom;
-      demo.onStatus?.('Preparing HD room 2...', undefined, 'room-loading');
+      demo.onStatus?.(`Preparing HD ${demo.fullGame ? activeRoom : 'room 2'}...`, undefined, 'room-loading');
       installPack(demo.packs[activeRoom], true, activeRoom).catch(() => {});
     }
     parityRequired = true;
@@ -676,10 +715,10 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     if (!demo || disposed || signal?.aborted || backgroundStarted) return;
     backgroundStarted = true;
     // Handle optional-room failures here; entry can retry a failed request.
-    return installPack(demo.packs.Scene1002, true, 'Scene1002').catch(() => {});
+     if (!demo.fullGame) return installPack(demo.packs.Scene1002, true, 'Scene1002').catch(() => {});
   };
   if (demo) {
-    const assets = [installPack(demo.packs.Scene1001, true, 'Scene1001')];
+    const assets = demo.fullGame ? [] : [installPack(demo.packs.Scene1001, true, 'Scene1001')];
     if (demo.cursor) assets.push(loadDemoCursor(demo.cursor, { signal: cursorController.signal }).then(value => {
       if (disposed) value.dispose(); else { demoCursor = value; cursorPixelsKey = undefined; }
     }));

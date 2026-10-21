@@ -16,6 +16,25 @@ with the respective authors. The project's GPL-3.0-or-later election does not
 override explicit MIT notices in individual project files or any third-party
 license.
 
+## Backstage Restoration References
+
+Five existing photographic references are included at the maintainer's explicit
+request in [tools/upscaling/references/backstage](tools/upscaling/references/backstage/README.md).
+Their [catalog](tools/upscaling/references/backstage/catalog.json) records byte
+sizes and SHA256. Photographer, original source URL and reuse license are
+currently unspecified; the project's software license does not relicense these
+photographs. They are reference material, not bundled game-resource exports.
+
+## Cursor Research Tooling
+
+The [HD cursor tools](tools/hd-cursor/README.md) use Blender (including its
+bundled NumPy) and host Pillow as separately installed dependencies; those
+packages are not vendored by the subproject. The repository software license
+does not establish or grant rights to the input models, game-specific geometry
+recipes or generated cursor artwork. Their distribution rights are unresolved,
+and they remain outside the public source set. See
+[Rights And Publication](tools/hd-cursor/docs/RIGHTS.md).
+
 ## ScummVM Runtime
 
 - Project: [ScummVM](https://www.scummvm.org/), copyright (C) 2001-2026 ScummVM contributors, with individual credits retained below.
@@ -26,7 +45,8 @@ license.
 - Build flags, filesystem exports and external linker overrides: [runtime.json](web/public/runtime/runtime.json). The original ScummVM source is not manually modified by this integration.
 
 `web/public/runtime/neverhood.dat` is the upstream ScummVM engine helper data,
-separate from the seven commercial game BLB archives that users must supply. It
+separate from the seven commercial game BLB archives. BYO users supply those
+locally; the HD prototype downloads them from its configured external release. It
 contains tables extracted by ScummVM's `devtools/create_neverhood` tool from a
 specific original executable; it is not an independently authored replacement
 game or a grant of rights to the original game's content. The corresponding
@@ -127,7 +147,10 @@ independent legal certification of compliance.
 
 The Neverhood name, characters, artwork, audio and commercial game data belong
 to their respective rights holders. Commercial BLBs and installers are not
-included in this repository or its static site. Users must provide files they
-are entitled to use. Open-source software licenses do not grant rights to those
+included in this repository or its static frontend. BYO users provide files they
+are entitled to use. The separately configured S3/CloudFront prototype release
+serves original BLBs, original videos inside those BLBs, and selected derived
+graphics. Operator authorization to publish is not rights-holder permission or
+legal clearance. Open-source software licenses do not grant rights to those
 game assets or legal immunity, and this project is not affiliated with or
 endorsed by ScummVM or the game's rights holders.

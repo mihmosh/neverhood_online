@@ -126,6 +126,38 @@ colors impossible through a 640x480 intermediate. It also checks runtime-hash
 rejection, original/proxy switching, menu fallback and normal Quit. Synthetic PNGs
 prove the pipeline, not AI image quality. No original game images are committed.
 
+## Current Full-Game HD Regression
+
+The current prototype uses the existing stock full-game runtime and external
+room ZIP loader; testing it does not rebuild or patch the engine. Serve the
+prepared full release with `NEVERHOOD_DEMO_DIR` on a loopback development server
+and run:
+
+```sh
+node test/browser-demo-full-game.mjs
+MOBILE=1 node test/browser-demo-full-game.mjs
+```
+
+The fixture defaults to `http://127.0.0.1:4191` (`TEST_ORIGIN` overrides it).
+Its private manifest is the local expected inventory; the checked-in page selects
+the public S3/CloudFront release. `DEMO_MANIFEST_URL` can explicitly choose the
+asset manifest. This passed natural Scene1001 -> Scene1002 -> Scene1004 traversal,
+desktop and emulated-mobile touch, Original/HD switching, indexed native parity,
+one ZIP per entered room, continuation beyond the old demo boundary, and a warm
+start without another room ZIP download. It does not inject room transitions or
+establish a full playthrough, complete HD coverage or physical-device support.
+
+`test/browser-demo-game.mjs` and `test/browser-demo-interactions.mjs` remain
+bounded two-room regression fixtures; serve their historical data, not the full
+release. Their completion-boundary expectations are not current product limits.
+
+`node scripts/verify-demo-videos.mjs --originals ORIGINAL_FILES_JSON --release HTTPS_MANIFEST`
+independently checks all seven original BLBs against local source hashes and
+downloads/hashes every public byte (638,122,574 bytes for the current release).
+The recorded audit found 551 original Smacker resources, all retained without
+transcoding. This is media-delivery integrity, not codec/gameplay certification.
+Neither check uploads user files, runs models or provisions cloud resources.
+
 ## Private Assets And Mapping
 
 ```sh

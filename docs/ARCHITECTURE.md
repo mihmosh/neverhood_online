@@ -3,10 +3,14 @@
 ## Product Boundary
 
 A static HTTPS site delivers the interface and ScummVM in WebAssembly.
-Installers, BLB archives and user saves are not sent to the server.
+In BYO mode, installers, imported BLBs and user saves are not uploaded.
 The user selects a game/installer folder or ZIP. Nested directories are searched
 automatically for a complete game or an installer with adjacent BIN parts.
 No technical file-by-file selection is exposed in the interface.
+The separate HD prototype downloads an explicitly configured S3/CloudFront
+release: seven original BLBs plus on-entry HD room ZIPs. This is external asset
+delivery, not an upload of a BYO user's local copy. The static frontend itself
+does not bundle commercial game data.
 The launcher uses original procedural CSS clay surfaces and a self-hosted OFL
 Mansalva font, not extracted game graphics or the game's font. A decorative CSS
 bud follows import state: animated while preparing, closed when ready, static for
@@ -25,6 +29,8 @@ avoid briefly showing the wrong controls during library discovery.
 3. Runtime adapter: connects the C++ engine, filesystem, input and saves.
 4. ScummVM: the existing Neverhood engine; original game logic stays in C++.
 5. Static server: serves only the client and allowlisted runtime artifacts.
+6. HD release host: serves pinned original media and lossless room/state ZIPs;
+   the external compositor and Cache Storage remain separate from engine logic.
 
 ## Import And Storage
 
@@ -125,7 +131,8 @@ Each Play creates a same-origin iframe with a fresh Emscripten runtime. Parent a
 child check origin, message source and a session nonce. Loading appears immediately
 in a fixed viewport overlay, with background scrolling and interaction disabled.
 SDL manages the drawable, high-DPI scale and resizing; CSS contains the scene in 4:3.
-Filtering is enabled. This scales original art; it is not an HD asset replacement.
+Filtering is enabled for the stock/BYO high-DPI path. That scaling alone is not
+an HD asset replacement; the separate HD compositor is described below.
 Resize handling follows the actual SDL GL/keyboard-focus window and its ID,
 including renderer recreation and later graphics initialization. It reapplies the
 embedded viewport through SDL if the drawable no longer matches the requested
@@ -174,9 +181,40 @@ Default outputs remain under ignored `private-assets/`, with a required private
 marker, symlink checks and source/public/build-path refusal. The public build does
 not copy this workspace; source packaging skips private/marker-bearing trees and
 database/media files. CI audits Git and public trees, but does not perform an
-artwork-similarity scan. All media processing is local and models are not run.
+artwork-similarity scan. These catalog commands operate locally without invoking
+models; separately documented upscaling tools and historical cloud runs have
+their own execution/acceptance boundaries.
 
-## Future HD Replacements
+## Current External HD Delivery
+
+The current prototype uses the unchanged stock full-game runtime. It does not
+load the historical restricted demo binary or introduce new engine exports,
+source overlays or WASM patches. A read-only adapter follows common Module/Scene
+fields; it does not interpret every module as the Module1000 subclass.
+
+One private original-to-HD table records native identities, geometry, used-palette
+RGB proofs, replacement PNG hashes and room membership. It preserves the two
+working legacy room mappings. Existing version-2 room ZIPs opt into lossless PNG
+images; the same loader validates and caches them. The current release contains
+134 room/state packs, not 134 unique rooms or proof of complete HD coverage.
+
+Native background fingerprints select a room pack on entry. Indexed composition
+is checked against the native backbuffer before HD presentation. Palette proofs
+ignore unrelated palette slots and the unused fourth byte, but reject changed
+used colors. Menus, unsupported output, ambiguous contexts and absent HD assets
+retain native output. Inactive decoded room packs are released while verified
+Cache Storage entries survive reload; hashes are checked again on reuse.
+
+All seven original BLBs (638,122,574 bytes) remain shared startup data in MEMFS,
+including all 551 original Smacker resources. Cutscene/navigation upscaling is
+in progress, so original videos remain in use without transcoding. This delivery
+does not stream the original game by room and is not a low-memory mobile design.
+See [the current mapping contract](ROOM_HD_RESTORATION.md#full-game-room-mapping-2026-10-21)
+and [deployment](DEPLOYMENT.md#current-hd-prototype-release).
+
+## Historical First-Room Adapter Experiment
+
+The following describes the earlier isolated prototype, not current delivery.
 
 The opt-in `?renderer=room1-proxy` experiment reads the completed render queue from
 the exact stock WASM identified by SHA-256. Clang layouts are generated from

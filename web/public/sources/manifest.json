@@ -58,14 +58,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 1390988,
-      "sha256": "9ffbf3be6a29e61ef9a513c4a24b3e7ebf0cd17d9a0340c969cca4c058f4df30",
+      "bytes": 3370008,
+      "sha256": "6108286848246cbe973b1fa433437beeb29ff7da6ee6427cc38c0c42a44738c8",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 1390988,
-      "archiveSha256": "9ffbf3be6a29e61ef9a513c4a24b3e7ebf0cd17d9a0340c969cca4c058f4df30"
+      "archiveBytes": 3370008,
+      "archiveSha256": "6108286848246cbe973b1fa433437beeb29ff7da6ee6427cc38c0c42a44738c8"
     }
   ],
   "files": [
@@ -126,32 +126,32 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 1390988,
-      "sha256": "9ffbf3be6a29e61ef9a513c4a24b3e7ebf0cd17d9a0340c969cca4c058f4df30",
+      "bytes": 3370008,
+      "sha256": "6108286848246cbe973b1fa433437beeb29ff7da6ee6427cc38c0c42a44738c8",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 1390988,
-      "archiveSha256": "9ffbf3be6a29e61ef9a513c4a24b3e7ebf0cd17d9a0340c969cca4c058f4df30"
+      "archiveBytes": 3370008,
+      "archiveSha256": "6108286848246cbe973b1fa433437beeb29ff7da6ee6427cc38c0c42a44738c8"
     },
     {
       "name": "REBUILD.sh",
-      "bytes": 3515,
-      "sha256": "77aee611feedae492a2eced527d70cae95123b1ab4d9c40a572f89f6ebd52d33"
+      "bytes": 4167,
+      "sha256": "2d3b509fd5be56ee1fc2998707cb1e0569f63e9b84096bffd7f8c7948936e74b"
     },
     {
       "name": "inventory.json",
-      "bytes": 6514611,
-      "sha256": "04e6db1c80ef2fd0910fd4e6c67701ac0320e61639fba12cbeb5855cc639eee5"
+      "bytes": 6552863,
+      "sha256": "43cac2dc8d2d456f928c095188dc2cb0ea5979c7f7c3ec214ae33f9da5993318"
     },
     {
       "name": "README.txt",
-      "bytes": 5691,
-      "sha256": "f06d01adde91a93098abccb8ebcc038c341051d3cea4773e5c2311fa6326bc72"
+      "bytes": 6469,
+      "sha256": "c5d73cbd4bbdf5c8b598adea963cb4607c6269b450d3c5fb9e4fabc8cb298488"
     }
   ],
-  "totalBytes": 39104665,
+  "totalBytes": 41123367,
   "chunkMaximumBytes": 16777216,
   "runtimeRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
   "extractorVersion": "1.9",

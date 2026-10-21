@@ -1,7 +1,15 @@
 import { REQUIRED_FILES } from './validation.js';
 
-export const DEMO_LIMITS = Object.freeze({ manifest: 1024 ** 2, file: 512 * 1024 ** 2, total: 768 * 1024 ** 2, roomArchive: 128 * 1024 ** 2 });
+export const DEMO_LIMITS = Object.freeze({ manifest: 1024 ** 2, file: 512 * 1024 ** 2, total: 768 * 1024 ** 2,
+  roomArchive: 128 * 1024 ** 2, losslessRoomArchive: 512 * 1024 ** 2 });
 const hashPattern = /^[a-f0-9]{64}$/;
+const roomPattern = /^[A-Za-z][A-Za-z0-9_-]{0,95}$/;
+const sourceKeyPattern = /^\d{1,4}x\d{1,4}-\d{1,5}-[a-f0-9]{8}-p[a-f0-9]{8}-(?:opaque|\d{1,3})$/;
+export const validPaletteProof = proof => proof && typeof proof === 'object' && !Array.isArray(proof) &&
+  Object.keys(proof).length === 2 && Array.isArray(proof.indices) && proof.indices.length <= 256 &&
+  proof.indices.every((index, offset) => Number.isInteger(index) && index >= 0 && index <= 255 &&
+    (offset === 0 || index > proof.indices[offset - 1])) &&
+  typeof proof.rgb === 'string' && proof.rgb.length === 6 * proof.indices.length && /^[a-f0-9]*$/.test(proof.rgb);
 export const demoPath = path => typeof path === 'string' && path.length <= 256 &&
   !/[\\:%?#\x00-\x20\x7f]/.test(path) && path.split('/').every(part => part && part !== '.' && part !== '..');
 
@@ -33,11 +41,23 @@ export function validateDemoManifest(manifest, sourceRuntimeSHA256) {
         !Number.isSafeInteger(entry.bytes) || entry.bytes < 16 || entry.bytes > DEMO_LIMITS.file || !hashPattern.test(entry.sha256)) throw new Error('Invalid demo game file.');
     names.add(entry.name); paths.add(entry.file); total += entry.bytes;
   }
-  if (total > DEMO_LIMITS.total || !manifest.packs || Object.keys(manifest.packs).length !== 2 || !demoPath(manifest.cursor)) throw new Error('Incomplete or oversized demo release.');
-  for (const room of ['Scene1001', 'Scene1002']) {
+  const rooms = manifest.fullGame === true ? Object.keys(manifest.packs ?? {}) : ['Scene1001', 'Scene1002'];
+  if (total > DEMO_LIMITS.total || !manifest.packs || !demoPath(manifest.cursor) ||
+      (manifest.fullGame === true ? manifest.version !== 2 || !rooms.length || rooms.length > 2048 || !manifest.rooms || Object.keys(manifest.rooms).length !== rooms.length : Object.keys(manifest.packs).length !== 2)) throw new Error('Incomplete or oversized demo release.');
+  const triggers = new Set();
+  for (const room of rooms) {
+    if (!roomPattern.test(room)) throw new Error('Invalid demo room identity.');
+    if (manifest.fullGame === true) {
+      const keys = manifest.rooms[room]?.backgroundKeys;
+      if (!Array.isArray(keys) || !keys.length || keys.length > 64 || new Set(keys).size !== keys.length || keys.some(key => !sourceKeyPattern.test(key) || triggers.has(key))) throw new Error('Invalid or ambiguous demo room triggers.');
+      for (const key of keys) triggers.add(key);
+      const bindings = manifest.rooms[room].backgroundBindings;
+      if (bindings !== undefined && (!Array.isArray(bindings) || !bindings.length || bindings.length > 64 ||
+          bindings.some(binding => !keys.includes(binding.key) || !validPaletteProof(binding.palette) || !binding.palette.indices.length))) throw new Error('Invalid background palette proof.');
+    }
     const entry = manifest.packs[room];
     if (manifest.version === 1 ? !demoPath(entry) : !entry || !demoPath(entry.file) || !entry.file.endsWith('.zip') ||
-        !Number.isSafeInteger(entry.bytes) || entry.bytes < 22 || entry.bytes > DEMO_LIMITS.roomArchive || !hashPattern.test(entry.sha256)) throw new Error('Invalid demo room delivery.');
+        !Number.isSafeInteger(entry.bytes) || entry.bytes < 22 || entry.bytes > (manifest.fullGame === true ? DEMO_LIMITS.losslessRoomArchive : DEMO_LIMITS.roomArchive) || !hashPattern.test(entry.sha256)) throw new Error('Invalid demo room delivery.');
     const path = manifest.version === 1 ? entry : entry.file;
     if (paths.has(path) || path === manifest.cursor || path === 'manifest.json') throw new Error('Duplicate demo asset path.');
     paths.add(path);

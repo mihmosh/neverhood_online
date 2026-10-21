@@ -2,13 +2,16 @@
 
 [![CI](https://github.com/mihmosh/neverhood_online/actions/workflows/ci.yml/badge.svg)](https://github.com/mihmosh/neverhood_online/actions/workflows/ci.yml)
 
-Play your own copy of The Neverhood directly in your browser.
+Play The Neverhood in your browser through the BYO importer or the separate
+Original/HD prototype.
 
 Neverhood Online is an independent, open-source browser interface around
 [ScummVM](https://www.scummvm.org/)'s existing Neverhood engine, compiled to
 WebAssembly with [Emscripten](https://emscripten.org/). It is not a new game
 engine, a new reverse-engineering effort, an official release or a remaster.
-**You supply the game. No game archives or installers are included.**
+**The repository and static frontend contain no commercial game archives or
+installers.** BYO import uses your local copy; the separately configured HD
+prototype downloads an external S3/CloudFront release.
 
 [Play in your browser](https://neverhood-online.vercel.app) |
 [Source code](https://github.com/mihmosh/neverhood_online) |
@@ -18,8 +21,9 @@ engine, a new reverse-engineering effort, an official release or a remaster.
 ![Neverhood Online onboarding interface, without game artwork](docs/images/onboarding.png)
 
 The launcher uses original CSS clay surfaces, inset fields and a small animated
-bud, plus the independently licensed Mansalva typeface. No game screenshots,
-sprites, textures, videos or original game font are used in the site design.
+bud, plus the independently licensed Mansalva typeface. The BYO onboarding design
+does not use game artwork or the original game font. The separate HD page displays
+game-derived previews and gameplay from the configured asset release.
 The bud follows actual import state and respects reduced-motion preferences.
 
 ## Play With Your Own Copy
@@ -69,7 +73,7 @@ important progress before clearing site data or changing hostname.
 
 ### Storage And Compatibility
 
-- Desktop Chromium is the current verified target. Firefox, Safari and mobile gameplay are not verified.
+- Desktop Chromium is the current verified target. The HD prototype's three-scene route also passed touch input in an emulated mobile Chromium viewport; this is not physical-device, mobile-import, Firefox or Safari certification.
 - Use sufficient free disk space and RAM. Temporary extraction can need additional space alongside the final library; private browsing may impose stricter limits.
 - Launch currently copies the game resources from OPFS into the runtime's RAM filesystem. This is not streaming playback or a low-memory mobile implementation.
 - Browser storage belongs to the exact site origin. Changing hostname or port creates separate storage; clearing site data or browser eviction can remove your library and saves. Keep your original files.
@@ -80,55 +84,95 @@ important progress before clearing site data or changing hostname.
 This is an early, working desktop-oriented project, not a promise of complete
 game compatibility. Real Chromium checks have covered folder and installer ZIP
 import, reload persistence, the first room and Escape menu, focused high-DPI
-4:3 rendering, resizing, in-game Quit and replay without reloading.
+4:3 rendering, resizing, in-game Quit and replay without reloading. The current HD
+prototype uses the unchanged full-game runtime and has passed the natural
+Scene1001 -> Scene1002 -> Scene1004 route beyond the old demo boundary, desktop
+and emulated touch input, original-indexed frame parity and a warm room-cache
+restart. Its S3 release retains all seven original BLBs, including the original
+cutscene and navigation videos.
 
 **Important limitations:**
 
 - A full playthrough and audible sound have not been verified.
 - Native save import/export, overwrite backups and one real in-game save/exit/reload/load cycle were tested in Chromium. This does not establish reliability for every edition or platform; keep external backups of important progress.
 - Offline relaunch is not ready. Local game storage alone does not make the site available offline.
-- HD replacements are limited to the separate two-room demo. This is not a whole-game HD remaster; normal BYO play does not download the demo assets.
+- HD replacements use room/state packs in the separate full-game prototype. This is not proof of complete HD coverage or a whole-game remaster; unresolved layers, palette/state variants and original videos remain native. Normal BYO play does not download the prototype assets.
 
-The automated suite has passed 240 tests; one compiler-dump comparison is skipped
-when its optional local toolchain outputs are absent. This is not a substitute for gameplay
+The automated suite includes importer, renderer, room-cache, release and media
+integrity checks; compiler-dump comparisons require optional local toolchain
+outputs. This is not a substitute for gameplay
 testing. See [testing](docs/TESTING.md) and the [verification log](docs/PLAN.md)
 for scope and outstanding work.
 
-## Two-Room HD Demo
+## Full-Game Original/HD Prototype
 
 [Open HD Demo](https://neverhood-online.vercel.app/hd-demo/) separately from the
-normal BYO-import launcher. The demo downloads its data automatically and starts
-in the first room. An independently built runtime limits play to the first two
-rooms and the first room's window view, completing before any out-of-scope scene
-or module is created. Saves, persistent engine settings and full-game menus are
-disabled. Original/HD switching does not restart gameplay. HD uses only Gemini
-backgrounds and the prepared Blender cursor states, with native cursor fallback
-for other gestures and palettes.
+normal BYO-import launcher. The prototype downloads its data automatically and
+uses the existing stock full-game runtime without engine patches or new WASM
+builds. The old two-room completion boundary is not used. Native engine menus and
+save storage are enabled; Original/HD switching does not restart gameplay. The
+historical bounded runtime remains packaged only for old releases and regression
+fixtures, not as the current full-game engine.
 
-Each HD room is delivered as one SHA256-pinned STORE ZIP. Startup prepares only
-the first room and cursor; the second room starts downloading in the background
-after the first playable frame. The browser validates and extracts archives into
-Cache Storage; subsequent launches read verified images from that cache without
-downloading the room ZIPs again. Loading progress is monotonic and background
-updates do not reopen the startup overlay.
-Unavailable or quota-limited storage falls back to session memory. Game data and
-derived media live outside Git and the static website, on the configured asset
-host. The current game-data bundle is conservative, not a proven minimal resource
-closure. Hardware-GPU performance and every puzzle path are not yet certified.
+The current release has 134 room/state packs, not 134 unique rooms. A single
+private original-to-HD table binds source resources/frames, raster geometry,
+palette evidence and replacement PNG hashes. It preserves the two previously
+working rooms and drives every room ZIP; filenames are not runtime identities.
+The external renderer selects a pack from the observed native background and
+retains the original output for uncertain bindings. See the
+[current mapping contract](docs/ROOM_HD_RESTORATION.md#full-game-room-mapping-2026-10-21).
+
+Each HD pack is a SHA256-pinned STORE ZIP of lossless PNGs. It loads on entry to
+its room/state, is verified into Cache Storage and is reused without another ZIP
+download. Inactive decoded packs are released. Palette proofs check used RGB
+entries rather than unrelated palette slots; changed used colors fail closed.
+The full-game path verifies indexed composition before HD presentation. Legacy
+WebP fixtures retain their older delivery contract; new game graphics are not
+lossily re-encoded. Existing small comparison previews remain unchanged.
+
+The original seven BLBs are shared startup data: 638,122,574 bytes, currently
+loaded into the runtime's RAM filesystem, not streamed room-by-room. All 551
+original Smacker resources are preserved, covering the game's original cutscene
+and navigation media. No movie is replaced by an upscaling experiment. Video
+restoration remains work in progress and is not a prerequisite for playing the
+original videos. Lossless HD ZIPs can be large, up to a bounded 512 MiB; this is
+not a low-memory mobile implementation. Unavailable/quota-limited persistent
+storage falls back to session memory. Hardware-GPU performance, a full playthrough
+and every puzzle path are not yet certified.
 
 Set this Vercel build-time environment variable, then redeploy:
 
 ```text
-NEVERHOOD_DEMO_MANIFEST_URL=https://YOUR_ASSET_HOST/manifest.json
+NEVERHOOD_DEMO_MANIFEST_URL=https://d3gutt3a0gjwwo.cloudfront.net/full-game-lossless-v1/manifest.json
 ```
 
-The asset host must allow anonymous CORS GET/HEAD from the website. Without that
-variable the production demo remains explicitly unavailable, while BYO import
-continues to work. Local development can use `NEVERHOOD_DEMO_DIR` pointing to a
-prepared release outside the repository/public trees. Media preparation uses
-`build:demo-data`, `build:demo-cursor` and `prepare:demo`; runtime rebuilds use
-`build:demo-runtime`. Normal deployment uses the committed runtime and its matching
-corresponding-source archives, without requiring the local game or toolchain.
+The checked-in `web/hd-demo/config.json` already selects that S3/CloudFront
+release; the build variable explicitly overrides it. The host must allow anonymous
+CORS GET/HEAD. Updating a Vercel variable requires a new deployment of the updated
+frontend, not just the old two-room code. Use `npm run build`, output `dist`, and
+Node.js 22.x. AWS credentials are not needed by Vercel or the browser.
+
+Publish the reviewed source tree, new scripts/tests and regenerated corresponding
+sources together. Do not commit only a generated source archive while leaving its
+source files untracked. Normal deployment copies existing runtime artifacts and
+does not rebuild the engine. Game archives, generated images and model weights
+stay outside Git and `dist`; only the explicit asset release is uploaded to S3.
+BYO import still keeps the user's imported files local. External publication is
+not a declaration that game/media redistribution rights have been resolved.
+
+Local QA can serve a prepared release using `NEVERHOOD_DEMO_DIR`; browser fixtures
+can explicitly select its loopback `/__private-demo/manifest.json`. This does not
+override the normal page's checked-in public URL. `prepare:demo -- --room-index`
+uses mapped lossless room ZIPs and the full original-file inventory; select
+`--runtime web/public/runtime/runtime.json`. `build:demo-data` nonvideo/repack
+modes and `build:demo-runtime` describe historical fixtures, not the current
+full-game deployment. Original-video delivery can be audited independently:
+
+```sh
+node scripts/verify-demo-videos.mjs \
+  --originals private-assets/upscaling/full-game-v1/original-files.json \
+  --release https://d3gutt3a0gjwwo.cloudfront.net/full-game-lossless-v1/manifest.json
+```
 
 The comparison on `/hd-demo/` uses two small, cropped screenshot previews hosted
 beside the demo manifest: `room1-original-preview-v2.webp` and
@@ -141,10 +185,35 @@ and Play button. HD demo documents, including `player.html?demo=1`, do not send
 COEP; the single-threaded demo does not need SharedArrayBuffer. Other pages keep
 their isolation headers. Starting the game sends the YouTube pause command.
 
+## Open Upscaling Workspace
+
+The [upscaling workspace](tools/upscaling/README.md) collects the two-pipeline
+design, shared manifest contract, mask policy, sanitized SeedVR2 experiment
+results and the original Gemini background prompt. Five deliberately selected
+backstage/set-photo references are included with a provenance catalog; their
+photographic rights are separate from the software license. Models, extracted
+frames, generated media, raw API responses and credentials remain outside Git.
+The animation branch is consolidated under
+[tools/upscaling/realesrnet](tools/upscaling/realesrnet/README.md), including the
+completed batch, AWS operations, comparisons and historical API tools. Its
+[English handoff](tools/upscaling/realesrnet/HANDOFF.md) defines review boundaries
+for the orchestrator. Cursor and background branches remain separate.
+
+## Cursor Tooling
+
+The separate [HD cursor tooling subproject](tools/hd-cursor/README.md) contains
+the Blender renderer, alpha-aware sprite packager, tests and technical
+documentation. Its public scope is generic software, not a freely licensed
+cursor artwork pack. Rights to the game-inspired models, shape recipes and
+renders have not been established. Models, recipes and the full research pack
+remain outside public sources; selected pointer artwork is externally delivered
+by the prototype without a claim of redistribution clearance.
+See its [publication boundary](tools/hd-cursor/docs/RIGHTS.md).
+
 ## Experimental First-Room Renderer
 
-The following lab notes describe the earlier stock-runtime experiment, separate
-from the bounded two-room demo above.
+The following historical lab notes describe the earlier first-room experiment,
+not the current full-game prototype above.
 
 Restoration work is split into two independent tasks:
 [HD backgrounds and sprites](docs/ROOM_HD_RESTORATION.md), and
@@ -360,8 +429,11 @@ The Neverhood's name, characters, artwork, music and commercial game data remain
 the property of their respective rights holders. Software licensing does not
 grant rights to those assets, authorize redistribution of your game copy, or
 provide legal immunity. Use only files you are entitled to use and follow
-applicable law. No gameplay images, original game archives or installers are
-provided by this project.
+applicable law. Commercial archives and generated media are excluded from Git
+and the static frontend. The experimental external release serves original BLBs
+and selected derived media; it does not serve installers. This delivery and the
+operator's publication decision do not establish redistribution rights or legal
+clearance.
 
 This is an independent project with AI-assisted first-party development, not an
 endorsement by ScummVM, the original game's creators or any rights holder.

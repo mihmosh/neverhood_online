@@ -2,7 +2,11 @@
 
 Task split recorded on 2026-10-18. This task is independent of
 [HD backgrounds and sprites](ROOM_HD_RESTORATION.md). The working research project
-is `../../neverhood-upscaling/`; game-derived media remain private there under `data/`.
+was `../../neverhood-upscaling/`; those research artifacts remain private under `data/`.
+This dated task split is historical. Current cutscene/navigation upscaling is
+still in progress. Gameplay uses the original Smacker resources retained in all
+seven S3-backed BLBs, not incomplete video experiments. Their byte-exact HTTPS
+delivery has been verified; see [the current release](DEPLOYMENT.md#current-hd-prototype-release).
 
 ## Goal And Boundary
 

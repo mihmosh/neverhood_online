@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { loadReplacementPack, loadReplacementPackURL, PACK_LIMITS, validateReplacementManifest, validateImageHeader } from '../web/prototype/replacement-pack.js';
+import { loadReplacementPack, loadReplacementPackURL, PACK_LIMITS, validateReplacementManifest, validateImageHeader, paletteProofMatches } from '../web/prototype/replacement-pack.js';
 
 const runtimeSHA256 = 'a'.repeat(64);
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -51,6 +51,189 @@ function sharedFixture() {
   value.files = () => [file('room-pack.json', JSON.stringify(value.manifest)), ...value.images];
   return value;
 }
+
+const proofId = 'e'.repeat(64);
+function proofFixture(count = 1, backgrounds = false) {
+  const value = fixture(count, backgrounds), manifest = value.manifest;
+  manifest.version = 2; manifest.lossless = true; manifest.images = [];
+  manifest.paletteProofs = { [proofId]: { indices: [1, 255], rgb: '123456abcdef' } };
+  for (const entry of [...manifest.entries, ...manifest.backgrounds]) {
+    const { file, sha256 } = entry;
+    const id = digest(file);
+    manifest.images.push({ id, file, sha256, format: 'png', width: entry.width, height: entry.height });
+    delete entry.file; delete entry.sha256;
+    Object.assign(entry, { image: id, crop: { x: 0, y: 0, width: entry.width, height: entry.height }, flipX: false, paletteProof: proofId });
+  }
+  const palette = new Uint8Array(1024);
+  palette.set([0x12, 0x34, 0x56, 0xff], 4); palette.set([0xab, 0xcd, 0xef, 0xff], 255 * 4);
+  return { ...value, palette };
+}
+
+test('palette proofs compare only declared RGB, including index zero when declared', () => {
+  const { palette, manifest } = proofFixture(), proof = manifest.paletteProofs[proofId];
+  assert.equal(paletteProofMatches(proof, palette), true);
+  palette[0] = 42; palette[7] = 0; palette[1023] = 17;
+  assert.equal(paletteProofMatches(proof, palette), true, 'unused RGB and used fourth bytes do not affect native RGB');
+  assert.equal(paletteProofMatches({ indices: [0], rgb: '2a0000' }, palette), true);
+  assert.equal(paletteProofMatches({ indices: [0], rgb: '000000' }, palette), false);
+  palette[4]--;
+  assert.equal(paletteProofMatches(proof, palette), false);
+  for (const invalid of [null, [], new Uint8Array(1023), new Uint16Array(1024)]) {
+    assert.equal(paletteProofMatches(proof, invalid), false);
+  }
+  assert.equal(paletteProofMatches(null, palette), false);
+});
+
+test('lossless proofs validate table shape, ordered indices, exact lowercase RGB and references', async () => {
+  const changes = [
+    m => { m.paletteProofs = null; }, m => { m.paletteProofs = []; }, m => { m.paletteProofs = 'proof'; },
+    m => { m.paletteProofs = { BAD: m.paletteProofs[proofId] }; },
+    m => { m.paletteProofs[proofId] = null; }, m => { m.paletteProofs[proofId] = []; },
+    m => { m.paletteProofs[proofId].extra = true; },
+    m => { m.paletteProofs[proofId].indices = [255, 1]; },
+    m => { m.paletteProofs[proofId].indices = [1, 1]; },
+    m => { m.paletteProofs[proofId].indices = [-1, 255]; },
+    m => { m.paletteProofs[proofId].indices = [1, 256]; },
+    m => { m.paletteProofs[proofId].indices = [1, 2.5]; },
+    m => { m.paletteProofs[proofId].indices = ['1', 255]; },
+    m => { m.paletteProofs[proofId].indices = Array(257).fill(1); },
+    m => { m.paletteProofs[proofId].indices = {}; },
+    m => { m.paletteProofs[proofId].rgb = '123456ABCDEf'; },
+    m => { m.paletteProofs[proofId].rgb = '123456abcdeg'; },
+    m => { m.paletteProofs[proofId].rgb = '123456'; },
+    m => { m.paletteProofs[proofId].rgb = 123456; },
+    m => { m.entries[0].paletteProof = 'f'.repeat(64); },
+    m => { m.entries[0].paletteProof = null; },
+    m => { m.entries[0].paletteProof = 'INVALID'; },
+    m => { delete m.paletteProofs; },
+    m => { m.backgrounds[0].paletteProof = 'f'.repeat(64); },
+    m => { m.paletteProofs = Object.fromEntries(Array.from({ length: PACK_LIMITS.entries + 1 }, (_, i) => [i.toString(16).padStart(64, '0'), { indices: [], rgb: '' }])); }
+  ];
+  for (const change of changes) {
+    const value = proofFixture(1, true); change(value.manifest);
+    await assert.rejects(load(value), /paletteProof/);
+  }
+  for (const value of [fixture(1), sharedFixture()]) {
+    value.manifest.paletteProofs = {};
+    await assert.rejects(load(value), /paletteProof/);
+    delete value.manifest.paletteProofs; value.manifest.entries[0].paletteProof = proofId;
+    await assert.rejects(load(value), /paletteProof/);
+  }
+});
+
+test('per-room palette tables allow 4500 full contexts within the bounded 16 MiB manifest', async () => {
+  const value = proofFixture();
+  const proof = { indices: Array.from({ length: 256 }, (_, i) => i), rgb: 'abcdef'.repeat(256) };
+  value.manifest.paletteProofs = Object.fromEntries(Array.from({ length: 4500 }, (_, i) => [i.toString(16).padStart(64, '0'), proof]));
+  value.manifest.entries[0].paletteProof = '0'.repeat(64);
+  const bytes = Buffer.byteLength(JSON.stringify(value.manifest));
+  assert.ok(bytes > 4 * 1024 ** 2 && bytes < PACK_LIMITS.manifest);
+  const pack = await load(value);
+  assert.equal(Object.keys(pack.manifest.paletteProofs).length, 4500);
+  assert.equal(pack.entries.get(key(1)).paletteProof, '0'.repeat(64));
+  pack.dispose();
+});
+
+test('resolveKey verifies exact and aliased used RGB without touching loader state', async () => {
+  const value = proofFixture(), log = [], pack = await load(value, { decode: decoder(log) });
+  const raw = key(1).replace('-p12345678-', '-p87654321-');
+  const before = pack.stats();
+  assert.equal(pack.resolveKey(key(1), value.palette), key(1));
+  value.palette[200 * 4] = 99; value.palette[7] = 12;
+  assert.equal(pack.resolveKey(raw, value.palette), key(1), 'returns the original manifest key, not a synthesized key');
+  value.palette[4]--;
+  assert.equal(pack.resolveKey(raw, value.palette), undefined, 'used RGB fade falls back');
+  assert.equal(pack.resolveKey(key(1), value.palette), undefined, 'an exact raw CRC still needs RGB verification');
+  assert.equal(pack.resolveKey(raw), undefined);
+  assert.deepEqual(pack.stats(), before);
+  for (const state of ['cache', 'pending', 'wanted', 'queue', 'hints', 'failed']) assert.equal(pack[state].size, 0);
+  assert.equal(log.length, 0);
+  pack.dispose(); assert.equal(pack.resolveKey(key(1), value.palette), undefined);
+});
+
+test('proof aliases preserve pixel CRC, dimensions, pitch and transparency exactly', async () => {
+  const value = proofFixture(), pack = await load(value);
+  for (const raw of ['unknown', key(2), key(1, 2), key(1, 1, 2),
+    key(1).replace('1x1-1-', '1x1-2-'), key(1).replace(/-0$/, '-opaque'), key(1).replace(/-0$/, '-1')]) {
+    assert.equal(pack.resolveKey(raw, value.palette), undefined, raw);
+  }
+  value.palette[0] = 64;
+  assert.equal(pack.resolveKey(key(1), value.palette), key(1), 'transparent actor index zero is ignored only because its proof omits zero');
+  pack.dispose();
+  const opaque = proofFixture();
+  opaque.manifest.entries[0].key = key(1).replace(/-0$/, '-opaque');
+  opaque.manifest.paletteProofs[proofId] = { indices: [0, 1, 255], rgb: '000000123456abcdef' };
+  const opaquePack = await load(opaque), canonical = opaque.manifest.entries[0].key;
+  assert.equal(opaquePack.resolveKey(canonical, opaque.palette), canonical);
+  assert.equal(opaquePack.resolveKey(key(1), opaque.palette), undefined);
+  opaque.palette[0] = 64;
+  assert.equal(opaquePack.resolveKey(canonical, opaque.palette), undefined, 'opaque index zero is real RGB');
+  opaquePack.dispose();
+});
+
+test('proof aliases honor the selected background, including original native fallback', async () => {
+  const value = proofFixture(1, true), pack = await load(value);
+  const canonical = value.manifest.backgrounds[0].key, raw = canonical.replace('-p12345678-', '-p87654321-');
+  assert.equal(pack.resolveKey(canonical, value.palette), undefined);
+  assert.equal(pack.resolveKey(raw, value.palette), undefined);
+  assert.equal(pack.entryFor(canonical), undefined);
+  for (const id of ['gemini', 'realesrnet']) {
+    pack.selectBackground(id);
+    assert.equal(pack.resolveKey(raw, value.palette), canonical);
+    assert.equal(pack.entryFor(canonical).id, id);
+    assert.equal(pack.entryFor(canonical).paletteProof, proofId);
+  }
+  pack.selectBackground('original');
+  assert.equal(pack.resolveKey(raw, value.palette), undefined);
+  assert.equal(pack.resolveKey(key(1), value.palette), key(1));
+  pack.dispose();
+});
+
+test('proof aliases fail closed for different images or flips, but identical replacements choose the first canonical key', async () => {
+  for (const mode of ['image', 'flip', 'same']) {
+    const value = proofFixture(2), [first, second] = value.manifest.entries;
+    second.key = first.key.replace('-p12345678-', '-p87654321-');
+    if (mode !== 'image') {
+      second.image = first.image; value.manifest.images.pop(); value.images.pop();
+      if (mode === 'flip') second.flipX = true;
+    }
+    const pack = await load(value), expected = mode === 'same' ? first.key : undefined;
+    assert.equal(pack.resolveKey(first.key, value.palette), expected, `${mode}: exact key cannot bypass ambiguity`);
+    assert.equal(pack.resolveKey(second.key, value.palette), expected);
+    assert.equal(pack.resolveKey(first.key.replace('-p12345678-', '-pffffffff-'), value.palette), expected);
+    pack.dispose();
+  }
+  const value = sharedFixture();
+  value.manifest.lossless = true;
+  const image = value.manifest.images[0], bytes = png(2, 2);
+  Object.assign(image, { format: 'png', file: 'images/shared.png', sha256: digest(bytes) });
+  value.images = [file(image.file, bytes)];
+  value.manifest.paletteProofs = { [proofId]: { indices: [1], rgb: '123456' } };
+  const [first, second] = value.manifest.entries;
+  first.paletteProof = second.paletteProof = proofId;
+  second.key = first.key.replace('-p12345678-', '-p87654321-'); second.flipX = first.flipX;
+  const pack = await load(value), palette = new Uint8Array(1024);
+  palette.set([0x12, 0x34, 0x56], 4);
+  assert.equal(pack.resolveKey(first.key, palette), undefined, 'different crop placements are ambiguous even for one physical image');
+  pack.dispose();
+});
+
+test('legacy and proof-free lossless bindings remain exact-only without requiring a palette', async () => {
+  for (const value of [fixture(1, true), sharedFixture(), proofFixture()]) {
+    delete value.manifest.paletteProofs;
+    for (const entry of value.manifest.entries) delete entry.paletteProof;
+    const pack = await load(value);
+    assert.equal(pack.resolveKey(key(1)), key(1));
+    assert.equal(pack.resolveKey(key(1).replace('-p12345678-', '-p87654321-'), new Uint8Array(1024)), undefined);
+    assert.equal(pack.resolveKey('unknown'), undefined);
+    if (value.manifest.backgrounds.length) {
+      const canonical = value.manifest.backgrounds[0].key;
+      assert.equal(pack.resolveKey(canonical), undefined);
+      pack.selectBackground('gemini'); assert.equal(pack.resolveKey(canonical), canonical);
+    }
+    pack.dispose();
+  }
+});
 
 test('v2 shares one physical WebP across independent mirrored logical bindings', async () => {
   const value = sharedFixture(), log = [];
@@ -445,7 +628,7 @@ test('manifest room values are exactly the two supported rooms, with unchanged l
     const value = fixture(1); value.manifest.room = room;
     assert.throws(() => validateReplacementManifest(value.manifest, runtimeSHA256), /schema/);
   }
-  assert.deepEqual(PACK_LIMITS, { files: 8192, entries: 8192, manifest: 4 * 1024 ** 2,
+  assert.deepEqual(PACK_LIMITS, { files: 8192, entries: 8192, manifest: 16 * 1024 ** 2,
     fileBytes: 32 * 1024 ** 2, encodedBytes: 512 * 1024 ** 2, cacheBytes: 96 * 1024 ** 2,
     maxCacheBytes: 192 * 1024 ** 2, pixels: 16 * 1024 ** 2, dimension: 8192, concurrent: 2, encodedCacheBytes: 32 * 1024 ** 2 });
 });

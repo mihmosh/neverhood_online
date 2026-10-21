@@ -1,0 +1,39 @@
+{
+  "recordVersion": 1,
+  "experiment": "seedvr2-probe-v1",
+  "date": "2026-10-21",
+  "runnable": false,
+  "source": {
+    "resource": "000bab02",
+    "sourceFrames": 32,
+    "sourceDurationTicks": 62,
+    "sourceTickRateKnown": false,
+    "canvas": [384, 216],
+    "processingFrames": 49,
+    "processingFps": 15,
+    "coreRangeInclusive": [8, 39],
+    "holdsBefore": 8,
+    "holdsAfter": 9,
+    "inputVideoSHA256": "e2f9fdbeeadff553da72d1881dfdb01ec10fa682c7268abf3a409e2e614cb201"
+  },
+  "commonSettings": {
+    "seed": 314159,
+    "sample_steps": 1,
+    "cfg_scale": 1,
+    "sp_size": 1,
+    "fps": 15
+  },
+  "runs": [
+    { "id": "A", "provider": "zsxkib/seedvr2", "version": "ca98249be9cb623f02a80a7851a2b1a33d5104c251a8f5a1588f251f79bf7c78", "model_variant": "3b", "apply_color_fix": false, "status": "succeeded", "predictSeconds": 12.787069895 },
+    { "id": "B", "provider": "zsxkib/seedvr2", "version": "ca98249be9cb623f02a80a7851a2b1a33d5104c251a8f5a1588f251f79bf7c78", "model_variant": "7b", "apply_color_fix": false, "status": "failed", "failureStage": "weight-loading", "failureCategory": "remote-cuda-oom", "predictSeconds": 9.820100866 },
+    { "id": "C", "provider": "zsxkib/seedvr2", "version": "ca98249be9cb623f02a80a7851a2b1a33d5104c251a8f5a1588f251f79bf7c78", "model_variant": "3b", "apply_color_fix": true, "status": "succeeded", "predictSeconds": 17.835386462 },
+    { "id": "D", "provider": "papina/seedvr2", "version": "182716ebbdd44310da62329469d11a308d93e128488f541d8b2b312a4370aa30", "model_variant": "7b", "apply_color_fix": false, "resolution": 720, "max_resolution": 1280, "status": "failed", "failureStage": "video-decoding", "failureCategory": "remote-pyav-missing", "predictSeconds": 0.008374092 }
+  ],
+  "successfulOutput": {
+    "hostedCanvas": [1280, 720],
+    "restoredRgbaCanvas": [1536, 864],
+    "additionalResampling": "Lanczos 1.2x after hosted RGB output",
+    "mask": "original nearest-neighbor 4x; alpha only 0/255",
+    "qualityGroundTruth": false
+  }
+}

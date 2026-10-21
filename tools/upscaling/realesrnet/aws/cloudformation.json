@@ -1,0 +1,180 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Neverhood private L4 upscaling worker and prefix-limited public HD demo delivery. Deploy in us-east-2. No SSH, model downloads, or automatic bucket deletion.",
+  "Metadata": {
+    "AutoStopScheduleCleanup": "AWS::Scheduler::Schedule does not expose ActionAfterCompletion in the current CloudFormation schema. After creation, the operator must update the schedule through the Scheduler API with ActionAfterCompletion=DELETE, preserving its target and UTC expression. The native one-time stop remains active without this cleanup setting."
+  },
+  "Parameters": {
+    "AvailabilityZone": { "Type": "AWS::EC2::AvailabilityZone::Name", "Default": "us-east-2a", "Description": "A us-east-2 availability zone offering g6.2xlarge." },
+    "ImageId": { "Type": "AWS::EC2::Image::Id", "Default": "ami-08c796f166a9277af", "Description": "Official Ubuntu 24.04 AMI in us-east-2; operator must verify owner and root device before launch." },
+    "RootDeviceName": { "Type": "String", "Default": "/dev/sda1", "AllowedPattern": "/dev/[a-zA-Z0-9]+", "Description": "Must match the verified AMI root device name." },
+    "AutoStopAt": { "Type": "String", "AllowedPattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", "Description": "Required future UTC stop time, YYYY-MM-DDTHH:mm:ss (no Z). Stops, not terminates, the worker; storage charges continue." }
+  },
+  "Resources": {
+    "Vpc": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": { "CidrBlock": "10.42.0.0/24", "EnableDnsSupport": true, "EnableDnsHostnames": true, "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }] }
+    },
+    "InternetGateway": { "Type": "AWS::EC2::InternetGateway", "Properties": { "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }] } },
+    "GatewayAttachment": { "Type": "AWS::EC2::VPCGatewayAttachment", "Properties": { "VpcId": { "Ref": "Vpc" }, "InternetGatewayId": { "Ref": "InternetGateway" } } },
+    "PublicSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": { "VpcId": { "Ref": "Vpc" }, "CidrBlock": "10.42.0.0/26", "AvailabilityZone": { "Ref": "AvailabilityZone" }, "MapPublicIpOnLaunch": true, "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }] }
+    },
+    "RouteTable": { "Type": "AWS::EC2::RouteTable", "Properties": { "VpcId": { "Ref": "Vpc" }, "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }] } },
+    "InternetRoute": { "Type": "AWS::EC2::Route", "DependsOn": "GatewayAttachment", "Properties": { "RouteTableId": { "Ref": "RouteTable" }, "DestinationCidrBlock": "0.0.0.0/0", "GatewayId": { "Ref": "InternetGateway" } } },
+    "SubnetRouteTableAssociation": { "Type": "AWS::EC2::SubnetRouteTableAssociation", "Properties": { "SubnetId": { "Ref": "PublicSubnet" }, "RouteTableId": { "Ref": "RouteTable" } } },
+    "WorkerSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "No inbound connections; HTTPS and VPC resolver DNS outbound only",
+        "VpcId": { "Ref": "Vpc" },
+        "SecurityGroupIngress": [],
+        "SecurityGroupEgress": [
+          { "IpProtocol": "tcp", "FromPort": 443, "ToPort": 443, "CidrIp": "0.0.0.0/0" },
+          { "IpProtocol": "udp", "FromPort": 53, "ToPort": 53, "CidrIp": "10.42.0.2/32" },
+          { "IpProtocol": "tcp", "FromPort": 53, "ToPort": 53, "CidrIp": "10.42.0.2/32" }
+        ],
+        "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }]
+      }
+    },
+    "StorageBucket": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "VersioningConfiguration": { "Status": "Enabled" },
+        "BucketEncryption": { "ServerSideEncryptionConfiguration": [{ "ServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } }] },
+        "PublicAccessBlockConfiguration": { "BlockPublicAcls": true, "IgnorePublicAcls": true, "BlockPublicPolicy": true, "RestrictPublicBuckets": true },
+        "OwnershipControls": { "Rules": [{ "ObjectOwnership": "BucketOwnerEnforced" }] },
+        "CorsConfiguration": { "CorsRules": [{ "AllowedOrigins": ["*"], "AllowedMethods": ["GET", "HEAD"], "AllowedHeaders": ["*"], "ExposedHeaders": ["ETag", "Content-Length"], "MaxAge": 86400 }] },
+        "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }]
+      }
+    },
+    "WorkerRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": { "Version": "2012-10-17", "Statement": [{ "Effect": "Allow", "Principal": { "Service": "ec2.amazonaws.com" }, "Action": "sts:AssumeRole" }] },
+        "Policies": [{
+          "PolicyName": "SsmWorkerWithoutParameterStore",
+          "PolicyDocument": { "Version": "2012-10-17", "Statement": [
+            { "Effect": "Allow", "Action": ["ssm:DescribeAssociation", "ssm:GetDeployablePatchSnapshotForInstance", "ssm:GetDocument", "ssm:DescribeDocument", "ssm:ListAssociations", "ssm:ListInstanceAssociations", "ssm:PutInventory", "ssm:PutComplianceItems", "ssm:PutConfigurePackageResult", "ssm:UpdateAssociationStatus", "ssm:UpdateInstanceAssociationStatus", "ssm:UpdateInstanceInformation"], "Resource": "*" },
+            { "Effect": "Allow", "Action": ["ssmmessages:CreateControlChannel", "ssmmessages:CreateDataChannel", "ssmmessages:OpenControlChannel", "ssmmessages:OpenDataChannel"], "Resource": "*" },
+            { "Effect": "Allow", "Action": ["ec2messages:AcknowledgeMessage", "ec2messages:DeleteMessage", "ec2messages:FailMessage", "ec2messages:GetEndpoint", "ec2messages:GetMessages", "ec2messages:SendReply"], "Resource": "*" }
+          ] }
+        }, {
+          "PolicyName": "PrivateUpscalingStorage",
+          "PolicyDocument": { "Version": "2012-10-17", "Statement": [
+            { "Effect": "Allow", "Action": "s3:GetBucketLocation", "Resource": { "Fn::GetAtt": ["StorageBucket", "Arn"] } },
+            { "Effect": "Allow", "Action": "s3:ListBucket", "Resource": { "Fn::GetAtt": ["StorageBucket", "Arn"] }, "Condition": { "StringLike": { "s3:prefix": ["sources/", "sources/*", { "Fn::Sub": "results/${AWS::StackName}/" }, { "Fn::Sub": "results/${AWS::StackName}/*" }] } } },
+            { "Effect": "Allow", "Action": "s3:GetObject", "Resource": { "Fn::Sub": "${StorageBucket.Arn}/sources/*" } },
+            { "Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:AbortMultipartUpload", "s3:ListMultipartUploadParts"], "Resource": { "Fn::Sub": "${StorageBucket.Arn}/results/${AWS::StackName}/*" } }
+          ] }
+        }],
+        "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }]
+      }
+    },
+    "WorkerInstanceProfile": { "Type": "AWS::IAM::InstanceProfile", "Properties": { "Roles": [{ "Ref": "WorkerRole" }] } },
+    "WorkerInstance": {
+      "Type": "AWS::EC2::Instance",
+      "DependsOn": ["InternetRoute", "SubnetRouteTableAssociation"],
+      "Properties": {
+        "ImageId": { "Ref": "ImageId" },
+        "InstanceType": "g6.2xlarge",
+        "IamInstanceProfile": { "Ref": "WorkerInstanceProfile" },
+        "SubnetId": { "Ref": "PublicSubnet" },
+        "SecurityGroupIds": [{ "Ref": "WorkerSecurityGroup" }],
+        "MetadataOptions": { "HttpEndpoint": "enabled", "HttpTokens": "required", "HttpPutResponseHopLimit": 1 },
+        "BlockDeviceMappings": [{ "DeviceName": { "Ref": "RootDeviceName" }, "Ebs": { "VolumeType": "gp3", "VolumeSize": 150, "Encrypted": true, "DeleteOnTermination": true } }],
+        "UserData": { "Fn::Base64": { "Fn::Join": ["\n", [
+          "#!/bin/bash",
+          "set -euo pipefail",
+          "",
+          "install -d -o ubuntu -g ubuntu -m 0750 /opt/neverhood-upscaling",
+          "if systemctl cat snap.amazon-ssm-agent.amazon-ssm-agent.service >/dev/null 2>&1; then",
+          "  systemctl enable --now snap.amazon-ssm-agent.amazon-ssm-agent.service",
+          "else",
+          "  systemctl enable --now amazon-ssm-agent.service",
+          "fi",
+          ""
+        ]] } },
+        "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }]
+      }
+    },
+    "DemoOriginAccessControl": {
+      "Type": "AWS::CloudFront::OriginAccessControl",
+      "Properties": { "OriginAccessControlConfig": { "Name": { "Fn::Sub": "${AWS::StackName}-hd-demo" }, "OriginAccessControlOriginType": "s3", "SigningBehavior": "always", "SigningProtocol": "sigv4" } }
+    },
+    "DemoResponseHeaders": {
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
+      "Properties": { "ResponseHeadersPolicyConfig": {
+        "Name": { "Fn::Sub": "${AWS::StackName}-hd-demo" },
+        "CorsConfig": { "AccessControlAllowCredentials": false, "AccessControlAllowHeaders": { "Items": ["*"] }, "AccessControlAllowMethods": { "Items": ["GET", "HEAD", "OPTIONS"] }, "AccessControlAllowOrigins": { "Items": ["*"] }, "AccessControlExposeHeaders": { "Items": ["Content-Length", "ETag"] }, "AccessControlMaxAgeSec": 86400, "OriginOverride": true },
+        "SecurityHeadersConfig": { "ContentTypeOptions": { "Override": true } },
+        "CustomHeadersConfig": { "Items": [{ "Header": "Cross-Origin-Resource-Policy", "Value": "cross-origin", "Override": true }] }
+      } }
+    },
+    "DemoCachePolicy": {
+      "Type": "AWS::CloudFront::CachePolicy",
+      "Properties": { "CachePolicyConfig": {
+        "Name": { "Fn::Sub": "${AWS::StackName}-hd-demo-assets" }, "DefaultTTL": 86400, "MinTTL": 0, "MaxTTL": 31536000,
+        "ParametersInCacheKeyAndForwardedToOrigin": { "CookiesConfig": { "CookieBehavior": "none" }, "HeadersConfig": { "HeaderBehavior": "none" }, "QueryStringsConfig": { "QueryStringBehavior": "none" }, "EnableAcceptEncodingGzip": true, "EnableAcceptEncodingBrotli": true }
+      } }
+    },
+    "DemoOriginRequestPolicy": {
+      "Type": "AWS::CloudFront::OriginRequestPolicy",
+      "Properties": { "OriginRequestPolicyConfig": {
+        "Name": { "Fn::Sub": "${AWS::StackName}-cors" },
+        "CookiesConfig": { "CookieBehavior": "none" }, "QueryStringsConfig": { "QueryStringBehavior": "none" },
+        "HeadersConfig": { "HeaderBehavior": "whitelist", "Headers": ["Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"] }
+      } }
+    },
+    "DemoDistribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Enabled": true, "Comment": "Only published HD demo assets; source and result objects remain private", "PriceClass": "PriceClass_100", "HttpVersion": "http2", "IPV6Enabled": true,
+          "Origins": [{ "Id": "PrivateDemoS3", "DomainName": { "Fn::GetAtt": ["StorageBucket", "RegionalDomainName"] }, "OriginPath": "/releases/hd-demo", "OriginAccessControlId": { "Ref": "DemoOriginAccessControl" }, "S3OriginConfig": { "OriginAccessIdentity": "" } }],
+          "DefaultCacheBehavior": { "TargetOriginId": "PrivateDemoS3", "ViewerProtocolPolicy": "redirect-to-https", "AllowedMethods": ["GET", "HEAD", "OPTIONS"], "CachedMethods": ["GET", "HEAD"], "Compress": true, "CachePolicyId": { "Ref": "DemoCachePolicy" }, "OriginRequestPolicyId": { "Ref": "DemoOriginRequestPolicy" }, "ResponseHeadersPolicyId": { "Ref": "DemoResponseHeaders" } },
+          "CacheBehaviors": [{ "PathPattern": "*.json", "TargetOriginId": "PrivateDemoS3", "ViewerProtocolPolicy": "redirect-to-https", "AllowedMethods": ["GET", "HEAD", "OPTIONS"], "CachedMethods": ["GET", "HEAD"], "Compress": true, "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad", "OriginRequestPolicyId": { "Ref": "DemoOriginRequestPolicy" }, "ResponseHeadersPolicyId": { "Ref": "DemoResponseHeaders" } }],
+          "ViewerCertificate": { "CloudFrontDefaultCertificate": true, "MinimumProtocolVersion": "TLSv1.2_2021" }
+        },
+        "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }]
+      }
+    },
+    "StorageBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": { "Ref": "StorageBucket" },
+        "PolicyDocument": { "Version": "2012-10-17", "Statement": [
+          { "Sid": "RequireTLS", "Effect": "Deny", "Principal": "*", "Action": "s3:*", "Resource": [{ "Fn::GetAtt": ["StorageBucket", "Arn"] }, { "Fn::Sub": "${StorageBucket.Arn}/*" }], "Condition": { "Bool": { "aws:SecureTransport": "false" } } },
+          { "Sid": "OnlyDemoDistributionCanReadPublishedDemo", "Effect": "Allow", "Principal": { "Service": "cloudfront.amazonaws.com" }, "Action": "s3:GetObject", "Resource": { "Fn::Sub": "${StorageBucket.Arn}/releases/hd-demo/*" }, "Condition": { "StringEquals": { "AWS:SourceArn": { "Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${DemoDistribution}" } } } }
+        ] }
+      }
+    },
+    "AutoStopRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": { "Version": "2012-10-17", "Statement": [{ "Effect": "Allow", "Principal": { "Service": "scheduler.amazonaws.com" }, "Action": "sts:AssumeRole", "Condition": { "StringEquals": { "aws:SourceAccount": { "Ref": "AWS::AccountId" } } } }] },
+        "Policies": [{ "PolicyName": "StopOnlyThisWorker", "PolicyDocument": { "Version": "2012-10-17", "Statement": [{ "Effect": "Allow", "Action": "ec2:StopInstances", "Resource": { "Fn::Sub": "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${WorkerInstance}" } }] } }],
+        "Tags": [{ "Key": "Project", "Value": "neverhood" }, { "Key": "Purpose", "Value": "upscaling" }]
+      }
+    },
+    "AutoStopSchedule": {
+      "Type": "AWS::Scheduler::Schedule",
+      "Properties": {
+        "Description": "One-time UTC cost guard: stop this worker only; retain private storage",
+        "ScheduleExpression": { "Fn::Sub": "at(${AutoStopAt})" }, "ScheduleExpressionTimezone": "UTC", "FlexibleTimeWindow": { "Mode": "OFF" }, "State": "ENABLED",
+        "Target": { "Arn": { "Fn::Sub": "arn:${AWS::Partition}:scheduler:::aws-sdk:ec2:stopInstances" }, "RoleArn": { "Fn::GetAtt": ["AutoStopRole", "Arn"] }, "Input": { "Fn::Sub": "{\"InstanceIds\":[\"${WorkerInstance}\"]}" }, "RetryPolicy": { "MaximumEventAgeInSeconds": 3600, "MaximumRetryAttempts": 3 } }
+      }
+    }
+  },
+  "Outputs": {
+    "InstanceId": { "Description": "Private worker administration via SSM only; no inbound access.", "Value": { "Ref": "WorkerInstance" } },
+    "BucketName": { "Description": "Private retained bucket. Operator uploads sources/ and publishes releases/hd-demo/; worker writes only results/<stack-name>/.", "Value": { "Ref": "StorageBucket" } },
+    "DistributionId": { "Description": "Distribution can read releases/hd-demo/ only, not sources/ or results/.", "Value": { "Ref": "DemoDistribution" } },
+    "DemoManifestURL": { "Description": "Public URL becomes usable only after operator publishes a release manifest.", "Value": { "Fn::Sub": "https://${DemoDistribution.DomainName}/v1/manifest.json" } },
+    "AutoStopAt": { "Description": "UTC one-time stop deadline; bucket and EBS persist after stop.", "Value": { "Ref": "AutoStopAt" } },
+    "AutoStopScheduleName": { "Description": "Operator must set ActionAfterCompletion=DELETE using the Scheduler API; not exposed by native CloudFormation.", "Value": { "Ref": "AutoStopSchedule" } }
+  }
+}

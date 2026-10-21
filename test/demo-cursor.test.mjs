@@ -41,6 +41,15 @@ test('unsupported resources, gestures, hotspot, index mutations and fades immedi
   assert.equal(demoCursorOrdinal(binding, frame), 0, 'palette fourth byte is not alpha');
 });
 
+test('full-game cursor lookup still requires exact raster, palette and hotspot outside the first room', () => {
+  const binding = { palette: new Uint8Array(768), frames: [1, 2, 3].map(index => new Uint8Array(1024).fill(index)) };
+  const frame = frameFor(binding, 1); frame.room = 'Module2300';
+  assert.equal(demoCursorOrdinal(binding, frame), -1);
+  assert.equal(demoCursorOrdinal(binding, frame, { allRooms: true }), 1);
+  frame.cursor.source.pixels[300] ^= 1;
+  assert.equal(demoCursorOrdinal(binding, frame, { allRooms: true }), -1);
+});
+
 test('cursor manifest rejects unrecognized versions and incomplete binding', async () => {
   await assert.rejects(validateDemoCursorManifest({ version: 1 }), /binding/);
   await assert.rejects(validateDemoCursorManifest({ version: 2 }), /binding/);

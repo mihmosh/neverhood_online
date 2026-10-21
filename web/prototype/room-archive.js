@@ -1,7 +1,7 @@
 import { inspectZip, updateCRC32 } from '../lib/zip-validation.js';
-import { PACK_LIMITS, validateReplacementManifest, validateImageHeader } from './replacement-pack.js';
+import { PACK_LIMITS, validateReplacementManifest, validateImageHeader, validPackRoom } from './replacement-pack.js';
 
-export const ROOM_ARCHIVE_LIMITS = Object.freeze({ bytes: 128 * 1024 ** 2 });
+export const ROOM_ARCHIVE_LIMITS = Object.freeze({ bytes: 512 * 1024 ** 2, legacyBytes: 128 * 1024 ** 2 });
 const fail = message => { throw new Error(`Room archive: ${message}`); };
 const yieldTask = () => new Promise(resolve => setTimeout(resolve, 0));
 const safePath = path => path.length <= 512 && !/[\\:%?#\x00-\x20\x7f]/.test(path) &&
@@ -11,7 +11,7 @@ const safePath = path => path.length <= 512 && !/[\\:%?#\x00-\x20\x7f]/.test(pat
 export async function validateRoomArchive(bytes, { runtimeSHA256, room, signal } = {}) {
   signal?.throwIfAborted();
   if (!(bytes instanceof Uint8Array) || bytes.byteLength < 22 || bytes.byteLength > ROOM_ARCHIVE_LIMITS.bytes) fail('archive byte limit');
-  if (!['Scene1001', 'Scene1002'].includes(room)) fail('expected room is required');
+  if (!validPackRoom(room)) fail('expected room is required');
   let reads = 0;
   const source = { size: bytes.byteLength, slice(start, end) {
     return { async arrayBuffer() {
@@ -48,9 +48,10 @@ export async function validateRoomArchive(bytes, { runtimeSHA256, room, signal }
   try { manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(manifestBytes)); }
   catch { fail('invalid manifest JSON'); }
   if (manifest?.version !== 2) fail('manifest version 2 required');
+  if (manifest.lossless !== true && bytes.byteLength > ROOM_ARCHIVE_LIMITS.legacyBytes) fail('legacy archive byte limit');
   const { entries, backgrounds, descriptors } = validateReplacementManifest(manifest, runtimeSHA256);
   if (manifest.room !== room) fail('manifest room does not match expected room');
-  if (!backgrounds.has('gemini')) fail('demo requires a Gemini background');
+  if (!backgrounds.has('gemini') && manifest.lossless !== true) fail('demo requires a Gemini background');
   if (files.size !== descriptors.length + 1) fail('unreferenced or missing files');
   for (let index = 0; index < descriptors.length; index++) {
     signal?.throwIfAborted();

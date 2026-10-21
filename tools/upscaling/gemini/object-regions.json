@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "rooms": {
+    "Scene1001": [
+      {"id": "left-wall-fixture", "label": "Partially visible circular fixture on the left wall; compare visible internal divisions, ridges and recesses, not an imagined complete object", "box": [0.0, 0.60, 0.115, 0.87]},
+      {"id": "central-window", "label": "Tilted blue frame, opening, frame thickness and irregular inner contours", "box": [0.40, 0.33, 0.68, 0.79]},
+      {"id": "wall-button", "label": "Small blue square plate and red circular button, including their internal shape", "box": [0.69, 0.65, 0.79, 0.81]},
+      {"id": "right-doorway", "label": "Right doorway and wall joint, irregular silhouette, handle or recess details visible in the original only", "box": [0.79, 0.38, 1.0, 1.0]},
+      {"id": "ceiling-and-upper-wall", "label": "Ceiling and upper wall, including empty regions; check for new fixtures or other added objects", "box": [0.0, 0.0, 1.0, 0.38]}
+    ],
+    "Scene1002": [
+      {"id": "ladder", "label": "Left ladder, visible rung count, rung shapes, spacing, rails and negative spaces", "box": [0.04, 0.51, 0.17, 0.99]},
+      {"id": "ceiling-rings", "label": "Pink ceiling elements, count, openings, arrangement and internal contours", "box": [0.34, 0.10, 0.72, 0.25]},
+      {"id": "upper-left-platform", "label": "Elevated left opening, pink trim and irregular supporting platform silhouette", "box": [0.015, 0.10, 0.32, 0.59]},
+      {"id": "right-doorway", "label": "Pink right doorway, opening and border shapes, relative proportions and colored interior regions", "box": [0.74, 0.41, 1.0, 1.0]},
+      {"id": "room-shell", "label": "Room shell and negative space, wall floor ceiling junctions and any newly introduced objects", "box": [0.0, 0.0, 1.0, 1.0]}
+    ]
+  }
+}

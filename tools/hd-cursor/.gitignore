@@ -1,0 +1,7 @@
+/outputs/
+/.venv/
+__pycache__/
+*.pyc
+*.blend
+*.blend[0-9]*
+*.zip

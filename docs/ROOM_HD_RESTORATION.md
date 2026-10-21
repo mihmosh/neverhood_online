@@ -4,6 +4,97 @@ Task split recorded on 2026-10-18. This is an experimental work brief, not a
 claim that an HD pack exists. The independent second task is
 [world reconstruction and video restoration](WORLD_3D_VIDEO.md).
 
+## Current Static Direction (2026-10-21)
+
+This section updates static restoration policy. The sections below preserve the
+2026-10-18 task split and experiment context; their starting-point statements are
+historical, not a current claim that no subsequent work exists. Animation/SeedVR2
+work and the independent world/video task are unaffected by this static update.
+
+- Opaque backgrounds use `gemini-nano-banana-2.1`, preservation, original source
+  only. No photographic attachments or detailed text-material variant are part of
+  the current policy. Preserve earlier experiments as history, not defaults.
+- Classify static use by opacity, scene/state, palette and resource binding,
+  priority and clipping context. Background, foreground/occluder and standalone
+  prop roles may overlap; archive bitmap counts are not semantic asset counts.
+- Use the native binary source mask as a coarse identity/topology prior, not a
+  final HD mask. The implemented experimental static default is
+  `mask_method='image-guided'`: smooth prior plus genuine edge inference against
+  restored RGB in a narrow trust band. Preserve offsets, right/bottom padding,
+  flips, clipping, state metadata, source palette and exact identity/binding keys.
+- Separate binary geometric segmentation from rendering coverage alpha localized
+  to a one-HD-pixel contour. The refined render alpha need not be binary; broad
+  donor softness is not acceptable. Source-nearest is diagnostic only, and exact
+  NN equality cannot establish final contour quality.
+- Foreground RGB uses an exact-canvas crop of the chosen HD background only with
+  explicit source-to-background correspondence. Boundary inference does not prove binding.
+  Original-RGB matching is diagnostic, not proof. If correspondence is not true,
+  treat the layer as an independent prop or require review.
+- Standalone props use opaque contextual RGB from restored images; masked hidden
+  donor colors are not boundary evidence. Alpha-aware Lanczos/source-nearest is
+  available only as an explicitly selected diagnostic control. The
+  offline runner performs no new neural inference and does not promote runtime
+  assets. No paid API or new session is needed for this pilot.
+- Source scenes are 640x480; exact 4x backgrounds are 2560x1920. A 2400x1792 Nano
+  candidate needs an explicitly recorded preparatory resample, not a native-4x
+  label. No hidden crop or automatic resize in the processing core is permitted.
+
+The image-guided contour update is implemented experimentally. The contour pilot
+consumes frozen Scene1002-v3 sources and the selected Nano background, without paid
+regeneration or live promotion. Its command from the repository root is:
+
+```sh
+python3 tools/upscaling/static/contour_pilot.py
+```
+
+The ignored report root is
+`private-assets/upscaling/static-layers/scene1002-guided-v1`; immutable runs have a
+content-hash suffix and `latest.json` identifies the current run. The pilot
+targets four LadderArch foreground resources (`152c1313`, `060000a0`, `b2a423b0`,
+`316e0772`) and two standalone props (`312c8774` ladder and `b3242310` door backing).
+Compare original NN, geometry-smoothed and image-guided contours with outlines,
+zooms and composites at identical world placement and padding. The earlier
+12-candidate Scene1002-v3 measurements remain a historical baseline: they proved
+unchanged blockiness, not final contour quality.
+The new run processes all six layers: five direct RGB-supported proposals and one
+ladder context correction requiring review. The ladder's upper opening conflicts
+with the original exterior connection near the arch. A six-pixel reconnection is
+recorded alongside the raw proposal, not claimed to be an RGB-proven boundary.
+See the [static workflow](../tools/upscaling/static/README.md) and
+[manifest contract](../tools/upscaling/configs/manifest.md).
+
+Existing preparation ran RealESRNet on RGB and alpha separately. That old alpha
+default is not validated segmentation or contour-localized coverage; hidden RGB in fully transparent
+pixels is not itself a visible defect. Check restored-RGB shape adherence, coarse
+consistency, four-connected holes/components, thin parts, no extra objects and
+changed-pixel membership within the native-SDF trust band. Symmetric raster-boundary
+distance is a separate diagnostic, not a hard bound equal to the band width.
+Three native pixels is a starting band
+for review, not a universal tuning promise. Low-contrast support requires review;
+topology mismatch blocks acceptance. Check edge-localized AA separately from
+segmentation; no automatic approval or general contour-quality guarantee is claimed.
+Runtime gameplay remains unvalidated until an
+in-engine fixture exercises priority/state transitions, part-3 deletion and hands.
+
+## Indexed Static Asset Processing
+
+The static branch can process its full eligible inventory using
+`python3 tools/upscaling/static/bulk.py --execute`. Its source-use ledger is distinct
+from the restored-background inventory. Source-backed candidates retain unresolved
+expressions, palette/state ambiguity and missing RGB as blocked records rather than
+being guessed or silently omitted.
+
+The private `static-all-v1/index.sqlite` and per-run `index.jsonl` preserve source
+identity, frame and palette context, native content, padded canvas, placement,
+visibility/clipping/priority evidence, donor hashes, normalization, contour outputs,
+review status and attempt history. Immutable selections and verified resumes keep
+the relationship between originals and generated masks reproducible.
+
+The thirteen prepared two-room bindings are a verified starting set, not all static
+assets in the game. Additional direct source bindings require their own contextual
+proofs. An activation-only button must not use the unpressed room's RGB. Whole-game
+closure and runtime promotion remain separate, unproven steps.
+
 ## Goal And Boundary
 
 Restore backgrounds, foreground layers, objects and animated sprites for
@@ -34,6 +125,52 @@ No video-SR model was selected or run by recording this direction. A second-room
 frame-wise pack is useful for rendering/performance tests, not proof that animation
 quality is accepted. Runtime fallback flashes and texture-cache stalls must also be
 measured separately from the model's intrinsic temporal inconsistency.
+
+## Full-Game Room Mapping (2026-10-21)
+
+The full-game extension uses the existing external compositor and version-2 room
+ZIP/cache loader. The stock full-game JS/WASM remains unchanged. The current
+CloudFront manifest is
+`https://d3gutt3a0gjwwo.cloudfront.net/full-game-lossless-v1/manifest.json`.
+Original videos remain in the seven original BLBs (638,122,574 shared startup
+bytes), not room-local HD downloads. `scripts/verify-demo-videos.mjs` verified
+every original byte over HTTPS and counted 551 retained Smacker resources;
+the private evidence is `private-assets/upscaling/full-game-release/original-video-audit-v1.json`.
+Video upscaling remains in progress and is not substituted into gameplay.
+
+The authoritative private original-to-HD table is
+`private-assets/upscaling/full-game-release/asset-map-v3/asset-map.json`.
+It records resource/frame aliases, indexed source identity, geometry, palette
+proofs, HD PNG hashes and room membership. `--mapping` packaging reads this table
+instead of recomputing associations from filenames or running inference:
+
+```sh
+node scripts/prepare-hd-room-packs.mjs \
+  --mapping private-assets/upscaling/full-game-release/asset-map-v3/asset-map.json \
+  --write --summary --output "$PWD/private-assets/upscaling/full-game-release/room-packs-new"
+```
+
+The table preserves the two previously working rooms through
+`scripts/import-demo-png-mapping.py`. Their PNG inputs are not modified. Explicit
+alpha-bound crops and reversible horizontal reflections deduplicate shared images;
+decoded cropped RGBA is checked byte-for-byte after lossless PNG encoding.
+
+The current table emits 134 room/state ZIPs, not 134 unique game rooms. Palette
+proofs compare only source-used RGB entries; changes to unrelated palette slots or
+the unused fourth byte cannot invalidate a correct binding. Used-color changes,
+ambiguous bindings and absent HD assets retain the native renderer. A complete
+runtime palette/state closure and a full playthrough are not established by the
+asset counts. The existing static review/geometry gates still apply.
+
+Room manifests retain their existing schema with `lossless: true` and shared PNGs.
+Lossless archives have a bounded 512 MiB ceiling; the older WebP release keeps its
+128 MiB delivery ceiling. Decoded image retention remains separately bounded.
+One ZIP loads on room entry, the inactive decoded pack is released, and persistent
+cache entries are verified again before reuse. The release and room index pin the
+asset-table SHA256. The tested natural route is Scene1001 -> Scene1002 -> Scene1004,
+including passage beyond the old demo boundary, checked native indexed parity
+and a zero-ZIP-download warm start. Desktop and emulated-mobile touch passed;
+this is not a complete playthrough or physical-device certification.
 
 ## Established Starting Point
 

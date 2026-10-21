@@ -154126,8 +154126,8 @@
     {
       "component": "project-build-sources",
       "path": ".gitignore",
-      "bytes": 654,
-      "sha256": "851277647102a183da6425a4b08352c38ccac276c4fcf1ad1a4d28053c8811ee"
+      "bytes": 1427,
+      "sha256": "91c3d2457e0c1d02d0e8d5294e26061d0ae92673d8e4a9bb477e4187e16b5d0d"
     },
     {
       "component": "project-build-sources",
@@ -154174,14 +154174,14 @@
     {
       "component": "project-build-sources",
       "path": "docs/ARCHITECTURE.md",
-      "bytes": 14183,
-      "sha256": "644f738c0f34af6ba6565835eb29254df069cf9509cfb49693f9a66468f8ab23"
+      "bytes": 16593,
+      "sha256": "8e54f4359aac32e561133dc80f1ead4646fd06256db085dab92ccf97b4288ece"
     },
     {
       "component": "project-build-sources",
       "path": "docs/DEPLOYMENT.md",
-      "bytes": 6232,
-      "sha256": "4b08e448dd9dabec395ac427aab321c024b441624785393c955d390d0a268d0e"
+      "bytes": 8528,
+      "sha256": "80076f9ee9ce5ae9bf413e138de338bae4f06fea9c6c792b5969f8f58def6d6e"
     },
     {
       "component": "project-build-sources",
@@ -154198,14 +154198,14 @@
     {
       "component": "project-build-sources",
       "path": "docs/PLAN.md",
-      "bytes": 10940,
-      "sha256": "d9e7f4123e2f1a2b669432b572b0c7338ec34f9c2578a7e4726f7dcd5b552946"
+      "bytes": 12267,
+      "sha256": "e9044f6d6218b8ec57e03afe071f579146a9a84d0e90e9cbb3edb1b125d80cbd"
     },
     {
       "component": "project-build-sources",
       "path": "docs/ROOM_HD_RESTORATION.md",
-      "bytes": 7602,
-      "sha256": "5ff2800f2f1dd1fdb6bae76a9b8a48b748f68e8f40bdb5507d6e7a90d5159d98"
+      "bytes": 16250,
+      "sha256": "48edc08e9431b21013db36e62b3d57cc370bc0b40f5fb95b392f04e33405bebb"
     },
     {
       "component": "project-build-sources",
@@ -154216,14 +154216,14 @@
     {
       "component": "project-build-sources",
       "path": "docs/TESTING.md",
-      "bytes": 9387,
-      "sha256": "062db2e9dda2bebb4e47e23d99cbb705d1e1e61e55b6122eaee3802ee30ebb94"
+      "bytes": 11132,
+      "sha256": "2e0ec90b9c6fb407c82550c76a87780f7a5cc126bde2cf8ee126ed2876e86aba"
     },
     {
       "component": "project-build-sources",
       "path": "docs/WORLD_3D_VIDEO.md",
-      "bytes": 7675,
-      "sha256": "22ff6c56f1fa850da56f6e1238864bce39347f017e1041367830e6114b0b287b"
+      "bytes": 8012,
+      "sha256": "f71cb24924f509d6cab6d742ffb99cf9729958a94fc54a29a9d0e021f99766db"
     },
     {
       "component": "project-build-sources",
@@ -154240,8 +154240,8 @@
     {
       "component": "project-build-sources",
       "path": "README.md",
-      "bytes": 21291,
-      "sha256": "08fd87e044d4cdd73cffcf52d4370220b6283be7dde96928009e80668fe385f1"
+      "bytes": 26016,
+      "sha256": "33482585ff920795197f7ae654f84ea19f2d6e82816a79b1091fcbb9b8b52271"
     },
     {
       "component": "project-build-sources",
@@ -154306,8 +154306,8 @@
     {
       "component": "project-build-sources",
       "path": "scripts/check-private-assets.mjs",
-      "bytes": 2070,
-      "sha256": "4c7037846097c4ef9cdd21a99ba5a7a20b90e00ac39b4404f5e77e107bd0310d"
+      "bytes": 2416,
+      "sha256": "c20c255b88fa6521f6aef7a04f916dafaf97d30183e7de4b47bd746fdc1a9bfb"
     },
     {
       "component": "project-build-sources",
@@ -154347,6 +154347,12 @@
     },
     {
       "component": "project-build-sources",
+      "path": "scripts/import-demo-png-mapping.py",
+      "bytes": 7343,
+      "sha256": "c37f020ec5ac476fdb902181553dee444a042ba5641e39b53ed8a7daf60c0131"
+    },
+    {
+      "component": "project-build-sources",
       "path": "scripts/package-extractor.cjs",
       "bytes": 3437,
       "sha256": "eed3fa27c3e2e995f52367e000a6b97ea2745e4ac0546473f6f60d8c3803013d"
@@ -154360,8 +154366,8 @@
     {
       "component": "project-build-sources",
       "path": "scripts/package-sources.mjs",
-      "bytes": 20882,
-      "sha256": "f9b9702d38e38706fb88d9d01842e2de32864e0b2b3055a0005b72c2929d2c4c"
+      "bytes": 23096,
+      "sha256": "973737b32ec574e8e31e4bce641922e50ffbcaab88610bbd740d543af6323f97"
     },
     {
       "component": "project-build-sources",
@@ -154372,8 +154378,14 @@
     {
       "component": "project-build-sources",
       "path": "scripts/prepare-demo-release.mjs",
-      "bytes": 6969,
-      "sha256": "cce7b793ab7c4b3da8ba0217e268b69775dcf1c2e0121d7ad2b53ca1c39beb41"
+      "bytes": 8966,
+      "sha256": "2ee76213dcf8aad3ceff439ff5799a260decabeb07aec4530ecb36d4db6acfd9"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "scripts/prepare-hd-room-packs.mjs",
+      "bytes": 32850,
+      "sha256": "1a5b38cf315a26985199e20902c93ea92b643bea69b2b97afd5b20eb1c8fc58b"
     },
     {
       "component": "project-build-sources",
@@ -154404,6 +154416,12 @@
       "path": "scripts/vendor-zip.mjs",
       "bytes": 1861,
       "sha256": "b2d19c2f1ae5ea5234cfe18543fc021dfdd1ba6a2ec72b5c103218ef2b81550d"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "scripts/verify-demo-videos.mjs",
+      "bytes": 5877,
+      "sha256": "62fa5a0ba3643c146a86dedce1476b93b13b0c6f18b60868b4f1b8586e92c90f"
     },
     {
       "component": "project-build-sources",
@@ -154449,6 +154467,12 @@
     },
     {
       "component": "project-build-sources",
+      "path": "test/browser-demo-full-game.mjs",
+      "bytes": 8326,
+      "sha256": "c5c6e899fd2e79cd5def0256552d92789155013a2b847db383229e4a432bc7a9"
+    },
+    {
+      "component": "project-build-sources",
       "path": "test/browser-demo-game.mjs",
       "bytes": 9654,
       "sha256": "a6975095520ef40e3660274b6d6a2e826109a76d0a6f3f4daa1abcc914226717"
@@ -154456,8 +154480,8 @@
     {
       "component": "project-build-sources",
       "path": "test/browser-demo-interactions.mjs",
-      "bytes": 4929,
-      "sha256": "c0d742c58df5837f2309a930bf79277e7a9a2411506148ae1cb14bc12a9fb18b"
+      "bytes": 5071,
+      "sha256": "dd9eecdc5ea5fb7cfc4f59d467426aed21d9f4a68dccab80aac7a014466ccbdb"
     },
     {
       "component": "project-build-sources",
@@ -154540,8 +154564,8 @@
     {
       "component": "project-build-sources",
       "path": "test/demo-cursor.test.mjs",
-      "bytes": 15375,
-      "sha256": "c4e7b63bc375609e7f0818d158d7d345304f2eeb1363311b8b7e049f81eb7810"
+      "bytes": 15919,
+      "sha256": "0e44b7a86c3a39b1194e4d7ca14bae3fc3f0620219fe5fdacea44d7f366ca375"
     },
     {
       "component": "project-build-sources",
@@ -154552,8 +154576,14 @@
     {
       "component": "project-build-sources",
       "path": "test/demo-delivery.test.mjs",
-      "bytes": 10862,
-      "sha256": "b19c925b87c109516b1111a4bcf02791a68d3ddf95af3fdc029161a443db2ad8"
+      "bytes": 12224,
+      "sha256": "a2dd187bacef3854537b6efe65cc3180b15e1b092c93744ea386878e33c0a24a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/demo-png-mapping.test.py",
+      "bytes": 4263,
+      "sha256": "5dea70bf0f938a20874cbe3ba8c32fb05c9c6beca40a44977422ff4ec7b95e9c"
     },
     {
       "component": "project-build-sources",
@@ -154570,8 +154600,8 @@
     {
       "component": "project-build-sources",
       "path": "test/demo-release.test.mjs",
-      "bytes": 3914,
-      "sha256": "8c405edd09cf6bcea1b75dfc1087019302aa8110217f811ead9e5ea7916eeb9f"
+      "bytes": 6921,
+      "sha256": "024a064d91318b138b5dd4042a60533eb6bcb0bbae616f6adf3c99461e5effbd"
     },
     {
       "component": "project-build-sources",
@@ -154584,6 +154614,12 @@
       "path": "test/demo-runtime.test.mjs",
       "bytes": 7340,
       "sha256": "3b61c5297fbc5c62351c36d14f449a6e20d3bea2136c3d16b1da42554d341e42"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/demo-videos.test.mjs",
+      "bytes": 3922,
+      "sha256": "381e4cc38c3321f132f230847468e792c1013aba24258ca787c28616bb9034b7"
     },
     {
       "component": "project-build-sources",
@@ -154605,6 +154641,90 @@
     },
     {
       "component": "project-build-sources",
+      "path": "test/gemini-all-review.test.py",
+      "bytes": 8785,
+      "sha256": "1226e93c2a45f6e9fecd39b415596fce21de63b85d2270405c78cd6d4c2b4b32"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-bulk-check.test.py",
+      "bytes": 29343,
+      "sha256": "f73d25f929cab247bf8175a4b6bd79ba5fb7603e082afd12dd6f11c93d6aba54"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-bulk.test.mjs",
+      "bytes": 7986,
+      "sha256": "a9caec93c14b8ae5997d2da430879f4cdf07ff3678e1f60e8a8b8e4679d2ff2e"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-comparison.test.py",
+      "bytes": 4263,
+      "sha256": "e87110f7a2e2fed0409296ce382f84d0515e2ee9e4a5310a97cc06eaf7ee06d0"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-coverage-sources.test.py",
+      "bytes": 7420,
+      "sha256": "f8fa032d51ab1bbe4b037bdcd8241bfd11ebdcef7f98d4cd52e504f1bfd11e3f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-coverage.test.mjs",
+      "bytes": 3413,
+      "sha256": "a4675c3d86c7ab32cb58db5e383198b6ed905276161c1290e34b68a16f564d83"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-eval.test.py",
+      "bytes": 28171,
+      "sha256": "8b02676f71172f8dcd53fbd0e5f675794ac13b2bee16351903b44b4cbdfb5dfd"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-experiment.test.mjs",
+      "bytes": 4041,
+      "sha256": "724220399dfbfd54efa856295d4d582f32542ef38266e201556b5cd6a7b16cfc"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-manual-review.test.py",
+      "bytes": 23283,
+      "sha256": "74986759d03e9b5d841fab9676de9eda6efda4f05f2d33dd08971ad955c28e10"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-opaque-pilot.test.mjs",
+      "bytes": 7177,
+      "sha256": "4b228d0a1ce2deb8d074b09c25d41b93462c431be595f3c951be3c90a3b363b7"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-prepare-runtime.test.py",
+      "bytes": 14687,
+      "sha256": "fb918fb0c65310c1b484fcace9ed6c2c105675273271c01666eaa4fa53beb728"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-release-selection.test.py",
+      "bytes": 10284,
+      "sha256": "b35d967da4f65d4f0ff8bc718f328b4c03094736e5de8f181a0358e1d973af6c"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/gemini-repair.test.mjs",
+      "bytes": 12245,
+      "sha256": "9c3340d79eca59e9e0a7f7a93f594b2db260108b6ee76879d92d288ab15c3f42"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/hd-room-packs.test.mjs",
+      "bytes": 19506,
+      "sha256": "635d0a8f46243edbf466e1930084a07e56fd36922c74e38441b365f57c92fe79"
+    },
+    {
+      "component": "project-build-sources",
       "path": "test/menu-font.test.mjs",
       "bytes": 2728,
       "sha256": "fb2237c1a82d2923b05e9db713543c3e827a23ba1201becd09f38654557dbfc3"
@@ -154612,8 +154732,8 @@
     {
       "component": "project-build-sources",
       "path": "test/private-assets.test.mjs",
-      "bytes": 851,
-      "sha256": "c9e578481f07e4e1b099b9d605509728b47267474aea062e6a2f2fedd1f817b8"
+      "bytes": 1704,
+      "sha256": "7413abfc391467b717bb1ccf32f8a6fad55cf4135c107872f65a30c06e8850e3"
     },
     {
       "component": "project-build-sources",
@@ -154630,8 +154750,8 @@
     {
       "component": "project-build-sources",
       "path": "test/render-frame-reader.test.mjs",
-      "bytes": 14611,
-      "sha256": "43336307d6dd2ae7450b872c6a02a3e48e483200f0523146d501add247e9216d"
+      "bytes": 15667,
+      "sha256": "5a24ef4b99407dc8647901a20b1effa1314780558b5b0f3f0c0f2b5fd4e4c894"
     },
     {
       "component": "project-build-sources",
@@ -154642,20 +154762,86 @@
     {
       "component": "project-build-sources",
       "path": "test/replacement-pack.test.mjs",
-      "bytes": 43016,
-      "sha256": "e3527e6532d826f7a77eeff772cfd339b5650750251048475cfc11fb7794afcb"
+      "bytes": 53389,
+      "sha256": "77c9d3bed79d0436eaf100706c2e2ce3f9118ba7ba0abbd24c1c37a34b9ad728"
     },
     {
       "component": "project-build-sources",
       "path": "test/room-archive.test.mjs",
-      "bytes": 22791,
-      "sha256": "743619474189c36a7d5175ff0f8a955499befe4f60e3c154b8ea60b55f53c15a"
+      "bytes": 23851,
+      "sha256": "f84ab54796584008cec37fef7c8d8f74ab1239122d02599eccd81f934242af59"
     },
     {
       "component": "project-build-sources",
       "path": "test/server.test.mjs",
       "bytes": 3808,
       "sha256": "749ebd0dc16db121b8584cf82783ea2b8bf37888be0d2ba02f98a674e8d31d3b"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-aws.test.mjs",
+      "bytes": 12218,
+      "sha256": "5ac623b54543d554dd28f0d018c1b3c2a19adde633e23c022958a4111096caa1"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-contour-pilot.test.py",
+      "bytes": 2665,
+      "sha256": "af789e5aa5d8edc5362594821c40d68716b2890c89e5f7019f504b40f4bcf9de"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-docs.test.mjs",
+      "bytes": 3527,
+      "sha256": "7ab002c5b18c5d60cd0e0d2300ac5256e1bd7e7a04f94677c53465c0e7cfd0fa"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-refine.test.py",
+      "bytes": 12538,
+      "sha256": "ad3300db61513e9078668f22eac4ec2b155b3cc9c7085fa53c7ef35a2d907ff8"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-repair-sources.test.mjs",
+      "bytes": 8278,
+      "sha256": "ea0c2fefcfbbb428e8cf73e830bcff924f8c03d58cca00d0df460e7264019bd4"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-static-bulk.test.py",
+      "bytes": 10095,
+      "sha256": "0e728d0f69be2e7baa37d51939c203795debc7d04942b8cfe3d9faf587b46931"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-static-inventory.test.py",
+      "bytes": 10445,
+      "sha256": "4fa903c48528aa85ba4d11437107ad648f1164103bae61cb57d3e89265c304d3"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-static-pilot.test.py",
+      "bytes": 8294,
+      "sha256": "fb2cd29b2d1cec6b6300325c9c169e61cd4a44bad7e58d485ac03c9fc0aa421c"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-static-prepared.test.py",
+      "bytes": 9885,
+      "sha256": "cf1b16efbeabb7ce39f455dda87a8cf5dfee95c33a24d9905d3582b59f4b250d"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-static-resolve.test.py",
+      "bytes": 19548,
+      "sha256": "f8a93f688245905406b3ded8551897ccae0856f34f8a134c0af31996c5a58073"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/upscaling-static.test.py",
+      "bytes": 12794,
+      "sha256": "0d145f386dff6b98a2940478f6f2b17818be5a9cf6200ff4bfe363e549fdd98b"
     },
     {
       "component": "project-build-sources",
@@ -154666,8 +154852,8 @@
     {
       "component": "project-build-sources",
       "path": "THIRD_PARTY_NOTICES.md",
-      "bytes": 9043,
-      "sha256": "da7a2489b4b39dea09ea1520831e0b92f9f586573274b42a6891dd427d07fa1e"
+      "bytes": 10408,
+      "sha256": "7a7a202f82500e400fe793514fe58ed788fd0cfe1419cb63e850b002629ff3f5"
     },
     {
       "component": "project-build-sources",
@@ -154713,9 +154899,855 @@
     },
     {
       "component": "project-build-sources",
+      "path": "tools/hd-cursor/.gitignore",
+      "bytes": 65,
+      "sha256": "4010fd1d17d29163c071b6fb6586fc94184e58effab2b77d0694137af6fecc79"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/docs/DEVELOPMENT.md",
+      "bytes": 5847,
+      "sha256": "09bfb539ddbdb7c92c25eceec8f082cf5148e98817e927eb1048dd7af7dec0b2"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/docs/FORMAT.md",
+      "bytes": 7300,
+      "sha256": "58b3e2320e4b42514005e6f35f9f1a8c62d1e11ca85fc08d674483cfa2587eb9"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/docs/HISTORY.md",
+      "bytes": 4077,
+      "sha256": "49fa8e7195555b18f43afdc2526f3bad0f2a5b4225a830f18785ecd9450ba062"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/docs/RIGHTS.md",
+      "bytes": 4068,
+      "sha256": "d00a7e8c6355b0908dc699681347844ff0099ea2c8157190d89b1b18095243a6"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/LICENSE.md",
+      "bytes": 1056,
+      "sha256": "bc2223a2d86753fdc55c2ee049be3a0eee0c18a39d76f0859ef96bcc916f02ce"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/README.md",
+      "bytes": 7805,
+      "sha256": "66d66614dde72962afd0b9ea7e25b65e08bf0c027d1fa41c8ab919ba50a83374"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/requirements.txt",
+      "bytes": 82,
+      "sha256": "345811283b7ee1fc37b6eeaf6cb018b8e002dde5ee6d9a50c2aca872648ca8e3"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/scripts/build_cursors.py",
+      "bytes": 11557,
+      "sha256": "e16f3b0a206313d834557a39f03fcc9f9504f5e9c804fc21ac02ca05b2ee28f7"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/scripts/common.py",
+      "bytes": 943,
+      "sha256": "b38f72851fe18fd7d531a0e9a05213e804641a0920ff043cae6858c7836671a6"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/scripts/package_cursors.py",
+      "bytes": 4601,
+      "sha256": "895e8b493d54cec82db8f7a0ba158ff53154da228ea48636a194474a1a2fa423"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/tests/test_pack.py",
+      "bytes": 4706,
+      "sha256": "b3b590442b3c9196070badb0b693aa44afbc53f19ff130b6f4506bfab75afcbb"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/hd-cursor/tests/test_tools.py",
+      "bytes": 4906,
+      "sha256": "76587d452fcd779fd549f8d7688e84d5deea83d2061233eff8f35681308807c2"
+    },
+    {
+      "component": "project-build-sources",
       "path": "tools/smoke-extractor.cjs",
       "bytes": 4304,
       "sha256": "5ad96cb91fb19ed10fd3cdaf133f03cd9e8edad412c22d569f59bbd640da042a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/benchmarks/README.md",
+      "bytes": 153,
+      "sha256": "8feb5be862c063554934e7f5c949c56a990d78e6aa2bad36bed7e940af401d06"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/configs/manifest.md",
+      "bytes": 7766,
+      "sha256": "706e9e60a25188d66697e8fccf8db160f1d9ba8a0807e16ed1c78fc7f94d1f52"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/configs/README.md",
+      "bytes": 865,
+      "sha256": "5e02764547aba0e6964ce04460c3cc851efc30c47aa3bc046bd9a71b481a7e2b"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/all-review.py",
+      "bytes": 16023,
+      "sha256": "43f75419b807a7dd8d37cc3199c34d338b5611bae01bb953681d12f730c6391f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/bulk-check.py",
+      "bytes": 45575,
+      "sha256": "6e257368bf35f5738df61bbfd77b5a87097c369eac90b904b566b863bcbf8f28"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/bulk-sources.mjs",
+      "bytes": 27003,
+      "sha256": "4001a0e93830f63d7ede22706144b270345f4b2acb1db7bbca21710f0f28218d"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/bulk-sources.test.mjs",
+      "bytes": 3162,
+      "sha256": "573d678cb49d432024410cd9c641d4881acc00f6ef0d16653b621d716a1a2d97"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/bulk.mjs",
+      "bytes": 13198,
+      "sha256": "a144ced880910d32ddec5323adf64b9384e4fa248d42e8bece55025aafebcec4"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/capabilities.mjs",
+      "bytes": 3924,
+      "sha256": "cd6b54e271d729e8b6dff7614cca8b514ea0e54741e7754cb948b4334c481703"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/check-comparison.mjs",
+      "bytes": 3416,
+      "sha256": "19f0a7013951dd970377635aac9f685828c7f030beb2e5adbe7a68af0a94a74e"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/check-manual-review.mjs",
+      "bytes": 8081,
+      "sha256": "99fdac4612ea2f65466450ada9c4e0c801283960038b31fb55373710fb2a7993"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/check-pilot.mjs",
+      "bytes": 4434,
+      "sha256": "5713cbe5d6f66a939400642cacede0e0efc9c166c24b27cc37620d6422cf699f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/comparison.html",
+      "bytes": 18442,
+      "sha256": "d5fd87d95c159169d673fbdc932afdd2725ed8975e6bde6c2579c20dce89b14f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/comparison.py",
+      "bytes": 7114,
+      "sha256": "67d19ef5fea0a22012aaa47186b52393e92a22080b309f479b1b3fbf7b665261"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/coverage-review.py",
+      "bytes": 4697,
+      "sha256": "6f5a0e06cbe89e168524cae79199ab133d550c9258146dc1d5f43cced1940427"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/coverage-sources.py",
+      "bytes": 14360,
+      "sha256": "7eb5c50b7904c3a03d5ad68b0f1616a30673aeb77841a962a93207e7b6346474"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/coverage.mjs",
+      "bytes": 9659,
+      "sha256": "43354b4eb5e82b7d21d0d3946480870922af0d7be540ab6ebdc08c19a083dcbe"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/evaluate.py",
+      "bytes": 29695,
+      "sha256": "50425f92efe1965bdee78cc8845d8a7b330b405a17d2e35311048cb01edb09f6"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/experiment.mjs",
+      "bytes": 25372,
+      "sha256": "9cf8798010ff8e40c15d3a023216c13226204c6bc3d3cef2c0359e964d2b626a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/judge.mjs",
+      "bytes": 14214,
+      "sha256": "5bef627468c34087e49eb46eb16d4d8193da3ef87f18b69880c45e284931d324"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/manual-review.py",
+      "bytes": 32197,
+      "sha256": "d825db60b0837306a780d2cc471408cd99f1185ed6215433cd024350ab1b6032"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/manual-rework.mjs",
+      "bytes": 5233,
+      "sha256": "15d431d894d56d5ff0e4ff2216308b3f98b60fc9ba7a467d9cf4cad3f79c48ba"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/object-regions.json",
+      "bytes": 1769,
+      "sha256": "dc9717c7b58b99ed8cf6cc854674a6a2170670cd9e3909c76ee0ecf8086599cc"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/paired-lighting.mjs",
+      "bytes": 12417,
+      "sha256": "feeb666df306e3613f0b1bfc24518ce08917b338d26d445d2b1600e558d3eb2a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/pilot-summary.mjs",
+      "bytes": 4315,
+      "sha256": "ab1b5d612d9c77c0c46c222f6564372738de5459be0512eb6b4e6d3fc538056c"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/prepare-flagged-review.mjs",
+      "bytes": 3436,
+      "sha256": "3bd93ce359ab867d477e7d45bab490f7d90b2114d9935f16bd0f912e585bb5e2"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/prepare-opaque-sources.mjs",
+      "bytes": 24660,
+      "sha256": "2bdc18a009ce47ceb9cf1cb99757a0e8366c4b4cce13a1a1ba72bfefac27b490"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/prepare-runtime.py",
+      "bytes": 9968,
+      "sha256": "c14104eb267f978473247001cdcd78ad447137fb37d9decd2d88f82e134f827b"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/probe.mjs",
+      "bytes": 4507,
+      "sha256": "215fd8bf1405577b7c7ad5c886e36db1410a97cf2d10b4decf0b5cd59e0d63b0"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/prompts/room-background-original.txt",
+      "bytes": 2011,
+      "sha256": "f7c628491688fab249175ee75e8551ab60c16eba36f7e464b4043f7260db93b6"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/prompts/static-material-reference.txt",
+      "bytes": 7850,
+      "sha256": "3b855a49dd09635fe979d74d5736d7b5359dfc2a4461aab4152a261245c0c2b5"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/README.md",
+      "bytes": 12750,
+      "sha256": "92c9485d28b2be640886d61c2463567478e39fcdc805ea318e1f4172c6f271b3"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/release-selection.py",
+      "bytes": 13024,
+      "sha256": "1f58f8128f10e3f0880e72b574c32be8bd92b399f2260d9266e8bfe03ec067bd"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/repair-sources.mjs",
+      "bytes": 26709,
+      "sha256": "c31ea51d931ee7bc25248c333e2cc01634e9584a5b7decb483f6eadc9446d19e"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/repair-summary.mjs",
+      "bytes": 4996,
+      "sha256": "ef273d0dba9fb038ca55cc15a655e765a726b76326ec019bed9df1c8f78abf1e"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/gemini/repair.mjs",
+      "bytes": 12140,
+      "sha256": "5dc515c35135716f644151118e620c2e9be8982f9cf519016e671ac7afb3c91b"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/masks/README.md",
+      "bytes": 4254,
+      "sha256": "6a401b167975f073325384eabfb07d57b3930007c791be33bf5391e510f43d35"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/README.md",
+      "bytes": 26370,
+      "sha256": "e493acbb3b546b6265a30a60553acc78001cb49f69ec2d5d47227c3d09ea549f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/bootstrap.sh",
+      "bytes": 311,
+      "sha256": "da85eb3d75e51d232732a6988983a2c06d1c39bd6a6b05d828169a3192553527"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/cloudformation.json",
+      "bytes": 15456,
+      "sha256": "b822d69536ef8d5de970edff229cd268ffd5fba4b7bf83515503a272b3a51730"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/fetch-results.py",
+      "bytes": 3539,
+      "sha256": "746997a78e0234bf40d32644cbb7cd2161e3f46eb777e809a97ad97509d641c9"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/helper/probe_triplicate.py",
+      "bytes": 984,
+      "sha256": "29e4645f87d57b48052459134bbe803c1b0e65dab93f8517d775c12fd223cac9"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/helper/probe.py",
+      "bytes": 11613,
+      "sha256": "08d4c4324ebe924e9deedb12317152f9a2a5e9a8ae4f0abbd75d2fc0afad0ae0"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/helper/probe7b.py",
+      "bytes": 689,
+      "sha256": "4db0365c49a52762afc4e6a27392bcdb50400c4f182640d5d0e86dab98a59536"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/helper/test_probe.py",
+      "bytes": 9942,
+      "sha256": "892c9ac5487e46960e9ab49002f78a8a89f6dafb987c6dba8c3147bee209873c"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/install-runner.sh",
+      "bytes": 3785,
+      "sha256": "feb9f69623da0ca96e694bae76b56473481ef5590307bc9cae353e0647631d75"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/manage-lab.mjs",
+      "bytes": 25740,
+      "sha256": "5876b2617fb80f1e0f6aa1036edd63672108841b6bf57091237bf1678e5a68d5"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/operator_aws.py",
+      "bytes": 780,
+      "sha256": "6072d46918034a6b2edcf1ea20b7b2d82375e92e786b9d645fde4c777bcbcd60"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/README.md",
+      "bytes": 11547,
+      "sha256": "61f718b3bef73b43cb9c0500ca444e7143da43792cca60127ea25cf6c595b45e"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/requirements-operator.txt",
+      "bytes": 15,
+      "sha256": "4c5e54689be4c3ee81cc98229e6210d87dbefb342f8594dc4a5d91da3d3c84bd"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/run-probe-7b.sh",
+      "bytes": 689,
+      "sha256": "644cc344d042a5deb86e31c00d54c9a21a92bc6efe484036cdb220e510120d77"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/run-probe.sh",
+      "bytes": 684,
+      "sha256": "65fb8186cad2bcfa2545ce9e94acfb88f87c60ad4057ca5941adbd1266e26439"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/aws/upload-plan.py",
+      "bytes": 3314,
+      "sha256": "cbc72e5addead55648376b283a3a2136dcb3b872e20102930d2218d108be108a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/install-worker.sh",
+      "bytes": 1376,
+      "sha256": "f3c2729381613fce62281d573c8c46a70e896d7ce4fc871f9203792045d7bcad"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/job_contract.py",
+      "bytes": 1177,
+      "sha256": "21d9f5b664e6390281a2091b9c11fe1a622148a7f843ac00611256ab90fab93c"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/licenses/BasicSR-LICENSE.txt",
+      "bytes": 11350,
+      "sha256": "5447872f21ddc29dc0dc060d5c885513c01c904e9da9931bba69898a6fb4d415"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/manage_batch.py",
+      "bytes": 32200,
+      "sha256": "0ef30c7ca75db11be79663b41939856139ab4190ca545427bf9e9e900d9f0a02"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/model.py",
+      "bytes": 8036,
+      "sha256": "5dd17bd887ee5d570a9af0ce1de78bda435df55ce0f57cc2a9ff45ef985f76a7"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/prepare-catalog.py",
+      "bytes": 10749,
+      "sha256": "6da384b41d49317700751a7613ef73f3eb1dc86aa99fcb412bdec3067d46332c"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/prepare-pilot-references.py",
+      "bytes": 7796,
+      "sha256": "75e9e0eabf3231c1d304bcf5d3fe0154699e1bff554d81399f2054dddd3f0f62"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/README.md",
+      "bytes": 8596,
+      "sha256": "b4d0fe5bdd91ba47ae7485d37434522354c7a36d26ac4a8fc270729d594495fb"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/release-catalog.py",
+      "bytes": 18603,
+      "sha256": "34957abad7f71dc726f271d473f1f8fd9b719bf872ea2589b277a842c747b44a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/run-worker.sh",
+      "bytes": 1169,
+      "sha256": "c5861b7df127aeb607e2b960336cfcccfd2cae913948bb89aff33f96d8590bfc"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/test_prepare_catalog.py",
+      "bytes": 12471,
+      "sha256": "33ae8995f5c53726d004d16e50f20011430116b9b64b9e816f0e70e16d0ec422"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/test_release_catalog.py",
+      "bytes": 13455,
+      "sha256": "e9d57a81ed1ca73b24acca880e383e2651e618ba6ad5e77cb6f85fe2282ccc39"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/test_worker.py",
+      "bytes": 16707,
+      "sha256": "29f16d7d70a2e9d6d69a5f879f38305541c4f823c720238ae6d7671431afde8d"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/verify-pilot.py",
+      "bytes": 11101,
+      "sha256": "b0293d42fcc860a9bb0646e6a94f49ae42d9598b3155c8a9d3f14663e6d862ac"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/verify-samples.py",
+      "bytes": 1934,
+      "sha256": "a8e112921e2cb8648ed31067c594f9931e05abc3abe0ebb9a643bd7a9184938c"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/batch/worker.py",
+      "bytes": 22333,
+      "sha256": "e2c6ffafbfb4d560f64ae697be72e41528ecc35d068bc547b2af7cb056ba8ded"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/check-input-roundtrip.py",
+      "bytes": 4851,
+      "sha256": "50bc12b01f82e76a314b4c56f29a8e7ac0ad6db90075a003eb541a1cbfd3abcd"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/compare-seedvr2-aws.py",
+      "bytes": 34922,
+      "sha256": "28f2bbe2aac8f77efb7188aa9de384fae366e61de15a91d6a1cb7ce93d0abd55"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/compare-triplicate-probe.py",
+      "bytes": 26863,
+      "sha256": "334df116103772ff30932d7b90d7c9735cc81125cad6a1a0b9193067378c3b14"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/issues/seedvr2-temporal-ghosting.md",
+      "bytes": 7938,
+      "sha256": "cbe082b50ce7a8ae51cef26d3f690d5f9784f93b4a98bb9f178c76dc044b13bd"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/prepare-per-frame-baseline.py",
+      "bytes": 5620,
+      "sha256": "cacd2923a50025175672cee6efa8659b7d1592a7fd9053cf677fa6be8bc5eac7"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/prepare-triplicate-probe.py",
+      "bytes": 10614,
+      "sha256": "f839113a59deac03991fbf64b628da946dc697750cee0317b141defb0e047735"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/promote-comparison.mjs",
+      "bytes": 1845,
+      "sha256": "fd8d609c02b671fd42ea53490c87f3e0252bf15a00289b3b0924a5f797b8d17d"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/README.md",
+      "bytes": 7987,
+      "sha256": "f82de624f95b4f6ec019319bfdaa5a50455ca00beb9d2d5ab4de02d9bdb0b236"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/refresh-viewer-controls.mjs",
+      "bytes": 2097,
+      "sha256": "379aaa701b71268566118a897faba0b547e97af42bf16d5c87309097f75256f6"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/serve-comparison.mjs",
+      "bytes": 3619,
+      "sha256": "c6862514a95ea151c7093e64dfeaaf6035c133b86c438ab18339e1dfbabc4e67"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/test_compare_seedvr2_aws.py",
+      "bytes": 24002,
+      "sha256": "c1d608862f0ee4c1e2e18c4708e1bfba6f653f5251988436dea7245f563eaef0"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/test_compare_triplicate_probe.py",
+      "bytes": 7750,
+      "sha256": "c7a07a6cf7ec6b93b026740ab5b27ee7aca121dc3437c0df43a148d9b06347b8"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/benchmarks/viewer-controls.js",
+      "bytes": 2905,
+      "sha256": "f858de6782a3203606097f4597dbb2f3a0de38a96f9c50bca9fab487ad1d67a9"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/BRANCH_SCOPE.json",
+      "bytes": 1457,
+      "sha256": "c85e7d3050980b3e70cdac2c9f90cfd571bf5d6e09138e93c404182f0a92bdbb"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/configs/README.md",
+      "bytes": 779,
+      "sha256": "f2aa71a6ef3aaa0e8e54da05b3bea8f550d0fa096edb0229ab44d5cf976ad0a3"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/configs/seedvr2-probe-v1.json",
+      "bytes": 2001,
+      "sha256": "878017c5d762e7a6e6a107a67baafa1eb02cc2ee269cdc921cfc677b789ad1ba"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/experiments/replicate/analyze-seedvr2-probe.py",
+      "bytes": 31404,
+      "sha256": "b6631d488812e29fd299c79817c75f99dc4730c4f0e1b57a47598caf3db0ef49"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/experiments/replicate/prepare-seedvr2-probe.py",
+      "bytes": 11959,
+      "sha256": "e0c9fe163e44ba70cad334e9b6ac4b343432f2260ac05d8faf2dc93a9983e065"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/experiments/replicate/README.md",
+      "bytes": 11883,
+      "sha256": "d5e57126f4071bd4534364755de39071468cfd28a773f6c5924e4d511eb558c1"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/experiments/replicate/seedvr2-replicate-probe.mjs",
+      "bytes": 14418,
+      "sha256": "6f23d32233afb1c905d68e6e681d5d1759b5341da9a10de192cd0a533283450c"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/experiments/replicate/serve-seedvr2-probe.mjs",
+      "bytes": 1928,
+      "sha256": "55ce7ea3f596d38a62796a4bc30fe5262e6a50a9e9ccf5821ea85ebe43d6e0a4"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/experiments/replicate/test-private-cli.py",
+      "bytes": 5673,
+      "sha256": "a213cf4b88e329c19a07af5a10d708a476516b9fe306ca0034d5580feb30dede"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/experiments/seedvr2/README.md",
+      "bytes": 13269,
+      "sha256": "35573dd4714364c047e3c8f96626d54b95efad4e7713353ec1df19cee951e7cc"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/HANDOFF.md",
+      "bytes": 8083,
+      "sha256": "49ff15f074e2454223d187706c301e7e303f32d99befdd0943295d558f575d0c"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/README.md",
+      "bytes": 3725,
+      "sha256": "20f673db7949eccc5e85eed5af9063e9c2e16e9af2cfc0b96ecd630037e7d80d"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/aws_trials.py",
+      "bytes": 9043,
+      "sha256": "6a76acc3e556b4583679cc3d0f234047586a0563d0c0201f26b137a2c1c5ed1f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/bulk_operator.py",
+      "bytes": 11930,
+      "sha256": "f50a031fbd7a8742c07d41b95281a6999e706c1a9bc93af7a9ec0a172c147618"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/bulk.py",
+      "bytes": 28306,
+      "sha256": "75c80fe7d9dbdbec5acc27b13bfa492f8aa8eaf9750e42666830302205193c6e"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/create_bulk_plan.py",
+      "bytes": 4407,
+      "sha256": "0ac3c79ee1cf214946628190f380d99452e833321e18f5ef0ab3608269ae6ad6"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/prepare.py",
+      "bytes": 11022,
+      "sha256": "f1836370d6f8ac0b6ce738e681edd87d274cde8075627d8b4542e525b9e3416e"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/run.py",
+      "bytes": 9390,
+      "sha256": "e036c42c75ee823237169c08a3a77461b258ac30aa6ebf86beb66feb0c79ec0a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/test_aws_trials.py",
+      "bytes": 14131,
+      "sha256": "ff4525fc1f13452e1a1ea2f34f721d1c713285779af945e423ab44232b08e6ab"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/test_bulk_operator.py",
+      "bytes": 19076,
+      "sha256": "7b315f43117edc3df6056797101f9158eff97c7fa11fc1bde40ee675fcc7b23b"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/test_bulk.py",
+      "bytes": 26304,
+      "sha256": "5cea034ad98136e4eac8a825a4cc542b1616e62c8660bf5696d7c687fc8a9dc5"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/test_prepare.py",
+      "bytes": 13548,
+      "sha256": "1b1bb79cc8d7086438eb702c859a80de368b3c0254ea54bfcd2f09e42a331de2"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/test_run.py",
+      "bytes": 7409,
+      "sha256": "356e5ea5d81e89a3b33a1d74ffcd956c7a56396971756590717682896edcfbf1"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/test_verify_bulk.py",
+      "bytes": 9433,
+      "sha256": "22747a573fb1b700278bc67a96368b6c46e4f125bffa0f6f0d4e329b737a128f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/verify_bulk.py",
+      "bytes": 13186,
+      "sha256": "2b4d2366ffa4ffae74bf4c422e972b84b565850a320051a28831bd60576590f5"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/realesrnet/video/verify_trials.py",
+      "bytes": 10362,
+      "sha256": "88d936a03d615320d41258e2c496b9151049246b4c56c6e6fc6e68482d1f349f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/references/backstage/catalog.json",
+      "bytes": 2311,
+      "sha256": "dabfd7e7a02a82f1f0526eb2052672f087c280899b44db066a0a5d950b73c4cf"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/references/backstage/DrwmSLYX0AAqgBN.jpeg",
+      "bytes": 234537,
+      "sha256": "7ea3fd4096f97bef8d2be6c8affb5e4292a90476d6c6a71a9b76e0baf32377f3"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/references/backstage/EPlcPUAVUAESfY7.jpeg",
+      "bytes": 331409,
+      "sha256": "5210bf16d7578e883ffda343e333f2241b96ca67a3bb5f486c0179acef7f21ef"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/references/backstage/EPlcPUCU4AUortb.jpeg",
+      "bytes": 357894,
+      "sha256": "e23047bf7bcc5186153d6f0eb431ea3d728f22fefc73ea4ede3b354521484eff"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/references/backstage/EPlcPUCVUAMdcTc.jpeg",
+      "bytes": 328614,
+      "sha256": "d83740f342483e35f75d07126ae4985401df7794fd2ed133198872e81beb9cb0"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/references/backstage/EPlcPUHU4AAocYP.jpeg",
+      "bytes": 348969,
+      "sha256": "79d652cde67faf27975a48e14fe2549f46b08a31adaa71acd71e4b3915a173fe"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/references/backstage/README.md",
+      "bytes": 1430,
+      "sha256": "362f1ce71546b8dba8c33143fe27d5b63d17f0de000ba1b4ee78f968babea691"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/references/import-backstage.mjs",
+      "bytes": 2586,
+      "sha256": "7a86630aa084c6d1a546f5d2956e6fd547d801b1de327a1f7b8c46eee9e336f5"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/references/README.md",
+      "bytes": 689,
+      "sha256": "8b2e2029c8c94083bc33e0e938ad1765d781428cda2ee48a02e41f1e16468666"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/seedvr2/README.md",
+      "bytes": 216,
+      "sha256": "fce1be55bd61209dde32a303ecd47f5396473d1efd085359136a8fef17b9442a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/static/bulk.py",
+      "bytes": 26656,
+      "sha256": "c0a417e51ac41418a771551467190e7356af93147ba7d40aa9594df8d2d08524"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/static/contour_pilot.py",
+      "bytes": 13648,
+      "sha256": "b4d83fdea2192ce02c054cf7765e5611ad1d1e6b9408944d034e6fb171ef1872"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/static/pilot.py",
+      "bytes": 22396,
+      "sha256": "2e4ced524823653c14cf4917498cc8e3c497af20089d7afda5884b46facea3bf"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/static/pipeline.py",
+      "bytes": 19549,
+      "sha256": "98dd75449f3a9a257349e6cc5f2bef28ea27fc3a3d09f68b804d0260043e0a94"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/static/prepared.py",
+      "bytes": 13367,
+      "sha256": "2593d52d4c3b8499cd820e8eaced1a443f12e1c9ee89c690af1ad760cde19846"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/static/README.md",
+      "bytes": 15885,
+      "sha256": "cd34ebe4945f5d7240dc9f51c243792e7d9be46419ddfaf4f51354a5f382b71a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/static/refine.py",
+      "bytes": 21079,
+      "sha256": "813c30507be7c2b76adda6599ce1767a3bfbe8ca4b5abc245d4786a83868b037"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/static/resolve.py",
+      "bytes": 21372,
+      "sha256": "cf5ff8e64cfae7b37ef9355a0ba868ad852e8349a638535caf986c450d90a19d"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/static/source_inventory.py",
+      "bytes": 17930,
+      "sha256": "54840595fa756f759068f50c504641c05e4ac6a35f99845c61ef3ddc38a9b9b6"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "tools/upscaling/tests/README.md",
+      "bytes": 938,
+      "sha256": "732ccc365ce5a9bee6e86af8811b0ded3973c38e36802725a90bfc93c53f00db"
     },
     {
       "component": "project-build-sources",
@@ -154762,8 +155794,8 @@
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/config.json",
-      "bytes": 42,
-      "sha256": "782f8eb5f05051d1f1552baa3192df614f4c17403a907042bd3f7dbcf3bfac57"
+      "bytes": 113,
+      "sha256": "639fa03de7532b48367fe4077513506c99bb740253d763b98ccb16fcf4f0b811"
     },
     {
       "component": "project-build-sources",
@@ -154780,8 +155812,8 @@
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/index.html",
-      "bytes": 8827,
-      "sha256": "3e4d1aa72414e3a7079ddc6f8155ab176f71793b55176339f038beb33d2a9cad"
+      "bytes": 8865,
+      "sha256": "4380623cae6cc6b5af05afac3b612819c33285ebc8d9b4745f6009a2937cd721"
     },
     {
       "component": "project-build-sources",
@@ -154792,8 +155824,8 @@
     {
       "component": "project-build-sources",
       "path": "web/lib/demo-data.js",
-      "bytes": 5431,
-      "sha256": "9f3fb62252859feeacd15ea0bdfe751fd7291baca70ebd87b48728d055e1c45b"
+      "bytes": 7294,
+      "sha256": "f0e5d619483004130c7ce7e2999a41cedba0dc7ad05469ffdc4defb1b1f5643a"
     },
     {
       "component": "project-build-sources",
@@ -154822,8 +155854,8 @@
     {
       "component": "project-build-sources",
       "path": "web/lib/runtime.js",
-      "bytes": 6737,
-      "sha256": "95dbba58bde2ef47229baceebdb1af15fff0a11c471c71aafe6f1dd5dcc06504"
+      "bytes": 6749,
+      "sha256": "54f756baa2bc7cd9f39aec587e0e62b47e00d3dbb97066025bd93ec391f072da"
     },
     {
       "component": "project-build-sources",
@@ -154900,8 +155932,8 @@
     {
       "component": "project-build-sources",
       "path": "web/player.js",
-      "bytes": 13585,
-      "sha256": "223b26f4a3a798608e35eca2692ba69e74aa9c947d44b9ec90c377836742f324"
+      "bytes": 14394,
+      "sha256": "64a93a2d99f262fdb142daa0de4ff11ebd149e46fb48a30906938109996b4606"
     },
     {
       "component": "project-build-sources",
@@ -154912,14 +155944,14 @@
     {
       "component": "project-build-sources",
       "path": "web/prototype/demo-cursor.js",
-      "bytes": 3603,
-      "sha256": "d8fe7ef62565ac43b16beaf10cc823c299a12c79b0531ec44c75c90ac9c23f8a"
+      "bytes": 3645,
+      "sha256": "96cccbc9d6b765ad01aaa4f774157e37149acd04c4433897a4a6f53ff8878c96"
     },
     {
       "component": "project-build-sources",
       "path": "web/prototype/read-frame.js",
-      "bytes": 9373,
-      "sha256": "039434d0d86c4ca9bd610bf85f0109a11e43f50eea01d7c4115a0aec648b3257"
+      "bytes": 9921,
+      "sha256": "aae7947e3d2ce0afc068166e29a2b501ba65d1b379622f4abb0e8d7c86efa070"
     },
     {
       "component": "project-build-sources",
@@ -154930,26 +155962,26 @@
     {
       "component": "project-build-sources",
       "path": "web/prototype/replacement-pack.js",
-      "bytes": 27578,
-      "sha256": "3a66071c3c018648b70da6a98c4ff2e4c21b59686dfed6191d68b0eb9d5028a1"
+      "bytes": 30696,
+      "sha256": "1e4f32c3055d4d45c6c5dd6517c74e8e7bd5fb727108d358d1dfcb3282bb27fa"
     },
     {
       "component": "project-build-sources",
       "path": "web/prototype/room-archive-cache.js",
-      "bytes": 8270,
-      "sha256": "2cbbcf9b394fa487b63240213acc155dc2a491fb04a0eada8b845f1c760cdf3c"
+      "bytes": 8340,
+      "sha256": "51055f21c17686a14563c14e5a7a98a0f3968580d44b6485db313ae1d7e3dfb0"
     },
     {
       "component": "project-build-sources",
       "path": "web/prototype/room-archive.js",
-      "bytes": 3755,
-      "sha256": "614630fecc3c97c67ab4cc896f1d7cfa5ccf8df9bf371994a032700f0f38b412"
+      "bytes": 3931,
+      "sha256": "a63184454a6e1c395f64b2c62a8cf44fa092d2a4eef70964ad3dd2fe6125c6f4"
     },
     {
       "component": "project-build-sources",
       "path": "web/prototype/room1.js",
-      "bytes": 40936,
-      "sha256": "96f51ec2c07d815fd1d17463f5f98c1f37bea4f1b7fdc0080be1036b259607aa"
+      "bytes": 43736,
+      "sha256": "14a059ad1a488d2f058b3a41a27ba23ac5da198daf2eda97bd4f4f39eef2dcd6"
     },
     {
       "component": "project-build-sources",

@@ -12,7 +12,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const inside = (base, path) => path === base || path.startsWith(base + sep);
 
-export async function prepareDemoRelease({ gameManifest, room1, room2, cursor, output, runtime = resolve(root, 'web/public/demo-runtime/runtime.json') }) {
+export async function prepareDemoRelease({ gameManifest, room1, room2, roomIndex, cursor, output, runtime = resolve(root, 'web/public/demo-runtime/runtime.json') }) {
   if (!isAbsolute(output) || output !== resolve(output) || inside(root, output) && !inside(resolve(root, 'private-assets'), output)) throw new Error('Demo media must be outside public/source trees.');
   const parent = await realpath(dirname(output));
   if (parent !== dirname(output) || ['web', 'dist', '.git', 'scummvm'].some(name => inside(resolve(root, name), parent))) throw new Error('Unsafe release output parent.');
@@ -20,12 +20,16 @@ export async function prepareDemoRelease({ gameManifest, room1, room2, cursor, o
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   const stage = `${output}.preparing-${process.pid}`;
   const descriptor = JSON.parse(await readFile(runtime, 'utf8'));
-  if (!descriptor.demo || !/^[a-f0-9]{64}$/.test(descriptor.wasmSHA256)) throw new Error('Build the bounded demo runtime first.');
+  const fullGame = Boolean(roomIndex);
+  if (!fullGame && (!descriptor.demo || !/^[a-f0-9]{64}$/.test(descriptor.wasmSHA256))) throw new Error('Build the bounded demo runtime first.');
+  if (fullGame && (descriptor.demo || !demoPath(descriptor.wasm) || descriptor.wasm.includes('/'))) throw new Error('Use the existing unchanged full-game runtime.');
+  const sourceRuntimeSHA256 = fullGame ? digest(await readFile(resolve(dirname(runtime), descriptor.wasm))) : descriptor.sourceRuntimeSHA256;
   const source = JSON.parse(await readFile(gameManifest, 'utf8'));
-  const manifest = { version: 2, id: 'two-rooms-q90-zip-tail-swing-v4', sourceRuntimeSHA256: descriptor.sourceRuntimeSHA256,
-    runtimeSHA256: descriptor.wasmSHA256, files: [], packs: {},
+  const manifest = { version: 2, id: fullGame ? 'full-game-lossless-v1' : 'two-rooms-q90-zip-tail-swing-v4', sourceRuntimeSHA256,
+    runtimeSHA256: fullGame ? sourceRuntimeSHA256 : descriptor.wasmSHA256, files: [], packs: {},
     cursor: 'cursor/cursor.json', minimal: false, experimental: true,
     resourceStrategy: source.mode ?? source.resourceStrategy ?? 'reference-corpus', closureProven: source.closureProven === true };
+  if (fullGame) Object.assign(manifest, { fullGame: true, rooms: {}, resourceStrategy: 'original-full-game-unchanged', closureProven: false });
   let totalAssetBytes = 0;
   const verifiedInput = async (sourcePath, sha256, bytes) => {
     const info = await lstat(sourcePath);
@@ -46,13 +50,28 @@ export async function prepareDemoRelease({ gameManifest, room1, room2, cursor, o
   try {
     await writeFile(resolve(stage, '.private-assets-no-public'), 'Private game-derived demo release. Not for public distribution without permission.\n');
     for (const name of REQUIRED_FILES) {
-      const entry = source.files?.find(item => item.name === name);
-      if (!entry || !demoPath(entry.file)) throw new Error(`Game manifest is missing ${name}.`);
+      const entry = source.files?.find(item => item.name === name || fullGame && item.relativePath === `DATA/${name}`);
+      if (!entry || !(fullGame && entry.localPath ? isAbsolute(entry.localPath) && entry.relativePath === `DATA/${name}` : demoPath(entry.file))) throw new Error(`Game manifest is missing ${name}.`);
       const file = `game/${name}`;
-      await copy(resolve(dirname(gameManifest), entry.file), file, entry.sha256, entry.bytes);
+      await copy(fullGame && entry.localPath ? entry.localPath : resolve(dirname(gameManifest), entry.file), file, entry.sha256, entry.bytes);
       manifest.files.push({ name, file, bytes: entry.bytes, sha256: entry.sha256 });
     }
-    for (const [directory, room, prefix] of [[room1, 'Scene1001', 'room1'], [room2, 'Scene1002', 'room2']]) {
+    if (fullGame) {
+      const index = JSON.parse(await readFile(roomIndex, 'utf8'));
+      if (!Array.isArray(index.rooms) || !index.rooms.length || index.rooms.length > 2048) throw new Error('Missing verified room archives.');
+      for (const entry of index.rooms) {
+        if (!/^[A-Za-z][A-Za-z0-9_-]{0,95}$/.test(entry.id) || manifest.packs[entry.id] || !demoPath(entry.file)) throw new Error('Invalid or duplicate room archive.');
+        const bytes = await verifiedInput(resolve(dirname(roomIndex), entry.file), entry.sha256, entry.bytes);
+        const validated = await validateRoomArchive(bytes, { runtimeSHA256: sourceRuntimeSHA256, room: entry.id });
+        if (validated.manifest.lossless !== true) throw new Error('Full-game room archives must use lossless PNGs.');
+        const file = `rooms/${entry.id}.zip`;
+        await copy(resolve(dirname(roomIndex), entry.file), file, entry.sha256, entry.bytes);
+        manifest.packs[entry.id] = { file, bytes: bytes.length, sha256: digest(bytes) };
+        manifest.rooms[entry.id] = { backgroundKeys: entry.backgroundKeys, backgroundBindings: entry.backgroundBindings };
+      }
+      manifest.assetMapSHA256 = index.assetMapSHA256;
+    }
+    for (const [directory, room, prefix] of fullGame ? [] : [[room1, 'Scene1001', 'room1'], [room2, 'Scene1002', 'room2']]) {
       const pack = JSON.parse(await readFile(resolve(directory, 'room-pack.json'), 'utf8'));
       pack.backgrounds = pack.backgrounds.filter(entry => entry.id === 'gemini');
       if (pack.backgrounds.length !== 1) throw new Error('Each demo room requires its Gemini background.');
@@ -78,7 +97,7 @@ export async function prepareDemoRelease({ gameManifest, room1, room2, cursor, o
     await copy(resolve(cursor, 'cursor.json'), 'cursor/cursor.json');
     await copy(resolve(cursor, 'sprite-sheet-128.png'), 'cursor/sprite-sheet-128.png', cursorManifest.imageSHA256 ?? cursorManifest.image?.sha256);
     manifest.totalAssetBytes = totalAssetBytes;
-    validateDemoManifest(manifest, descriptor.sourceRuntimeSHA256);
+    validateDemoManifest(manifest, sourceRuntimeSHA256);
     await writeFile(resolve(stage, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
     await rename(stage, output);
     return manifest;
@@ -87,7 +106,7 @@ export async function prepareDemoRelease({ gameManifest, room1, room2, cursor, o
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const options = {};
-  const keys = { '--game-manifest': 'gameManifest', '--room1': 'room1', '--room2': 'room2', '--cursor': 'cursor', '--output': 'output', '--runtime': 'runtime' };
+  const keys = { '--game-manifest': 'gameManifest', '--room1': 'room1', '--room2': 'room2', '--room-index': 'roomIndex', '--cursor': 'cursor', '--output': 'output', '--runtime': 'runtime' };
   for (let index = 2; index < process.argv.length; index += 2) {
     const key = keys[process.argv[index]], value = process.argv[index + 1];
     if (!key || !value) throw new Error('Usage: prepare-demo-release.mjs --game-manifest PATH --room1 DIR --room2 DIR --cursor DIR --output NEW_PRIVATE_DIR');

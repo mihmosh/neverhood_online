@@ -110,7 +110,7 @@ export async function discoverRuntime() {
         localHD = pack.ok;
       } catch { /* Local HD is optional; original playback remains available. */ }
     }
-    return { available: true, start: options => startRuntime(descriptor, options, localHD) };
+    return { available: true, descriptor, start: options => startRuntime(descriptor, options, localHD) };
   } catch {
     return { available: false, reason: 'The engine is unavailable or its adapter is not ready.' };
   }

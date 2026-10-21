@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "category": "physical-set-photo-candidates",
+  "publication": "maintainer-approved-reference-inclusion",
+  "sourceCollection": "Existing maintainer backstage_hires collection",
+  "softwareLicenseDoesNotApply": true,
+  "totalBytes": 1601423,
+  "files": [
+    {
+      "id": "DrwmSLYX0AAqgBN",
+      "file": "DrwmSLYX0AAqgBN.jpeg",
+      "description": "Klaymen close-up against a textured clay wall",
+      "photographer": null,
+      "sourceUrl": null,
+      "captureDate": null,
+      "license": "unspecified",
+      "cameraOriginalAuthenticated": false,
+      "bytes": 234537,
+      "sha256": "7ea3fd4096f97bef8d2be6c8affb5e4292a90476d6c6a71a9b76e0baf32377f3"
+    },
+    {
+      "id": "EPlcPUAVUAESfY7",
+      "file": "EPlcPUAVUAESfY7.jpeg",
+      "description": "Klaymen positioned in a clay doorway",
+      "photographer": null,
+      "sourceUrl": null,
+      "captureDate": null,
+      "license": "unspecified",
+      "cameraOriginalAuthenticated": false,
+      "bytes": 331409,
+      "sha256": "5210bf16d7578e883ffda343e333f2241b96ca67a3bb5f486c0179acef7f21ef"
+    },
+    {
+      "id": "EPlcPUCU4AUortb",
+      "file": "EPlcPUCU4AUortb.jpeg",
+      "description": "Woodland set with a large tree",
+      "photographer": null,
+      "sourceUrl": null,
+      "captureDate": null,
+      "license": "unspecified",
+      "cameraOriginalAuthenticated": false,
+      "bytes": 357894,
+      "sha256": "e23047bf7bcc5186153d6f0eb431ea3d728f22fefc73ea4ede3b354521484eff"
+    },
+    {
+      "id": "EPlcPUCVUAMdcTc",
+      "file": "EPlcPUCVUAMdcTc.jpeg",
+      "description": "Two puppets on a green set; support wires visible",
+      "photographer": null,
+      "sourceUrl": null,
+      "captureDate": null,
+      "license": "unspecified",
+      "cameraOriginalAuthenticated": false,
+      "bytes": 328614,
+      "sha256": "d83740f342483e35f75d07126ae4985401df7794fd2ed133198872e81beb9cb0"
+    },
+    {
+      "id": "EPlcPUHU4AAocYP",
+      "file": "EPlcPUHU4AAocYP.jpeg",
+      "description": "Klaymen on a brown clay set",
+      "photographer": null,
+      "sourceUrl": null,
+      "captureDate": null,
+      "license": "unspecified",
+      "cameraOriginalAuthenticated": false,
+      "bytes": 348969,
+      "sha256": "79d652cde67faf27975a48e14fe2549f46b08a31adaa71acd71e4b3915a173fe"
+    }
+  ]
+}

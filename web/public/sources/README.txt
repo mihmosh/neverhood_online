@@ -19,7 +19,8 @@ CMake 3.16+, Ninja, make and a native C++ compiler for optional data tools)
 3. Copy downloaded REBUILD.sh into that restored root; run:
    JOBS=4 bash REBUILD.sh
    This installs the standard Emscripten SDK 4.0.10 from upstream, restores the
-   supplied Emscripten/SDL source trees into it, and compiles both binaries using
+   supplied Emscripten/SDL source trees into it, and compiles the stock runtime
+   and extractor using
    the original recipes and flags. No private downloads or game data are needed.
    SDK compiler executables, LLVM and Node are standard build tools downloaded
    by upstream setup, deliberately not in these source archives.
@@ -34,7 +35,15 @@ CMake 3.16+, Ninja, make and a native C++ compiler for optional data tools)
    It extracts tables from a particular original nhc.exe (MD5 checked in source),
    so regenerating neverhood.dat additionally needs that legitimately obtained
    upstream input, which is NOT included. Rebuilding either WASM does not need it;
-   use the unchanged upstream neverhood.dat supplied in this package.
+    use the unchanged upstream neverhood.dat supplied in this package.
+5. Optional historical bounded two-room binary, also listed in the manifest:
+   REBUILD_LEGACY_DEMO=1 JOBS=4 bash REBUILD.sh
+   This additionally generates the five legacy external overlays and builds
+   scripts/.build/neverhood-demo-web/scummvm.js and scummvm.wasm. It does not
+   modify upstream source files and does not require a .git checkout. The
+   Git-based provenance/packaging helpers are deliberately not invoked here.
+   The current full-game prototype uses the stock runtime from step 4, not this
+   historical restricted binary. No new engine build is needed to deploy it.
 
 VERSIONS AND SCOPE
 ScummVM c546a4c80d2daf3bb1d5a3652279e26f762c0204, GPL-3.0-or-later: full Neverhood
@@ -62,7 +71,9 @@ All upstream notices/licenses remain in their source trees. Project build
 scripts retain their SPDX notices. Build flags, dependency URLs/original archive
 hashes and configuration are in build-records/{runtime,extractor}.json and
 runtime-config.{h,mk}; scripts/runtime.mk contains exact external linker changes.
-Original ScummVM source files are unmodified; no source overlay is used.
+The default full-game runtime uses original ScummVM sources without overlays.
+The separately retained historical bounded demo uses the five overlays recorded
+in build-records/demo-runtime.json; their generator and linker recipe are included.
 Build-record configurations retain original absolute build paths as provenance;
 REBUILD.sh regenerates them for your directory rather than using those paths.
 

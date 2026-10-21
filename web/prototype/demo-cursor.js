@@ -32,9 +32,9 @@ export async function validateDemoCursorManifest(manifest) {
 
 // Match the presented raster, not Mouse._frameNum (which is already incremented).
 // This also retains needRefresh-delayed row changes and sheet-load phase.
-export function demoCursorOrdinal(binding, frame) {
+export function demoCursorOrdinal(binding, frame, { allRooms = false } = {}) {
   const cursor = frame.cursor;
-  if (frame.room !== 'Scene1001' || cursor?.resourceHash !== 0x6520a400 || cursor.hotspotX !== 3 || cursor.hotspotY !== 7 ||
+  if ((!allRooms && frame.room !== 'Scene1001') || cursor?.resourceHash !== 0x6520a400 || cursor.hotspotX !== 3 || cursor.hotspotY !== 7 ||
       cursor.source.width !== 32 || cursor.source.height !== 32 || frame.palette?.length !== 1024) return -1;
   for (let i = 0; i < 768; i++) if (frame.palette[Math.floor(i / 3) * 4 + i % 3] !== binding.palette[i]) return -1;
   return binding.frames.findIndex(pixels => {

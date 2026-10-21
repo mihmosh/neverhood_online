@@ -183,6 +183,19 @@ export function parseNativeScenes(inputs) {
     if (!classes.has(member.owner)) classes.set(member.owner, []);
     classes.get(member.owner).push(member);
   }
+  const pointerOwners = new Map(), arrays = [];
+  for (const source of sources) {
+    for (const match of source.code.matchAll(/\b(\w+)\s*\*\s*(\w+)\s*(?=[;=(])/g)) {
+      if (!pointerOwners.has(match[2])) pointerOwners.set(match[2], new Set());
+      pointerOwners.get(match[2]).add(match[1]);
+    }
+    for (const match of source.code.matchAll(/\b(?:static\s+)?const\s+\w+\s+(\w+)\s*\[[^\]]*\]\s*=\s*\{/g)) {
+      const start = match.index + match[0].lastIndexOf('{');
+      const end = closingBrace(source.code, start);
+      arrays.push({ name: match[1], text: source.code.slice(match.index, end + 1), file: source.file,
+        line: source.code.slice(0, match.index).split('\n').length });
+    }
+  }
   const scenes = [];
   for (const member of functions.filter(item => /^Module\d+$/.test(item.owner) && item.name === 'createScene')) {
     const module = Number(member.owner.slice(6));
@@ -207,7 +220,7 @@ export function parseNativeScenes(inputs) {
         neighbors: unique(transitions), unresolvedEdges, arm, update });
     }
   }
-  return { sources, functions, classes, scenes };
+  return { sources, functions, classes, scenes, pointerOwners, arrays };
 }
 
 export function deriveRoomGraphFromSources({ files, tables, manifest, engineData, sources }) {
@@ -272,10 +285,13 @@ export function deriveRoomGraphFromSources({ files, tables, manifest, engineData
     const selectedClasses = new Set(scene.sceneClasses), queue = [...scene.sceneClasses];
     const texts = [scene.arm.text, globals, ...moduleMembers.map(member => member.text)];
     const classEvidence = [];
+    const dependencyTexts = [{ text: scene.arm.text, file: scene.arm.file },
+      { text: globals, file: moduleFile?.file }, ...moduleMembers];
     while (queue.length) {
       const owner = queue.shift();
       for (const member of native.classes.get(owner) ?? []) {
         texts.push(member.text);
+        dependencyTexts.push(member);
         classEvidence.push({ file: member.file, line: member.line, member: `${owner}::${member.name}` });
         for (const token of member.text.matchAll(/\b(?:As\w+|Km\w+|Ss\w+|Scene\d+|Klaymen)\b/g)) {
           if (native.classes.has(token[0]) && !selectedClasses.has(token[0])) { selectedClasses.add(token[0]); queue.push(token[0]); }
@@ -284,6 +300,26 @@ export function deriveRoomGraphFromSources({ files, tables, manifest, engineData
       // KmScene classes inherit animations from Klaymen even without naming it in a method body.
       if (owner.startsWith('Km') && native.classes.has('Klaymen') && !selectedClasses.has('Klaymen')) {
         selectedClasses.add('Klaymen'); queue.push('Klaymen');
+      }
+    }
+    // Follow typed shared helpers and their source-local tables, not every member of their owner.
+    const helperSeen = new Set(dependencyTexts), arraySeen = new Set(), sharedHelpers = [], resourceArrays = [];
+    for (let at = 0; at < dependencyTexts.length; at++) {
+      const dependency = dependencyTexts[at];
+      for (const match of dependency.text.matchAll(/\b(\w+)(?:\s*\([^()]*\))?\s*->\s*(\w+)\s*\(/g)) {
+        const owners = native.pointerOwners.get(match[1]);
+        if (owners?.size !== 1) continue;
+        const owner = [...owners][0];
+        for (const helper of native.classes.get(owner) ?? []) {
+          if (helper.name !== match[2] || helperSeen.has(helper)) continue;
+          helperSeen.add(helper); dependencyTexts.push(helper); texts.push(helper.text);
+          sharedHelpers.push({ file: helper.file, line: helper.line, member: `${owner}::${helper.name}` });
+        }
+      }
+      for (const array of native.arrays) {
+        if (array.file !== dependency.file || arraySeen.has(array) || !new RegExp(`\\b${array.name}\\b`).test(dependency.text)) continue;
+        arraySeen.add(array); dependencyTexts.push(array); texts.push(array.text);
+        resourceArrays.push({ file: array.file, line: array.line, name: array.name });
       }
     }
     const hashes = new Set(texts.flatMap(literals)), staticSeen = new Set();
@@ -375,6 +411,7 @@ export function deriveRoomGraphFromSources({ files, tables, manifest, engineData
       qualification: 'native-case-and-referenced-class-literal-state-union-plus-module-shared-helpers; not-complete-closure', closureProven: false,
       evidence: { createScene: { file: scene.arm.file, line: scene.arm.line },
         updateScene: scene.update ? { file: scene.update.file, line: scene.update.line } : null, members: classEvidence,
+        sharedHelpers, resourceArrays,
         moduleShared: moduleMembers.map(member => ({ file: member.file, line: member.line, member: `${moduleName}::${member.name}` })),
         hdMapping: 'existing-manifest-ID equals native class or native-class/background-hash state; not a new visual/palette binding' } };
   }

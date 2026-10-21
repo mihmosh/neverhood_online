@@ -122,6 +122,24 @@ test('strict timestamp precedence then alias resolution; cycles and unverified s
   assert.throws(() => deriveRoomGraphFromSources(unverified), /verified physical block/);
 });
 
+test('typed shared hash helpers include source-local resource tables without unrelated owner methods', () => {
+  const input = fixture();
+  input.sources = [...input.sources.map(item => ({ ...item, text: item.text.replace('load(0x22222222);',
+    'load(0x22222222); load(_vm->_gameModule->getMusicHash());') })),
+  source('neverhood.h', 'class Engine { GameModule *_gameModule; };'),
+  source('gamemodule.cpp', `
+static const uint32 musicHashes[] = { 0x55555555, 0x33333333 };
+static const uint32 unrelatedHashes[] = { 0x99999999 };
+uint32 GameModule::getMusicHash() { return musicHashes[state]; }
+void GameModule::unrelated() { load(0x99999999); }
+`), source('modules/unrelated.cpp', 'static const uint32 musicHashes[] = { 0x99999999 };')];
+  const room = deriveRoomGraphFromSources(input).rooms['1000:0'];
+  assert(room.resources.some(resource => resource.hash === '55555555'));
+  assert(!room.resources.some(resource => resource.hash === '99999999'));
+  assert.deepEqual(room.evidence.sharedHelpers.map(item => item.member), ['GameModule::getMusicHash']);
+  assert.deepEqual(room.evidence.resourceArrays.map(item => item.name), ['musicHashes']);
+});
+
 test('HD state IDs require an actual class/background state, not an arbitrary prefix', () => {
   const input = fixture();
   input.sources = input.sources.map(item => ({ ...item, text: item.text.replace('setMessageList(0x00400001);',
@@ -187,6 +205,8 @@ test('actual read-only native sources cover every module createScene case and au
   assert.deepEqual(graph.rooms['2000:1'].navigationListIds, ['004b7b00', '004b7b48']);
   assert.equal(graph.rooms['3000:1'].navigationListIds.length, 3);
   assert.deepEqual(graph.rooms['2800:12'].staticBackgrounds, ['0000A245']);
+  assert(graph.rooms['2800:2'].evidence.sharedHelpers.some(item => item.member === 'GameModule::getCurrRadioMusicFileHash'));
+  assert(graph.rooms['2800:2'].evidence.resourceArrays.some(item => item.name === 'kRadioMusicFileHashes'));
   assert(graph.rooms['2700:0'].neighbors.includes('2700:1'));
   assert(graph.rooms['3000:1008'].unresolved.includes('dynamic-Smacker-hash'));
   assert(graph.rooms['2300:0'].missingVideoHashes.includes('2048a041'));
@@ -202,4 +222,19 @@ test('actual read-only native sources cover every module createScene case and au
   console.log(JSON.stringify({ nativeRooms: graph.evidence.roomCount, modules: graph.evidence.moduleCount,
     navigationLists: graph.evidence.navigationListCount, referencedNavigationLists: graph.evidence.referencedNavigationListCount,
     navigationRooms: graph.evidence.navigationRoomCount, missingVideoHashes: graph.evidence.missingVideoHashes.length }));
+});
+
+test('Scene2803 actual shared radio selector closes both physical resources crossing a.blb block 412', async () => {
+  const graph = await deriveRoomGraph({
+    files: { 'a.blb': { bytes: 28059697, hashes: Array(429).fill('a'.repeat(64)) } },
+    tables: { 'a.blb': { entries: [
+      { hash: 0x82b22000, type: 8, compression: 1, timestamp: 3997947822, offset: 25363504, diskSize: 1669120 },
+      { hash: 0x02b22001, type: 8, compression: 1, timestamp: 3991385818, offset: 27032624, diskSize: 1027073 }
+    ] } }, manifest: { packs: { 'Scene2803-29800A01-b1f53112': {}, 'Scene2803-412A423E-ecd4da1e': {} } }
+  });
+  const room = graph.rooms['2800:2'];
+  assert.deepEqual(room.resources.map(item => item.hash), ['02b22001', '82b22000']);
+  for (let index = 387; index <= 428; index++) assert(room.blocks.some(block => block.name === 'a.blb' && block.index === index));
+  assert.equal(room.hdRoom, null);
+  assert.deepEqual(room.hdRooms, ['Scene2803-29800A01-b1f53112', 'Scene2803-412A423E-ecd4da1e']);
 });

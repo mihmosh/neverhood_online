@@ -61,7 +61,7 @@ export function installOriginalFiles(FS, index, readBlock, { onRead = () => {}, 
         // Resolve the complete read before changing its destination or stream position.
         for (let done = 0; done < count;) {
           const at = position + done, blockIndex = Math.floor(at / index.blockSize);
-          const bytes = readBlock(name, blockIndex, started + waitMs);
+          const bytes = readBlock(name, blockIndex, started + waitMs, { position, length: count });
           if (!(bytes instanceof Uint8Array) || bytes.length !== Math.min(index.blockSize, file.bytes - blockIndex * index.blockSize)) throw new Error('Truncated verified original block.');
           const within = at % index.blockSize, take = Math.min(count - done, bytes.length - within);
           blocks.push({ bytes, within, take, done }); done += take;

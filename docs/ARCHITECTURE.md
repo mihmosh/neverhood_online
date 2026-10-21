@@ -214,7 +214,7 @@ and [deployment](DEPLOYMENT.md#current-hd-prototype-release).
 
 ### Room-Scoped Original And HD Loading
 
-The selected release is `https://d3gutt3a0gjwwo.cloudfront.net/room-streaming-v1/manifest-menu-v2.json`.
+The selected release is `https://d3gutt3a0gjwwo.cloudfront.net/room-streaming-v1/manifest-scene2803-v3.json`.
 Native menu/save/load/delete/credits assets and fonts are included in the shared
 preload before Escape is accepted. This brings the original startup bundle to
 29,294,592 bytes, still below 32 MiB; opening the menu must not trigger a cold read.
@@ -256,6 +256,13 @@ than aborting the native session. A preinitialized compositor-promoted Offscreen
 is painted by that worker to show animated loading while the game thread waits.
 Normal DOM input is blocked during this synchronous wait; queued gameplay input
 from the loading interval is discarded. No false EOF or failed-stack retry is used.
+Demand reads expand to the actual physical resource plus bounded stdio read-ahead,
+not just one 64 KiB block. Verified demand windows are reused in worker memory and
+learned current-room blocks are retained. The loading overlay waits 180 ms before
+appearing and, once shown, remains stable for at least 300 ms. Shared radio helper
+tables are included in the graph; Scene2803 prefetches its complete 18-track state
+union instead of interrupting playback for successive audio blocks. Startup's
+32 MiB ceiling applies only to initial boot, not to restored later rooms.
 The previous full-download release remains available at
 `full-game-lossless-v1` as the reference path, not a silent fallback.
 

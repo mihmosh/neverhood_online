@@ -7,6 +7,7 @@ let protectedHashes = new Set(), cacheKeys = [], storedKeys = new Set();
 const queue = [], pending = new Map();
 const stats = { networkBytes: 0, networkRequests: 0, cacheHits: 0, corruptions: 0 };
 let loadingCanvas, loadingContext, loadingTimer;
+let demandGroup;
 const waits = new Map();
 const digest = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), n => n.toString(16).padStart(2, '0')).join('');
 
@@ -15,7 +16,10 @@ function drawLoading() {
   const ctx = loadingContext, { width, height } = loadingCanvas;
   ctx.clearRect(0, 0, width, height);
   if (!waits.size) return;
-  const job = waits.values().next().value, x = width / 2, y = height / 2;
+  const job = [...waits.values()].find(job => performance.now() >= job.showAfter);
+  if (!job) return;
+  job.shownAt ??= performance.now();
+  const x = width / 2, y = height / 2;
   ctx.fillStyle = 'rgba(26, 19, 9, 0.91)'; ctx.fillRect(0, 0, width, height);
   const angle = performance.now() / 350;
   ctx.strokeStyle = '#d69340'; ctx.lineWidth = 5; ctx.lineCap = 'round';
@@ -107,11 +111,11 @@ async function block(name, number) {
 
 async function run(job) {
   const header = job.sab && new Int32Array(job.sab, 0, 8);
-  if (header && job.wait) { waits.set(job.sab, job); drawLoading(); }
+  if (header && job.wait) { job.showAfter = performance.now() + 180; waits.set(job.sab, job); drawLoading(); }
   try {
     let bytes, attempts = 0;
     for (;;) {
-      try { bytes = await block(job.name, job.index); break; }
+      try { bytes = job.group ? await demandBlocks(job) : await block(job.name, job.index); break; }
       catch (error) {
         if (!job.wait) throw error;
         attempts++;
@@ -123,6 +127,7 @@ async function run(job) {
       }
     }
     if (header) {
+      if (job.shownAt) await new Promise(resolve => setTimeout(resolve, Math.max(0, job.shownAt + 300 - performance.now())));
       new Uint8Array(job.sab, 32).set(bytes);
       header[1] = bytes.length;
       Atomics.store(header, 0, 1);
@@ -137,6 +142,36 @@ async function run(job) {
       Atomics.store(header, 0, -1);
     } else postMessage({ id: job.id, error: String(error.message || error), stats, cacheError });
   } finally { if (header) { waits.delete(job.sab); drawLoading(); } active--; drain(); }
+}
+
+async function demandBlocks(job) {
+  const { first, last, name } = job.group, file = index.files[name];
+  if (name !== job.name || !file || !Number.isSafeInteger(first) || !Number.isSafeInteger(last) ||
+      first < 0 || last >= file.hashes.length || first > job.index || last < job.index || last - first >= 512) throw new Error('Invalid demand resource window.');
+  const key = `${name}/${first}/${last}`;
+  let group = demandGroup;
+  if (!group || group.key !== key) {
+    group = { key, bytes: new Map(), delivered: new Set() }; demandGroup = group;
+    group.ready = (async () => {
+      let at = first;
+      const fill = async () => {
+        while (at <= last && !group.failed) { const number = at++; group.bytes.set(number, await block(name, number)); }
+      };
+      await Promise.all([fill(), fill()]);
+      return group.bytes;
+    })().catch(error => { group.failed = true; if (demandGroup === group) demandGroup = undefined; throw error; });
+  }
+  const bytes = await group.ready;
+  if (!group.delivered.has(job.room)) {
+    group.delivered.add(job.room);
+    for (const [number, data] of bytes) {
+      if (number === job.index) continue;
+      const copy = data.slice();
+      postMessage({ event: 'demand-block', name, index: number, room: job.room, bytes: copy.buffer, stats }, [copy.buffer]);
+    }
+  }
+  stats.demandResourceBytes = [...bytes.values()].reduce((sum, block) => sum + block.length, 0);
+  return bytes.get(job.index);
 }
 
 function drain() {

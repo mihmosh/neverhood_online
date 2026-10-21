@@ -114,6 +114,46 @@ async function until(predicate) {
   }
 }
 
+test('consecutive demand reads reuse a complete verified resource window', async t => {
+  const w = await worker(t);
+  await w.init();
+  const group = { name: 'i.blb', first: 0, last: 2 };
+  const read = async number => {
+    const sab = new SharedArrayBuffer(32 + ORIGINAL_BLOCK_BYTES), header = new Int32Array(sab, 0, 8);
+    await w.send({ type: 'read', id: 900 + number, name: 'i.blb', index: number, sab, group, room: '2800:2', wait: true });
+    await until(() => Atomics.load(header, 0) !== 0);
+    assert.equal(header[0], 1);
+    assert.deepEqual(new Uint8Array(sab, 32, header[1]), w.block('i.blb', number));
+  };
+  await read(0);
+  assert.equal(w.requests.length, 3);
+  w.storage.cache.match = () => { throw new Error('a consecutive demand must not read disk again'); };
+  await read(1); await read(2);
+  assert.equal(w.requests.length, 3, 'no repeat network fetches for the same resource');
+});
+
+test('loading stays transparent for short misses and appears only after the reveal delay', async t => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const w = await worker(t, { fetchResponse: async request => { await gate; return response(request); } });
+  await w.init();
+  let paint, clock = 0, panels = 0;
+  t.mock.method(globalThis, 'setInterval', callback => { paint = callback; return 0; });
+  t.mock.method(performance, 'now', () => clock);
+  const context = { clearRect() {}, fillRect() { panels++; }, beginPath() {}, arc() {}, stroke() {}, fillText() {} };
+  await w.send({ type: 'loading-canvas', canvas: { width: 640, height: 480, getContext: () => context } });
+  const sab = new SharedArrayBuffer(32 + ORIGINAL_BLOCK_BYTES), header = new Int32Array(sab, 0, 8);
+  await w.send({ type: 'read', id: 950, name: 'i.blb', index: 0, sab, wait: true });
+  await until(() => w.requests.length === 1);
+  clock = 100; paint(); assert.equal(panels, 0);
+  clock = 250; paint(); assert.equal(panels, 1);
+  assert.equal(header[0], 0, 'native read is still waiting while loading is visible');
+  clock = 600; release();
+  await until(() => header[0] === 1);
+  const previous = panels; paint();
+  assert.equal(panels, previous, 'completed reads do not keep painting the loading panel');
+});
+
 test('original worker initializes a seven-file index and fetches exact full and final partial blocks', async t => {
   const w = await worker(t);
   assert.equal((await w.init()).ready, true);

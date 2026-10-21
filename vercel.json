@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "NEVERHOOD_DEMO_MANIFEST_URL=https://d3gutt3a0gjwwo.cloudfront.net/room-streaming-v1/manifest-menu-v2.json npm run build",
+  "buildCommand": "NEVERHOOD_DEMO_MANIFEST_URL=https://d3gutt3a0gjwwo.cloudfront.net/room-streaming-v1/manifest-scene2803-v3.json npm run build",
   "outputDirectory": "dist",
   "headers": [
     {

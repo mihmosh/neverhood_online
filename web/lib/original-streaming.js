@@ -1,6 +1,7 @@
 import { fetchDemoBytes, demoAssetURL } from './demo-data.js';
 import { ORIGINAL_BLOCK_BYTES, validateOriginalIndex, installOriginalFiles } from './original-streaming-fs.js';
 import { createNativeRoomReader } from './original-streaming-state.js';
+import { demandWindow } from './original-streaming-demand.js';
 
 export async function createOriginalStreaming({ module, manifest, signal, onProgress = () => {}, onFatal, memoryBytes = 128 * 1024 ** 2 }) {
   if (!crossOriginIsolated || typeof SharedArrayBuffer !== 'function') throw new Error('Room streaming requires a cross-origin isolated page. The full download was not started.');
@@ -28,12 +29,25 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
   worker.postMessage({ type: 'loading-canvas', canvas: offscreen }, [offscreen]);
   const resizeLoading = () => worker.postMessage({ type: 'loading-size', width: Math.min(1280, innerWidth), height: Math.min(960, innerHeight) });
   addEventListener('resize', resizeLoading);
-  const pending = new Map(), memory = new Map(), reads = new Map();
+  const pending = new Map(), memory = new Map(), reads = new Map(), learned = new Map();
   const stats = { mode: 'room-streaming', indexBytes: bytes.length, memoryBytes: 0, maxMemoryBytes: 0,
     memoryHits: 0, synchronousMisses: 0, maxReadMs: 0, maxWaitMs: 0, reads: 0, readyRooms: [], terminal: false };
-  let serial = 0, disposed = false, protectedHashes = new Set(), currentRoom, generation = 0, enteredGame = false;
+  let serial = 0, disposed = false, protectedHashes = new Set(), baseProtectedHashes = new Set(), currentRoom, generation = 0, enteredGame = false, waitEpisodeOpen = false;
   const transitions = [];
   const hashFor = ref => index.files[ref.name].hashes[ref.index];
+  const learn = (room, refs) => {
+    let observed = learned.get(room);
+    if (!observed) learned.set(room, observed = new Map());
+    for (const ref of refs) {
+      const hash = hashFor(ref);
+      observed.delete(hash); observed.set(hash, ref);
+      if (room === currentRoom) protectedHashes.add(hash);
+      if (observed.size > 512) {
+        const oldest = observed.keys().next().value; observed.delete(oldest);
+        if (room === currentRoom && !baseProtectedHashes.has(oldest)) protectedHashes.delete(oldest);
+      }
+    }
+  };
   const request = (type, payload) => new Promise((resolve, reject) => {
     if (disposed) return reject(new Error('Original streaming session closed.'));
     const id = ++serial;
@@ -44,6 +58,12 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
   worker.onmessage = ({ data }) => {
     if (disposed) return;
     Object.assign(stats, data.stats ?? {});
+    if (data.event === 'demand-block') {
+      const ref = { name: data.name, index: data.index }, hash = hashFor(ref);
+      if (data.room === currentRoom && learned.get(data.room)?.has(hash)) protectedHashes.add(hash);
+      try { retain(hash, new Uint8Array(data.bytes)); } catch { stats.uncachedDemandBlocks = (stats.uncachedDemandBlocks ?? 0) + 1; }
+      return;
+    }
     if (data.cacheError) stats.cacheError = data.cacheError;
     if (data.event === 'waiting') {
       if (data.id > (stats.completedReadID ?? 0)) { stats.waitingError = data.error; stats.waitingAttempts = data.attempts; }
@@ -102,7 +122,7 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
     }
     throw error;
   };
-  const readBlock = (name, number) => {
+  const readBlock = (name, number, _deadline, read) => {
     if (disposed || stats.terminal) throw new Error('Original streaming session is terminal.');
     const hash = index.files[name].hashes[number], cached = memory.get(hash);
     if (cached) { stats.memoryHits++; memory.delete(hash); memory.set(hash, cached); return cached; }
@@ -110,8 +130,15 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
     stats.lastMiss = { name, index: number, room: currentRoom };
     const started = performance.now(), sab = new SharedArrayBuffer(ORIGINAL_BLOCK_BYTES + 32), header = new Int32Array(sab, 0, 8);
     const readID = ++serial;
-    stats.waiting = true; stats.waitStartedAt = started;
-    worker.postMessage({ type: 'read', id: readID, name, index: number, sab, wait: true });
+    stats.waiting = true;
+    if (!waitEpisodeOpen) { stats.waitStartedAt = started; waitEpisodeOpen = true; queueMicrotask(() => { waitEpisodeOpen = false; }); }
+    const native = nativeRoom(), owner = native && !native.menu && index.rooms[native.id] ? native.id : currentRoom;
+    const group = demandWindow(index, name, number, read);
+    const observed = Array.from({ length: group.last - group.first + 1 }, (_, i) => ({ name, index: group.first + i }));
+    learn(owner, observed);
+    worker.postMessage({ type: 'protect', hashes: [...new Set([...protectedHashes, ...observed.map(hashFor)])] });
+    stats.lastDemandResource = { ...group, room: owner };
+    worker.postMessage({ type: 'read', id: readID, name, index: number, sab, wait: true, group, room: owner });
     let state;
     while ((state = Atomics.load(header, 0)) === 0) { /* Preserve this native call until verified bytes arrive. */ }
     stats.maxWaitMs = Math.max(stats.maxWaitMs, performance.now() - started);
@@ -123,15 +150,17 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
     try { retain(hash, bytes); } catch { stats.uncachedDemandBlocks = (stats.uncachedDemandBlocks ?? 0) + 1; }
     return bytes;
   };
-  const setRoom = async id => {
+  const setRoom = async (id, { initial = false } = {}) => {
     const room = index.rooms[id];
     if (!room) return;
     const ticket = ++generation;
     // Entry bytes must be prefetched; this does not suspend or retry a native read.
     stats.loadingBoundary = 'input-gate-and-prefetched-neighbors';
     currentRoom = id; stats.currentRoom = id; stats.preparing = true; stats.prefetchError = undefined;
+    stats.readyRooms = [];
     const videoBlocks = hashes => (hashes ?? []).flatMap(hash => index.videos[hash].blocks);
-    const refs = [...index.bootstrap, ...(index.common ?? []), ...room.blocks, ...videoBlocks(room.videoHashes)];
+    const nativeRefs = [...index.bootstrap, ...(index.common ?? []), ...room.blocks, ...videoBlocks(room.videoHashes)];
+    const refs = [...nativeRefs, ...(learned.get(id)?.values() ?? [])];
     const neighbors = room.neighbors.flatMap(id => {
       const target = index.rooms[id];
       const entries = (room.neighborEntries ?? []).filter(entry => entry.room === id).flatMap(entry => entry.entryVideoHashes ?? []);
@@ -141,12 +170,15 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
     const neededBytes = [...needed.values()].reduce((sum, ref) => sum + Math.min(index.blockSize,
       index.files[ref.name].bytes - ref.index * index.blockSize), 0);
     if (neededBytes > memoryBytes) throw new Error('Current room and its entry barriers exceed the original memory budget.');
-    if (!enteredGame && neededBytes > 32 * 1024 ** 2) throw new Error('The original startup bundle exceeds the 32 MiB fast-start budget.');
+    if (initial && neededBytes > 32 * 1024 ** 2) throw new Error('The original startup bundle exceeds the 32 MiB fast-start budget.');
+    baseProtectedHashes = new Set([...nativeRefs, ...neighbors].map(hashFor));
     protectedHashes = new Set(needed.keys());
     worker.postMessage({ type: 'protect', hashes: [...protectedHashes] });
     const isCurrent = () => ticket === generation;
     await prefetch(refs, id, isCurrent);
     if (ticket !== generation || disposed) return;
+    stats.readyRooms = [id];
+    if (!initial) stats.preparing = false;
     await prefetch(neighbors, 'neighbor', isCurrent);
     if (ticket === generation) {
       stats.readyRooms = [...new Set([id, ...room.neighbors])].filter(id => index.rooms[id].blocks.every(ref => memory.has(hashFor(ref))));
@@ -171,7 +203,7 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
       files: Object.fromEntries(Object.entries(index.files).map(([name, file]) => [name,
         { bytes: file.bytes, sha256: file.sha256, url: file.url, hashes: file.hashes }])) };
     await request('init', { index: byteIndex, address });
-    await setRoom('1000:0');
+    await setRoom('1000:0', { initial: true });
     installOriginalFiles(module.FS, index, readBlock, { onRead: read => {
       stats.reads++; stats.maxReadMs = Math.max(stats.maxReadMs, read.ms);
       const key = `${currentRoom}/${read.name}/${read.position}/${read.bytes}`, previous = reads.get(key);
@@ -192,7 +224,7 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
       const state = nativeRoom();
       if (!state) return null;
       stats.native = state;
-      if (state.id === '1000:0') enteredGame = true;
+      if (state.module !== 1500 && index.rooms[state.id]) enteredGame = true;
       if (!enteredGame || state.menu) return null;
       const last = transitions.at(-1);
       if (!last || last.id !== state.id || last.smacker !== state.smacker) {

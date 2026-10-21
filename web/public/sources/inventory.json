@@ -154300,8 +154300,8 @@
     {
       "component": "project-build-sources",
       "path": "scripts/build-site.mjs",
-      "bytes": 11289,
-      "sha256": "52c84e1a95f2a2b4b150db59e5898d90f0d373d18346030cd189f49680ee4d83"
+      "bytes": 11343,
+      "sha256": "b1ccb3dba41061e161c55b6131676bab50b90c4c90c3e50ce430c998dd7b62b6"
     },
     {
       "component": "project-build-sources",

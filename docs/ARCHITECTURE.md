@@ -214,7 +214,10 @@ and [deployment](DEPLOYMENT.md#current-hd-prototype-release).
 
 ### Room-Scoped Original And HD Loading
 
-The selected release is `https://d3gutt3a0gjwwo.cloudfront.net/room-streaming-v1/manifest.json`.
+The selected release is `https://d3gutt3a0gjwwo.cloudfront.net/room-streaming-v1/manifest-menu-v2.json`.
+Native menu/save/load/delete/credits assets and fonts are included in the shared
+preload before Escape is accepted. This brings the original startup bundle to
+29,294,592 bytes, still below 32 MiB; opening the menu must not trigger a cold read.
 The compiled stock JS/WASM remains unchanged. The external player creates seven
 read-only sparse FS nodes with exact native BLB sizes instead of downloading their
 full 638 MB. A dedicated Worker fetches SHA256-pinned 64 KiB physical ranges and

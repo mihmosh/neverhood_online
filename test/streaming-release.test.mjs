@@ -7,6 +7,7 @@ import { request } from 'node:http';
 import { BLOCK_SIZE, PRELOAD_LIMIT_BYTES, INDEX_LIMIT_BYTES, RUNTIME_SHA256, deriveDependencies, mergeRoomGraph, indexOriginal, noSymlinks, sha256, sourceLiteralHashes } from '../scripts/prepare-streaming-demo.mjs';
 import { boundedRange, createStreamingServer, MAX_RANGE_BYTES, MAX_HD_RANGE_BYTES } from '../scripts/serve-streaming-demo.mjs';
 import { REQUIRED_FILES } from '../web/lib/validation.js';
+import { deriveMenuCommon, loadMenuSources, mergeMenuCommon } from '../scripts/prepare-streaming-demo.mjs';
 
 function original() {
   const bytes = Buffer.alloc(BLOCK_SIZE * 3 + 17);
@@ -94,6 +95,34 @@ test('source literal closure resolves winners and aliases, covers block34, exclu
   files['a.blb'].bytes = 40 * 1024 ** 2;
   tables['a.blb'].entries.at(-1).diskSize = PRELOAD_LIMIT_BYTES + 1;
   assert.throws(() => deriveDependencies(trace, files, tables, sources), /preload exceeds32MiB.*largest resources/);
+});
+
+test('menu common closes static references, winning aliases, fonts and controls absent from the room graph', async () => {
+  const { files, tables, trace } = dependencies();
+  const data = Buffer.alloc(46);
+  data.writeUInt32LE(0x11223344, 0); data.writeUInt32LE(1, 8);
+  data.writeUInt32LE(0xabcdef01, 12); data.writeUInt32LE(1, 16);
+  data.writeUInt32LE(0x94188d4d, 22);
+  tables['hd.blb'].entries.push(
+    { name: 'hd.blb', hash: 0x08c0020c, type: 2, timestamp: 1, compression: 1, offset: BLOCK_SIZE, diskSize: 10 },
+    { name: 'hd.blb', hash: 0x94188d4d, type: 2, timestamp: 1, compression: 0x65, diskSize: 123 });
+  const sources = [{ file: 'menu.cpp', text: 'uint32 buttons[] = {0x08C0020C}; script(0xABCDEF01); movie(0x001A0005);' }];
+  const menu = deriveMenuCommon(files, tables, sources, data);
+  assert.deepEqual(menu.blocks, [{ name: 'hd.blb', index: 1 }, { name: 'i.blb', index: 2 }, { name: 'i.blb', index: 3 }]);
+  assert.equal(menu.resources.find(resource => resource.hash === '94188d4d').resolvedHash, '0000007b');
+  assert.deepEqual(menu.videos, ['001a0005']);
+  const index = deriveDependencies(trace, files, tables), before = structuredClone(index);
+  assert(!index.common.some(ref => ref.name === 'hd.blb' && ref.index === 1));
+  const merged = mergeMenuCommon(index, menu, files);
+  assert(merged.common.some(ref => ref.name === 'hd.blb' && ref.index === 1));
+  assert.deepEqual(index, before); assert.deepEqual(merged.rooms, index.rooms); assert.deepEqual(merged.videos, index.videos);
+  const native = (await loadMenuSources()).flatMap(source => sourceLiteralHashes(source.text));
+  for (const hash of [0x08c0020c, 0x00208084, 0x2328121a, 0x201c2474, 0x728523ed, 0x94188d4d, 0x8290ac20, 0x08861079]) {
+    assert(native.includes(hash), `Missing native menu background/cursor/font/control/sound ${hash.toString(16)}`);
+  }
+  const oversized = { ...menu, blocks: Array.from({ length: 513 }, (_, index) => ({ name: 'a.blb', index })) };
+  files['a.blb'].bytes = 40 * 1024 ** 2;
+  assert.throws(() => mergeMenuCommon(index, oversized, files), /Menu common exceeds32MiB/);
 });
 
 test('observed startup Smacker gets a full separate bundle without expanding unrelated videos sharing padding', () => {

@@ -6,6 +6,7 @@ import { dirname, isAbsolute, parse, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { REQUIRED_FILES, validateHeader } from '../web/lib/validation.js';
 import { validateDemoManifest } from '../web/lib/demo-data.js';
+import { decodeEngineData, parseNativeScenes } from './derive-room-streaming-graph.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const BLOCK_SIZE = 65536;
@@ -83,6 +84,80 @@ function addSpan(set, name, position, count, files) {
 export function sourceLiteralHashes(text) {
   const code = text.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
   return [...new Set([...code.matchAll(/\b0x([a-fA-F0-9]{8})\b/g)].map(match => parseInt(match[1], 16)))];
+}
+
+export function deriveMenuCommon(files, tables, sources, engineData) {
+  const data = decodeEngineData(engineData), winners = new Map();
+  for (const name of REQUIRED_FILES) for (const entry of tables[name].entries) {
+    if (!winners.has(entry.hash) || entry.timestamp > winners.get(entry.hash).timestamp) winners.set(entry.hash, entry);
+  }
+  const hashes = new Set(sources.flatMap(source => sourceLiteralHashes(source.text))), visited = new Set();
+  const expand = hash => {
+    if (visited.has(hash)) return;
+    visited.add(hash);
+    for (const ref of data.references.get(hash) ?? []) { hashes.add(ref); expand(ref); }
+  };
+  for (const hash of [...hashes]) expand(hash);
+  const blocks = new Set(), resources = [], videos = [];
+  for (const hash of [...hashes].sort((a, b) => a - b)) {
+    let entry = winners.get(hash);
+    const aliases = new Set();
+    while (entry?.compression === 0x65) {
+      assert(!aliases.has(entry.hash), 'Menu BLB alias cycle'); aliases.add(entry.hash);
+      entry = winners.get(entry.diskSize);
+      assert(entry, 'Missing menu BLB alias target');
+    }
+    if (!entry || !entry.diskSize) continue;
+    if (entry.type === 10) { videos.push(hash.toString(16).padStart(8, '0')); continue; }
+    addSpan(blocks, entry.name, entry.offset, entry.diskSize, files);
+    resources.push({ hash: hash.toString(16).padStart(8, '0'), resolvedHash: entry.hash.toString(16).padStart(8, '0'),
+      name: entry.name, offset: entry.offset, bytes: entry.diskSize });
+  }
+  return { blocks: refs(blocks), resources, videos,
+    sources: sources.map(source => ({ file: source.file, sha256: sha256(source.text) })),
+    engineDataSHA256: data.sha256,
+    qualification: 'native-menu-all-states-nonvideo-source-literals-and-recursive-static-data-winning-physical-spans; movies-excluded' };
+}
+
+export async function loadMenuSources() {
+  const sources = [];
+  const helpers = {
+    'gamemodule.cpp': ['GameModule', 'checkRequests', 'openMainMenu', 'createMenuModule', 'updateMenuModule'],
+    'scene.cpp': ['Scene', 'insertScreenMouse', 'insertStaticSprite'],
+    'graphics.cpp': ['FontSurface'],
+  };
+  for (const file of ['menumodule.cpp', 'menumodule.h', 'mouse.cpp', 'mouse.h', ...Object.keys(helpers)]) {
+    const path = resolve(root, 'scummvm/engines/neverhood', file);
+    await noSymlinks(path);
+    const text = await readFile(path, 'utf8');
+    const selected = helpers[file] ? parseNativeScenes([{ file, text }]).functions
+      .filter(member => helpers[file].includes(member.name)).map(member => member.text).join('\n') : text;
+    sources.push({ file: `engines/neverhood/${file}`, text: selected });
+  }
+  return sources;
+}
+
+export function mergeMenuCommon(index, menu, files) {
+  const common = new Set([...index.common, ...menu.blocks].map(ref => `${ref.name}/${ref.index}`));
+  const measure = list => [...new Set(list.map(ref => `${ref.name}/${ref.index}`))].reduce((sum, value) => {
+    const [name, block] = value.split('/');
+    return sum + Math.min(BLOCK_SIZE, files[name].bytes - Number(block) * BLOCK_SIZE);
+  }, 0);
+  const budget = { ...index.evidence.budget, commonBytes: measure(refs(common)) };
+  const initialIds = budget.initialRoomIds ?? ['1000:0', ...(index.rooms['1000:0']?.neighbors ?? [])];
+  budget.firstRoomBytes = measure([...index.bootstrap, ...refs(common), ...(index.rooms['1000:0']?.blocks ?? [])]);
+  budget.firstRoomAndNeighborsBytes = measure([...index.bootstrap, ...refs(common), ...initialIds.flatMap(id => index.rooms[id]?.blocks ?? [])]);
+  if (index.rooms['2300:0']) {
+    const initial = [...index.bootstrap, ...refs(common), ...initialIds.flatMap(id => index.rooms[id]?.blocks ?? [])];
+    const entry = index.rooms['2300:0'];
+    const next = [...initial, ...entry.blocks, ...(budget.module2300EntryVideoHashes ?? []).flatMap(hash => index.videos[hash].blocks)];
+    budget.module2300TransitionResidentBytes = measure(next);
+    budget.module2300TransitionAdditionalBytes = measure(next) - measure(initial);
+    budget.module2300TransitionWithin32MiB = measure(next) <= PRELOAD_LIMIT_BYTES;
+    budget.module2300AssociatedVideosResidentBytes = measure([...initial, ...entry.blocks, ...(entry.videoHashes ?? []).flatMap(hash => index.videos[hash].blocks)]);
+  }
+  assert(budget.firstRoomAndNeighborsBytes <= PRELOAD_LIMIT_BYTES, 'Menu common exceeds32MiB initial preload');
+  return { ...index, common: refs(common), evidence: { ...index.evidence, budget, menuCommon: menu } };
 }
 
 export function deriveDependencies(trace, files, tables, sources = []) {
@@ -311,8 +386,9 @@ export async function prepareStreamingDemo({ baseDir, output, tracePath, origina
   const { deriveRoomGraph } = await import('./derive-room-streaming-graph.mjs');
   const dependencies = deriveDependencies(trace, files, tables, sources);
   const graph = await deriveRoomGraph({ files, tables, manifest });
+  const menu = deriveMenuCommon(files, tables, await loadMenuSources(), await readFile(resolve(root, 'web/public/runtime/neverhood.dat')));
   const index = { version: 1, blockSize: BLOCK_SIZE, runtimeSHA256: RUNTIME_SHA256, files,
-    ...mergeRoomGraph(dependencies, graph, files) };
+    ...mergeMenuCommon(mergeRoomGraph(dependencies, graph, files), menu, files) };
   index.evidence.traceSHA256 = sha256(traceBytes);
   const indexBytes = Buffer.from(JSON.stringify(index) + '\n');
   assert(indexBytes.length <= INDEX_LIMIT_BYTES, `Streaming index exceeds16MiB: ${indexBytes.length}`);

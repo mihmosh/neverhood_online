@@ -154174,8 +154174,8 @@
     {
       "component": "project-build-sources",
       "path": "docs/ARCHITECTURE.md",
-      "bytes": 23506,
-      "sha256": "08d7abdc99bc23dec146d8c3cd38b6f65e3dbd5074ed3792ceb0b4120ce75d44"
+      "bytes": 23758,
+      "sha256": "f896960a6a50d7f776537d6f18c866f0bb1ffd18a588bf39dc253d13a6acdc65"
     },
     {
       "component": "project-build-sources",
@@ -154414,8 +154414,8 @@
     {
       "component": "project-build-sources",
       "path": "scripts/prepare-streaming-demo.mjs",
-      "bytes": 24368,
-      "sha256": "acfa791e2e853805f80367613588890f31a2d469e1d67af740981fe07b429d26"
+      "bytes": 29080,
+      "sha256": "56d7330c28697a073983b3adf4185e466f2e5dc2ec9852ebf20c5b47b520c515"
     },
     {
       "component": "project-build-sources",
@@ -154888,8 +154888,8 @@
     {
       "component": "project-build-sources",
       "path": "test/streaming-release.test.mjs",
-      "bytes": 24210,
-      "sha256": "25ff5a550af7ea2d2fda63c00e77d5bcb25d356f2af5a1f71a883cad708bde19"
+      "bytes": 26417,
+      "sha256": "986941df0fa0154bf1348713ca9e8259f7e64baec7c0cfcfeab41ee7fe276568"
     },
     {
       "component": "project-build-sources",
@@ -155884,8 +155884,8 @@
     {
       "component": "project-build-sources",
       "path": "vercel.json",
-      "bytes": 944,
-      "sha256": "3c0733eb3add6f28d48da49bc2d3b66ecb8ea775dd44f2874dd94acca5220ca8"
+      "bytes": 952,
+      "sha256": "e63861d7ca6dee3b00465817775516cf1bd5fc193d8775371d78f7829e77f94b"
     },
     {
       "component": "project-build-sources",
@@ -155926,8 +155926,8 @@
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/config.json",
-      "bytes": 109,
-      "sha256": "f871c850a6712e0c6e88448c2606b0177f45f17fbb5193e6cb00a412eb317621"
+      "bytes": 117,
+      "sha256": "97eb4d03d9eccbaa6f18dcf0947b53b0b9cba462805d1ab144022e51ba79d801"
     },
     {
       "component": "project-build-sources",

@@ -20,7 +20,7 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
   }
   const loadingCanvas = document.createElement('canvas');
   loadingCanvas.id = 'original-streaming-loading'; loadingCanvas.setAttribute('aria-hidden', 'true');
-  loadingCanvas.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:2147483647;pointer-events:none;will-change:transform;transform:translateZ(0)';
+  loadingCanvas.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:2147483647;pointer-events:none;background:transparent;will-change:transform;transform:translateZ(0)';
   loadingCanvas.width = Math.min(1280, innerWidth); loadingCanvas.height = Math.min(960, innerHeight);
   document.body.append(loadingCanvas);
   const offscreen = loadingCanvas.transferControlToOffscreen();

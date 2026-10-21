@@ -53,6 +53,26 @@ Vercel build status alone does not prove that the deployed requests work.
 
 ## Current HD Prototype Release
 
+The selected release is now `room-streaming-v1`, including the approved static
+window and seven-gesture cursor. The committed config and Vercel build command pin
+`https://d3gutt3a0gjwwo.cloudfront.net/room-streaming-v1/manifest.json`; the command
+overrides the older project environment value. The compiled runtime is unchanged.
+Original BLBs use pinned 64 KiB ranges through the external sparse FS/Worker;
+HD ZIP members use independent pinned ranges. Bootstrap, rooms, neighbors and
+original navigation movies are described separately. No EC2/GPU processing is
+needed for publication. Assets and metadata are verified in S3 before the manifest
+is published last. Existing media is copied server-side into immutable versioned
+keys; private catalogs, inputs and credentials are excluded.
+
+Both parent and game iframe now require COOP/COEP for SharedArrayBuffer. The
+CloudFront response policy additionally exposes `Content-Range`; CORS/CORP remain
+enabled for authorized cross-origin assets. The YouTube iframe is credentialless
+to preserve compatible embedding under the isolation policy. A browser without
+the required isolation gets a clear error, never a hidden full-BLB download.
+
+The following `full-game-lossless-v1` description is the preserved full-download
+reference release, not the selected startup behavior.
+
 The current source prototype uses the unchanged full-game runtime, not the
 historical bounded two-room binary. `web/hd-demo/config.json` selects the existing
 S3/CloudFront release. A Vercel build may explicitly select it with:
@@ -135,6 +155,30 @@ The included `server.mjs` is for development and listens only on
 `127.0.0.1:4173` by default. It does not replace a production reverse proxy.
 
 ## Prepublication Checks
+
+The 2026-10-21 cursor/static-window fixes are a local opt-in, not a change to the
+CloudFront release or Vercel environment. `scripts/prepare-window-overlay.mjs`
+creates only the approved window ZIP. `scripts/prepare-visual-demo.mjs` combines
+that overlay with an explicitly supplied prepared cursor and a new private
+manifest. It verifies every declared legacy asset and hardlinks it, rather than
+copying or repacking several gigabytes. Never edit/chmod those linked files:
+their inodes are shared with the reference release. New cursor/window files are
+separate copies. The base manifest and compiled runtime are unchanged.
+
+Serve such a prepared release on a separate loopback origin:
+
+```sh
+PORT=4204 NEVERHOOD_DEMO_DIR=/absolute/path/to/new/private-release \
+  node scripts/serve-visual-demo.mjs
+```
+
+This wrapper overrides only the local `/hd-demo/config.json` endpoint; the normal
+static server and public config are not edited. The current prepared local output
+is `private-assets/upscaling/gemini-review-all/visual-demo-local-20261021T185526Z`.
+Its assembly receipt records the input hashes, destination files, copied bytes
+and shared inodes. This path remains the explicit full-original-download reference,
+not a silently enabled original streaming implementation. Upload, publishing and
+production selection require separate permission.
 
 1. Static frontend deployment contains no original game resources or secrets; the separate authorized asset release contains only its explicitly selected files.
 2. The exact upstream version, complete corresponding source and build instructions are available.

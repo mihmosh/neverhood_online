@@ -208,6 +208,20 @@ for the orchestrator. Cursor and background branches remain separate.
 
 ## Cursor Tooling
 
+The full-game player now supports room-scoped original/HD delivery from the
+`room-streaming-v1` asset release. It starts with about 22.7 MB of original data
+instead of all 638 MB, prefetches neighboring room/video dependencies and reads
+individual verified HD ZIP members. The stock runtime remains unchanged; see
+[architecture](docs/ARCHITECTURE.md#room-scoped-original-and-hd-loading).
+
+The full-game visual layer supports the prepared seven-gesture atlas
+through exact resource/raster/hotspot and per-presented-pose used-color proofs.
+The existing published manifest still uses its original cursor export. An approved
+static first-room window pack is prepared separately, with explicit normalization
+and its own `Module1000-C084110C` state identity. These changes do not change the
+engine. The separate streaming loader handles original startup delivery. See the
+[local verification record](docs/ROOM_HD_RESTORATION.md#local-cursor-and-window-verification-2026-10-21).
+
 The separate [HD cursor tooling subproject](tools/hd-cursor/README.md) contains
 the Blender renderer, alpha-aware sprite packager, tests and technical
 documentation. Its public scope is generic software, not a freely licensed

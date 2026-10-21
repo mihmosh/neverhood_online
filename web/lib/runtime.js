@@ -85,7 +85,8 @@ export async function discoverDemoRuntime({ manifestURL } = {}) {
         JSON.stringify(descriptor.engineData) !== '["neverhood.dat"]' ||
         !/^[a-f0-9]{64}$/.test(descriptor.wasmSHA256) || !/^[a-f0-9]{64}$/.test(descriptor.sourceRuntimeSHA256)) throw new Error('The demo engine descriptor is incompatible.');
     const manifest = await fetchDemoManifest(manifestURL, descriptor.sourceRuntimeSHA256);
-    return { available: true, downloadBytes: manifest.totalAssetBytes,
+    return { available: true, streaming: manifest.streaming?.version === 1,
+      downloadBytes: manifest.streaming ? undefined : manifest.totalAssetBytes,
       start: options => startRuntime(descriptor, options, false, { manifestURL: manifest.manifestURL }) };
   } catch (error) {
     return { available: false, reason: error.message || 'The HD demo is unavailable.' };

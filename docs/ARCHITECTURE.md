@@ -212,6 +212,110 @@ does not stream the original game by room and is not a low-memory mobile design.
 See [the current mapping contract](ROOM_HD_RESTORATION.md#full-game-room-mapping-2026-10-21)
 and [deployment](DEPLOYMENT.md#current-hd-prototype-release).
 
+### Room-Scoped Original And HD Loading
+
+The selected release is `https://d3gutt3a0gjwwo.cloudfront.net/room-streaming-v1/manifest.json`.
+The compiled stock JS/WASM remains unchanged. The external player creates seven
+read-only sparse FS nodes with exact native BLB sizes instead of downloading their
+full 638 MB. A dedicated Worker fetches SHA256-pinned 64 KiB physical ranges and
+maintains a separate verified persistent cache. The player asynchronously prepares
+bootstrap/current-room dependencies and neighbor entry resources before accepting
+new input; neighboring navigation movies continue prefetching in the background.
+
+The source-derived graph records 244 native scene IDs, 135 HD mappings and 475
+explicitly associated original video bundles. Navigation lists are decoded from
+the original engine data; movies are not replaced with static HD backgrounds.
+Existing room ZIPs remain logical containers, but pinned member indexes allow
+strict HTTP 206 reads of individual PNGs instead of whole-room ZIP downloads.
+Each returned member is independently verified; partial delivery is never reported
+as verification of the complete ZIP. Missing optional HD images retain their
+native layers without discarding an available verified HD background.
+
+Cold first-room verification loaded 22,740,992 original bytes in about 5.3 seconds;
+a fresh page/Worker reused 347 cached blocks with zero original network traffic.
+The native first-room -> second-room -> courtyard navigation movie `2028A041`
+route completed with zero synchronous misses and maximum original FS read below
+1 ms. Three-room offline backtracking also retained HD output. Corrupt cached
+blocks are rehashed and repaired; transport failures show Retry and start a fresh
+native session rather than returning false EOF or resuming a failed native read.
+
+Original memory is capped at 128 MiB, original persistent blocks at 256 MiB, and
+the HD encoded/persistent caches at 32/256 MiB respectively. Startup originals
+have a 32 MiB preflight ceiling. COOP `same-origin` and COEP `require-corp` are
+required on both the parent page and player iframe. CDN CORS exposes Content-Range;
+the client rejects a full-file 200 response to a Range request.
+
+Static dependency closure remains explicitly qualified for dynamic references and
+unresolved edges. These checks are not a complete playthrough or physical-device
+certification. An unexpected unready native read has a bounded terminal failure,
+never invented bytes. The previous full-download release remains available at
+`full-game-lossless-v1` as the reference path, not a silent fallback.
+
+### Earlier Transport Experiments
+
+Before the implementation above, the 2026-10-21 transport experiment retained the
+reference launcher. Stock `Module.FS` permits per-file read-only
+`stream_ops.read`/`llseek` overrides, with real file sizes and no full-file backing
+allocation. Memory hits, independent descriptors, positioned reads, cross-block
+reads, `SEEK_END` and short EOF reads were verified on the unchanged artifact.
+Promise-based fetching cannot complete a synchronous native read by itself.
+
+The first independent-provider candidate, synchronous Window XHR to a controlling
+Service Worker, failed in Chrome 156: synchronous requests bypassed the SW and got
+origin 404 responses even after the same URL had been verified and cached through
+asynchronous fetch. This invalidates that transport, not all external transports.
+
+A second experiment used a dedicated Worker, SharedArrayBuffer and atomic
+completion under COOP `same-origin` / COEP `require-corp`. The Worker independently
+fetched exact 64 KiB physical BLB ranges, verified SHA256 and used Cache Storage.
+The Window synchronously read completed bytes through a bounded atomic spin; it
+never called unsupported Window `Atomics.wait`, substituted zeroes, or treated a
+missing block as EOF. Physical block addressing also covered shadowed archive
+entries, gaps and tails omitted from the historical resource-only index.
+
+This transport actually launched the stock game with 2,555,904 original bytes
+before the first confirmed room frame in one run (2.54 seconds). Menu/return worked;
+the maximum interactive long task on that short route was 82 ms. Persistent-cache
+reads while offline and after Worker restart succeeded. Corruption, unavailable
+network and a dead Worker produced finite errors, not invented bytes. The Worker
+script was restarted online before the offline check; a fully offline application
+restart was not established.
+
+It is not a safe general cache-miss architecture. An added 150 ms response delay
+blocked the Window for 175.82 ms and consumed roughly 0.20 renderer CPU-seconds.
+Another cold natural Scene1001 -> Scene1002 -> Scene1004 trace downloaded
+8,060,928 original bytes but produced 172 ms and 119 ms interactive long tasks.
+That fails the experimental 100 ms interactive-stall target; the 32 MiB startup
+target alone is insufficient. Scene1004 is an ordinary ladder room, not proof of
+a navigation movie. Startup long tasks also exceeded 100 ms.
+
+A second fresh-context route prefetched only those 123 verified blocks
+asynchronously before entry. With an added 150 ms delay per network response this
+took 5.156 seconds, then native Scene1001 -> Scene1002 -> Scene1004 -> Scene1002
+completed with the return performed offline: zero redownloads, no unexpected cold
+misses/spins, maximum FS read 1.095 ms and maximum interactive RAF gap 83.335 ms.
+This is evidence for prefetch on that observed route, not a validated per-room
+dependency graph. No post-room1 Smacker was read or decoded; the startup video
+resource is not a navigation-video proof. Return all the way to Scene1001 and the
+required navigation-movie/camera-return slice were not established.
+
+Timeout/error here aborts a current synchronous read; it does not safely suspend
+and resume its native continuation. No safe arbitrary-miss retry has been proved.
+Therefore no room graph, original/HD/video bundling migration or mass repack was
+started. Verified async prefetch plus proven dependency closure and pre-entry
+barriers remain prerequisites; a small successful trace is not that closure.
+Neither COOP/COEP deployment to the real asset CDN nor mobile support was certified.
+The stable reference and port-4204 visual release still fetch all original BLBs at launch;
+the selected streaming release does not.
+
+The isolated executable experiments and full traces remain under `/tmp/kilo`:
+`neverhood-sparse-proof.mjs`, `neverhood-sparse-transport-check.mjs`,
+`neverhood-sab-proof.mjs`, `neverhood-sab-browser.mjs`, `neverhood-sab-jitter.mjs`,
+`neverhood-sab-route.mjs`, `neverhood-sab-route-cold.json` and
+`neverhood-sab-route-warm.json`. They are diagnostic experiments, not public runtime
+modules or production delivery contracts. The public source archives contain the
+implemented visual fixes and this failure/measurement record, not private BLB bytes.
+
 ## Historical First-Room Adapter Experiment
 
 The following describes the earlier isolated prototype, not current delivery.

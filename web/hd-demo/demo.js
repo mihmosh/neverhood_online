@@ -73,7 +73,7 @@ async function checkAvailability() {
       recheck.hidden = false;
       return;
     }
-    const size = Number.isSafeInteger(runtime.downloadBytes) && runtime.downloadBytes > 0 && runtime.downloadBytes < 1024 ** 3
+    const size = runtime.streaming ? ' Original and HD data load by room; nearby rooms and navigation videos are prefetched.' : Number.isSafeInteger(runtime.downloadBytes) && runtime.downloadBytes > 0 && runtime.downloadBytes < 1024 ** 3
       ? ` Up to ${Math.ceil(runtime.downloadBytes / 1024 ** 2)} MiB of game assets.` : '';
     setStatus(`Start a new game or load your progress from the game menu. Room packs prepare as you explore.${size}`);
   } catch (error) {

@@ -172,6 +172,61 @@ including passage beyond the old demo boundary, checked native indexed parity
 and a zero-ZIP-download warm start. Desktop and emulated-mobile touch passed;
 this is not a complete playthrough or physical-device certification.
 
+## Local Cursor And Window Verification (2026-10-21)
+
+The stock runtime remains byte-for-byte unchanged, with WASM SHA256
+`31bdb5fa1afcdf80a6895e2fe5c87a5a999a245af85de7326df20f0756e0d83c`.
+These are local opt-in changes, not an upload or production switch.
+
+The seven-gesture cursor export uses existing private artwork, not a new render.
+`node scripts/build-demo-cursor.mjs private-assets/demo-cursor-seven-v1 --all-gestures`
+produces 21 exact resource/row bindings for `6520a400`, `41108c00` and `23303124`.
+The loader pins the complete prepared manifest's canonical JSON SHA256, then checks
+every raster/palette and the atlas image hash. Each presented 32x32 indexed raster
+selects its own pose and only its nonzero used palette indices; colors used solely
+by other poses do not invalidate it. Native hotspots, visibility and the repeated
+six-frame phase remain authoritative. The compositor selects the appropriate
+128x128 cell in the 384x896 atlas and reports resource, row, pose and an explicit
+native fallback reason. Shipped version-1 `tail-swing-v4` manifests remain supported.
+Unknown resources/rasters, changed used RGB, menus and unsupported render states
+remain native. If identical native rasters correspond to distinct HD animation
+poses, `pose-ambiguous` retains native output rather than guessing a phase. Source
+fingerprints are not evidence of full-game gesture coverage.
+
+The user explicitly accepted single-available-candidate pending background groups.
+The private receipt is
+`gemini-review-all/user-20261021T183214Z-single-available-pending.json`: 15 new
+approvals, retaining the two previous receipt approvals. Multiple-candidate groups,
+the unmapped paired-lighting experiment and the existing conflict were not silently
+resolved. Approval does not authorize publishing or accepting unrelated candidates.
+
+The accepted window output `a3b85c90380de0b289fa1f759cc186e903c6cc965540ae56b4f5e342394902dc`
+was explicitly resampled from 2400x1792 to 2560x1920 with Lanczos, no crop/padding,
+and encoded as lossless RGB PNG. Normalized SHA256 is
+`cfa107d1ab5fb517bf347964fea876b7789f16cf8c99ec51cd46d32030cdd793`.
+`scripts/prepare-window-overlay.mjs` uses the ordinary provenance-checking mapping
+and ZIP packer with an empty animation catalog. It emits just one 6,096,753-byte
+window ZIP with identity `Module1000-C084110C`, SHA256
+`b5b7981538623dae8ca0ca6da4ec85e053a9107e463cc69793a4113a819dd4de`.
+It does not regenerate or copy all legacy packs. The window is a native static
+scene, never a navigation-video substitution.
+
+On isolated origin 4201, native input opened the window via the red button and
+window hotspot, selected the approved room identity, switched HD/Original/HD,
+returned to Scene1001, and reached Scene1002 through three lever pulls and the
+door. The window had one HD background draw, zero renderer mismatches/errors and
+no page errors. Separate DPR-2 browser testing confirmed HD resource `23303124`
+at all four edges of Scene1002 and indexed native parity of 0/307200 differing
+pixels. These proofs do not certify every module, physical mobile device, gesture
+context or a complete playthrough. Reproduce with `scripts/prove-window-runtime.mjs`
+and `test/browser-demo-cursor.mjs`; private image/pack inputs are required.
+
+The combined local release is served at `http://127.0.0.1:4204/hd-demo/` by
+`scripts/serve-visual-demo.mjs`. Its direct, non-intercepted browser proof also
+confirmed the window cursor resource `41108c00` as HD. The assembly links declared
+legacy inputs without copying their bytes, and copies only the new approved window
+and cursor files. It does not reduce the browser's original-data startup download.
+
 ## Established Starting Point
 
 - Seven source archives were cataloged: 8192 indexed frames, including 7111

@@ -27,6 +27,7 @@ let syncing = Promise.resolve();
 let engineFrame;
 let windowStamp = '';
 let renderPrototype;
+let originalStreaming;
 
 function windowSize() {
   if (renderPrototype?.preferNativeResolution?.()) return [640, 480];
@@ -71,6 +72,7 @@ function sync(populate) {
 function finish(error) {
   if (finishing) return finishing;
   controller.abort();
+  originalStreaming?.dispose();
   renderPrototype?.dispose();
   resizeObserver?.disconnect();
   cancelAnimationFrame(engineFrame);
@@ -100,7 +102,7 @@ async function start(descriptor, demo) {
     descriptor = { ...stock.descriptor, wasmSHA256: demoManifest.sourceRuntimeSHA256,
       sourceRuntimeSHA256: demoManifest.sourceRuntimeSHA256 };
   }
-  const startup = demoManifest ? createDemoProgress({ nativeBytes: demoManifest.totalBytes,
+  const startup = demoManifest ? createDemoProgress({ nativeBytes: demoManifest.streaming ? 32 * 1024 ** 2 : demoManifest.totalBytes,
     roomBytes: demoManifest.packs.Scene1001?.bytes ?? 0 }, status) : null;
   const announcePlaying = () => {
     if (playing || signal.aborted) return;
@@ -151,7 +153,16 @@ async function start(descriptor, demo) {
         fullGame: fullGameSession, rooms: demoManifest.rooms,
         abiURL: fullGameSession ? new URL('./prototype/render-abi.json', import.meta.url).href : artifact(descriptor.abi), sourceRuntimeSHA256: descriptor.sourceRuntimeSHA256,
         packs: Object.fromEntries(Object.entries(demoManifest.packs).map(([room, entry]) => [room, demoManifest.version === 2
-          ? { ...entry, url: demoAssetURL(entry.file, demoManifest.manifestURL) } : demoAssetURL(entry, demoManifest.manifestURL)])),
+          ? { ...entry, url: demoAssetURL(entry.file, demoManifest.manifestURL),
+            ...(entry.streaming ? { streaming: { ...entry.streaming, index: { ...entry.streaming.index,
+              url: demoAssetURL(entry.streaming.index.file, demoManifest.manifestURL) } } } : {}) } : demoAssetURL(entry, demoManifest.manifestURL)])),
+        onRoom: (room, nativeModule) => {
+          if (!originalStreaming || !room) return;
+          originalStreaming.enterRoom(room, nativeModule).then(() => {
+            if (signal.aborted) return;
+            renderPrototype?.prefetchRooms?.(originalStreaming.neighborHDRooms()).catch(error => status(error.message, undefined, 'background'));
+          }).catch(error => status(`Room data preparation failed: ${error.message}`, undefined, 'background'));
+        },
         onStatus: status,
         onStartupProgress: (loaded, total, phase) => startup(phase === 'download' ? 'room' : 'verify', total ? loaded / total : 0,
           phase === 'download' ? 'Loading HD room 1...' : 'Verifying HD room 1 and preparing its cache...'),
@@ -184,7 +195,24 @@ async function start(descriptor, demo) {
     if (!response.ok) throw new Error('A game player file is missing.');
     fs.writeFile(`/engine-data/${name}`, new Uint8Array(await response.arrayBuffer()));
   }
-  if (demoManifest) {
+  if (demoManifest?.streaming) {
+    const { createOriginalStreaming } = await import('./lib/original-streaming.js');
+    originalStreaming = await createOriginalStreaming({ module: Module, manifest: demoManifest, signal,
+      onProgress: (fraction, text) => playing ? status(text, fraction * 100, 'background') : startup('native', fraction, text),
+      onFatal: error => { finish(error); } });
+    window.originalStreaming = { stats: originalStreaming.stats, trace: originalStreaming.trace };
+    const firstRoom = originalStreaming.index.rooms[originalStreaming.currentRoom()]?.hdRoom;
+    if (firstRoom) await renderPrototype?.prefetchRooms?.([firstRoom], { wait: true });
+    renderPrototype?.prefetchRooms?.(originalStreaming.neighborHDRooms()).catch(error => status(error.message, undefined, 'background'));
+    const gate = event => {
+      const state = originalStreaming.stats();
+      if (!state.preparing) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (state.prefetchError) originalStreaming.retry().catch(error => status(`Room preparation failed: ${error.message}. Click to retry.`, undefined, 'background'));
+      status('Preparing the nearby original room data. Input will resume when it is verified.', undefined, 'background');
+    };
+    for (const type of ['pointerdown', 'mousedown', 'touchstart', 'keydown']) window.addEventListener(type, gate, { capture: true, passive: false, signal });
+  } else if (demoManifest) {
     let copied = 0;
     for (const entry of demoManifest.files) {
       const bytes = await fetchDemoBytes(demoAssetURL(entry.file, demoManifest.manifestURL), {
@@ -234,6 +262,9 @@ async function start(descriptor, demo) {
     const observeEngine = () => {
       if (signal.aborted) return;
       const active = Module.getValue(Module._g_engine, '*') !== 0;
+      const prepared = originalStreaming?.observe();
+      prepared?.then(() => renderPrototype?.prefetchRooms?.(originalStreaming.neighborHDRooms()))
+        .catch(error => status(`Room preparation failed: ${error.message}`, undefined, 'background'));
       if (active) resizeWindow();
       if (active && !sawEngine) {
         sawEngine = true;

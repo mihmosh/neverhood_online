@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { demoCursorOrdinal, validateDemoCursorManifest, loadDemoCursor } from '../web/prototype/demo-cursor.js';
+import { createHash } from 'node:crypto';
+import { demoCursorMatch, demoCursorOrdinal, validateDemoCursorManifest, loadDemoCursor } from '../web/prototype/demo-cursor.js';
 import { createRoomPrototype } from '../web/prototype/room1.js';
 import { RenderFrameReader } from '../web/prototype/read-frame.js';
 
 const privateManifest = await readFile(new URL('../private-assets/demo-cursor/cursor.json', import.meta.url), 'utf8').then(JSON.parse).catch(() => null);
+const preparedManifest = await readFile(new URL('../private-assets/demo-cursor-seven-v1/cursor.json', import.meta.url), 'utf8').then(JSON.parse).catch(() => null);
 
 function frameFor(binding, ordinal = 0, pitch = 32) {
   const palette = new Uint8Array(1024);
@@ -55,6 +57,67 @@ test('cursor manifest rejects unrecognized versions and incomplete binding', asy
   await assert.rejects(validateDemoCursorManifest({ version: 2 }), /binding/);
 });
 
+function sevenGestureManifest() {
+  const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+  const palette = Buffer.alloc(768, 130);
+  const hotspots = [[15, 5], [17, 25], [17, 30], [14, 1], [3, 7], [30, 18], [1, 18]];
+  return { version: 2, revision: 'clay-seven-gestures-v1', logicalSize: [32, 32], cellSize: 128,
+    phaseMapping: [0, 0, 1, 1, 2, 2], imageSHA256: 'a'.repeat(64),
+    bindings: ['6520a400', '41108c00', '23303124'].flatMap(resource => hotspots.map((hotspot, row) => ({
+      resource, row, hotspot, paletteRGBBase64: palette.toString('base64'), paletteRGBSHA256: sha(palette),
+      frames: [0, 1, 2].map(ordinal => {
+        const pixels = Buffer.alloc(1024, 20 + row * 3 + ordinal); pixels[0] = 0;
+        return { ordinal, indicesBase64: pixels.toString('base64'), indexedSHA256: sha(pixels) };
+      }),
+    }))) };
+}
+
+test('seven gestures match exact per-resource rows, pitched rasters and six native phases', async () => {
+  const binding = await validateDemoCursorManifest(sevenGestureManifest());
+  for (const entry of binding.bindings) for (const pose of [0, 0, 1, 1, 2, 2]) {
+    const frame = frameFor(entry, pose, 40);
+    frame.room = 'Module1000'; frame.cursor.resourceHash = entry.resourceHash;
+    [frame.cursor.hotspotX, frame.cursor.hotspotY] = entry.hotspot;
+    assert.equal(demoCursorOrdinal(binding, frame), -1, 'bounded demo never expands to an unknown room');
+    assert.equal(demoCursorOrdinal(binding, frame, { allRooms: true }), entry.row * 3 + pose);
+    frame.cursor.visible = false;
+    assert.equal(demoCursorOrdinal(binding, frame, { allRooms: true }), entry.row * 3 + pose, 'visibility does not advance/reset pose');
+  }
+});
+
+test('used-index cursor proof ignores unrelated colors but rejects fades, wrong sheets and delayed row rasters', async () => {
+  const binding = await validateDemoCursorManifest(sevenGestureManifest());
+  const entry = binding.bindings.find(entry => entry.resourceHash === 0x23303124 && entry.row === 6);
+  const frame = frameFor(entry, 2); frame.room = 'Scene1002'; frame.cursor.resourceHash = entry.resourceHash;
+  [frame.cursor.hotspotX, frame.cursor.hotspotY] = entry.hotspot;
+  const lookup = () => demoCursorOrdinal(binding, frame);
+  assert.equal(lookup(), 20);
+  frame.palette[0] ^= 1; frame.palette[255 * 4] ^= 1; frame.palette[entry.used[2][0] * 4 + 3] ^= 255;
+  frame.palette[entry.used[0][0] * 4] ^= 1;
+  assert.equal(lookup(), 20, 'index zero, unused colors and palette alpha are irrelevant');
+  frame.palette[entry.used[2][0] * 4] ^= 1;
+  assert.equal(lookup(), -1, 'a changed RGB component of the cursor immediately restores native');
+  assert.equal(demoCursorMatch(binding, frame).reason, 'used-palette-mismatch');
+  frame.palette[entry.used[2][0] * 4] ^= 1;
+  frame.cursor.resourceHash = 0x12345678; assert.equal(lookup(), -1);
+  assert.equal(demoCursorMatch(binding, frame).reason, 'resource-unproven');
+  frame.cursor.resourceHash = entry.resourceHash;
+  [frame.cursor.hotspotX, frame.cursor.hotspotY] = [3, 7]; assert.equal(lookup(), -1, 'no matching by pointer intent or guessed row');
+  [frame.cursor.hotspotX, frame.cursor.hotspotY] = entry.hotspot;
+  frame.cursor.source.pixels[400] ^= 1; assert.equal(lookup(), -1);
+  assert.equal(demoCursorMatch(binding, frame).reason, 'raster-unproven');
+});
+
+test('seven-gesture manifests reject duplicate bindings, invalid hotspots and altered data', async () => {
+  for (const mutate of [m => m.bindings.push(m.bindings[0]), m => { m.bindings[0].hotspot = [3, 7]; },
+    m => { m.bindings[0].frames[0].indicesBase64 = Buffer.alloc(1024).toString('base64'); },
+    m => { m.bindings[0].paletteRGBBase64 = Buffer.alloc(768).toString('base64'); },
+    m => { m.bindings[0].frames[0].ordinal = 2; }]) {
+    const manifest = sevenGestureManifest(); mutate(manifest);
+    await assert.rejects(validateDemoCursorManifest(manifest), /binding|fingerprint/);
+  }
+});
+
 test('private exported fingerprints validate real indices and reject tampering', { skip: !privateManifest && 'Run scripts/build-demo-cursor.mjs with the private study assets' }, async () => {
   const binding = await validateDemoCursorManifest(privateManifest);
   assert.deepEqual([0, 1, 2].map(ordinal => demoCursorOrdinal(binding, frameFor(binding, ordinal))), [0, 1, 2]);
@@ -85,6 +148,49 @@ test('cursor download validates image bytes before decoding and closes invalid b
   t.mock.method(globalThis, 'fetch', async url => new Response(String(url).endsWith('.json') ? JSON.stringify(privateManifest) : 'corrupt'));
   await assert.rejects(loadDemoCursor(config), /SHA256/);
   await assert.rejects(loadDemoCursor({ ...config, manifestURL: 'http://outside.example/cursor.json' }), /HTTPS/);
+});
+
+test('runtime loader rejects a self-consistent but unapproved seven-gesture association before image fetch', async t => {
+  const requests = [];
+  t.mock.method(globalThis, 'fetch', async url => {
+    requests.push(url);
+    return new Response(JSON.stringify(sevenGestureManifest()));
+  });
+  await assert.rejects(loadDemoCursor({ manifestURL: 'https://example.test/cursor.json', imageURL: 'https://example.test/cursor.png' }), /Unapproved/);
+  assert.equal(requests.length, 1);
+});
+
+test('prepared private atlas passes the runtime pin and every exact source pose uses only its own colors', { skip: !preparedManifest }, async t => {
+  const directory = new URL('../private-assets/demo-cursor-seven-v1/', import.meta.url);
+  const image = await readFile(new URL('sprite-sheet-128.png', directory));
+  t.mock.method(globalThis, 'fetch', async url => new Response(url.endsWith('.json') ? JSON.stringify(preparedManifest) : image));
+  const bitmap = { width: 384, height: 896, close() {} };
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'createImageBitmap');
+  Object.defineProperty(globalThis, 'createImageBitmap', { configurable: true, value: async () => bitmap });
+  t.after(() => previous ? Object.defineProperty(globalThis, 'createImageBitmap', previous) : delete globalThis.createImageBitmap);
+  const binding = await loadDemoCursor({ manifestURL: 'https://example.test/cursor.json', imageURL: 'https://example.test/cursor.png' });
+  assert.equal(binding.bindings.length, 21);
+  let unrelatedPoseChecks = 0;
+  for (const entry of binding.bindings) for (let pose = 0; pose < 3; pose++) {
+    const frame = frameFor(entry, pose, 48); frame.room = 'another-module';
+    frame.cursor.resourceHash = entry.resourceHash;
+    [frame.cursor.hotspotX, frame.cursor.hotspotY] = entry.hotspot;
+    const lookup = () => demoCursorMatch(binding, frame, { allRooms: true });
+    const duplicates = entry.frames.filter(pixels => pixels.every((value, index) => value === entry.frames[pose][index])).length;
+    if (duplicates > 1) {
+      assert.equal(lookup().reason, 'pose-ambiguous', 'identical native rasters cannot authorize a guessed HD animation pose');
+      continue;
+    }
+    assert.deepEqual(lookup(), { ordinal: entry.row * 3 + pose, reason: null });
+    const unused = entry.used.flat().find(index => !entry.used[pose].includes(index));
+    if (unused !== undefined) {
+      frame.palette[unused * 4] ^= 1; unrelatedPoseChecks++;
+      assert.equal(lookup().ordinal, entry.row * 3 + pose);
+    }
+    frame.palette[entry.used[pose][0] * 4] ^= 1;
+    assert.equal(lookup().reason, 'used-palette-mismatch');
+  }
+  assert.ok(unrelatedPoseChecks > 0);
 });
 
 test('demo ABI is checked against actual variant hash, packs against source hash, UI selection persists between rooms', async t => {

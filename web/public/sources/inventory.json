@@ -154174,14 +154174,14 @@
     {
       "component": "project-build-sources",
       "path": "docs/ARCHITECTURE.md",
-      "bytes": 16593,
-      "sha256": "8e54f4359aac32e561133dc80f1ead4646fd06256db085dab92ccf97b4288ece"
+      "bytes": 23506,
+      "sha256": "08d7abdc99bc23dec146d8c3cd38b6f65e3dbd5074ed3792ceb0b4120ce75d44"
     },
     {
       "component": "project-build-sources",
       "path": "docs/DEPLOYMENT.md",
-      "bytes": 8528,
-      "sha256": "80076f9ee9ce5ae9bf413e138de338bae4f06fea9c6c792b5969f8f58def6d6e"
+      "bytes": 11198,
+      "sha256": "cea17f5222b03e8147248ba173f416aedb6a7f7e221903e30e8ac12b5a2742f0"
     },
     {
       "component": "project-build-sources",
@@ -154204,8 +154204,8 @@
     {
       "component": "project-build-sources",
       "path": "docs/ROOM_HD_RESTORATION.md",
-      "bytes": 16250,
-      "sha256": "48edc08e9431b21013db36e62b3d57cc370bc0b40f5fb95b392f04e33405bebb"
+      "bytes": 19921,
+      "sha256": "d4994590de5fa86e810032bb233cb52caf71c05305cebb26c1f6cb4afb6b7346"
     },
     {
       "component": "project-build-sources",
@@ -154216,8 +154216,8 @@
     {
       "component": "project-build-sources",
       "path": "docs/TESTING.md",
-      "bytes": 11132,
-      "sha256": "2e0ec90b9c6fb407c82550c76a87780f7a5cc126bde2cf8ee126ed2876e86aba"
+      "bytes": 14761,
+      "sha256": "c0a4b9bb45253cbc3467e24b31b99c5a87d4c3014fd91fc0bd25b357fb3c4a71"
     },
     {
       "component": "project-build-sources",
@@ -154240,8 +154240,8 @@
     {
       "component": "project-build-sources",
       "path": "README.md",
-      "bytes": 26016,
-      "sha256": "33482585ff920795197f7ae654f84ea19f2d6e82816a79b1091fcbb9b8b52271"
+      "bytes": 27423,
+      "sha256": "6a6c1377e4d526572b2a309bd83b07f369114bcc756451d93dbc2dbe91e7d9e2"
     },
     {
       "component": "project-build-sources",
@@ -154263,9 +154263,15 @@
     },
     {
       "component": "project-build-sources",
+      "path": "scripts/audit-window-coverage.mjs",
+      "bytes": 6459,
+      "sha256": "afce3c11d2cca0ce82340d1a17d82f8dc21d9fd055520af4b844966548eeaa8a"
+    },
+    {
+      "component": "project-build-sources",
       "path": "scripts/build-demo-cursor.mjs",
-      "bytes": 3077,
-      "sha256": "6f9f3be0d79a22458edfadb836f22df99e548871dfa74e0d07c3603821524bcd"
+      "bytes": 4926,
+      "sha256": "1f68178fce4a06147b865a2c0a8398b8afbbfc805f8ba2238e744840d6bec992"
     },
     {
       "component": "project-build-sources",
@@ -154341,6 +154347,12 @@
     },
     {
       "component": "project-build-sources",
+      "path": "scripts/derive-room-streaming-graph.mjs",
+      "bytes": 25821,
+      "sha256": "49805eb53a60ae2a66d4c9e96fdde3a63ec5318a3981607783267527a7f3579b"
+    },
+    {
+      "component": "project-build-sources",
       "path": "scripts/generate-render-abi.mjs",
       "bytes": 12479,
       "sha256": "aa2b6d045a4bc989e0195d4a3951621f6e43c85fb497ace259996ae89216d2c5"
@@ -154372,8 +154384,8 @@
     {
       "component": "project-build-sources",
       "path": "scripts/prepare-demo-previews.mjs",
-      "bytes": 4778,
-      "sha256": "6cd214c16d9fc18a883bac8d9b1e236ffbb837737119747bed803ec99302fad6"
+      "bytes": 4803,
+      "sha256": "e305ff7c3c856ba47af0bd568fbd3b065d35fc273288111cd6ccf258bb2a691a"
     },
     {
       "component": "project-build-sources",
@@ -154395,9 +154407,51 @@
     },
     {
       "component": "project-build-sources",
+      "path": "scripts/prepare-streamed-hd.mjs",
+      "bytes": 4755,
+      "sha256": "6dad8837625b568ca9117bf2fbf466f326c43ca4f4eaea095e4bcf21999f8218"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "scripts/prepare-streaming-demo.mjs",
+      "bytes": 24368,
+      "sha256": "acfa791e2e853805f80367613588890f31a2d469e1d67af740981fe07b429d26"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "scripts/prepare-visual-demo.mjs",
+      "bytes": 8776,
+      "sha256": "a2c1594387ecb8c6394f2339c63658dc766265632f8df807570a5556e4afc1ee"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "scripts/prepare-window-overlay.mjs",
+      "bytes": 4837,
+      "sha256": "c156e1aef2607517f5d604e57c87243a2d80da8d0fb15994711f840c87fda77f"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "scripts/prove-window-runtime.mjs",
+      "bytes": 6861,
+      "sha256": "9d28b743a0a7e97dd410265736d39fd62a64c56e640c8cd80acc1d6428683d26"
+    },
+    {
+      "component": "project-build-sources",
       "path": "scripts/runtime.mk",
       "bytes": 935,
       "sha256": "449200d0801ab34520ca648f4a083352332565dcd058a43d589e4a32bf47bd66"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "scripts/serve-streaming-demo.mjs",
+      "bytes": 11609,
+      "sha256": "72d11ac69e87c04f351623c8c339093e8467a3242bcf7e86cd87843fc897efa8"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "scripts/serve-visual-demo.mjs",
+      "bytes": 1528,
+      "sha256": "ea92f6c429fb1d4ea8117ba7010eb73ad0ef58d6a220b3e826039d7f0e4e1611"
     },
     {
       "component": "project-build-sources",
@@ -154431,6 +154485,12 @@
     },
     {
       "component": "project-build-sources",
+      "path": "scripts/window-scenes.mjs",
+      "bytes": 2253,
+      "sha256": "e10f5857140301de3b931e0546f0782a63205e987a58b288326c988ec9030cc6"
+    },
+    {
+      "component": "project-build-sources",
       "path": "SECURITY.md",
       "bytes": 3382,
       "sha256": "14fb972045a94693de5b63a23e49368d10e4b18d0aaa5e6824365bfcd6de8956"
@@ -154439,7 +154499,7 @@
       "component": "project-build-sources",
       "path": "server.mjs",
       "bytes": 17003,
-      "sha256": "b1d21ac5ce2e5c14809e2b262e8e18671dc8bcdd593123681bfaf4d00c73c12b"
+      "sha256": "a6dde73fd248b7aae39c2339b376ec9102642d42c91806f602207e3c9267709b"
     },
     {
       "component": "project-build-sources",
@@ -154467,6 +154527,12 @@
     },
     {
       "component": "project-build-sources",
+      "path": "test/browser-demo-cursor.mjs",
+      "bytes": 4730,
+      "sha256": "6df970b2c8e783aafee510ca449d0b6dcf584f0321c128541c9f2dea13c6d22f"
+    },
+    {
+      "component": "project-build-sources",
       "path": "test/browser-demo-full-game.mjs",
       "bytes": 8326,
       "sha256": "c5c6e899fd2e79cd5def0256552d92789155013a2b847db383229e4a432bc7a9"
@@ -154474,8 +154540,8 @@
     {
       "component": "project-build-sources",
       "path": "test/browser-demo-game.mjs",
-      "bytes": 9654,
-      "sha256": "a6975095520ef40e3660274b6d6a2e826109a76d0a6f3f4daa1abcc914226717"
+      "bytes": 10204,
+      "sha256": "c075fec6839499c270c574927c87be1a123732afd3bc58cd2621a49b79523e45"
     },
     {
       "component": "project-build-sources",
@@ -154498,14 +154564,20 @@
     {
       "component": "project-build-sources",
       "path": "test/browser-hd-demo.mjs",
-      "bytes": 8262,
-      "sha256": "52f3fd96f078146dea5ab7ccd00ad9621bf0980b7dc24565917c4e218d66f4ed"
+      "bytes": 16328,
+      "sha256": "621e4fdb71dfbf3b9813da4cc11efba036f0764bc4b27270d09822ddb89694a0"
     },
     {
       "component": "project-build-sources",
       "path": "test/browser-installer-smoke.mjs",
       "bytes": 3530,
       "sha256": "d0cc14e1e14b237b2cb61d2b2b889f8a105616f1bc7c4b5ace01725448eb5ab3"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/browser-room-streaming.mjs",
+      "bytes": 8570,
+      "sha256": "a2f2d20d12c33a9ee7d0a14931a5bae5d13a3a904b044f261545f9f04ffa61aa"
     },
     {
       "component": "project-build-sources",
@@ -154534,14 +154606,20 @@
     {
       "component": "project-build-sources",
       "path": "test/browser-saves.mjs",
-      "bytes": 16691,
-      "sha256": "c2f1692637adcb93daa932dfb9a37fb6e9394657d5f0e40684fb31d809168d30"
+      "bytes": 19286,
+      "sha256": "c74202317e20a4f207c27666f42c5bfeabb823ed61e24b2567a912d01d185b3b"
     },
     {
       "component": "project-build-sources",
       "path": "test/browser-smoke.mjs",
       "bytes": 15222,
       "sha256": "921794def82d546192f373c1d8ce1d94e0ebc90462ed393a1fa14ac496aa2f1a"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/browser-streaming-cache.mjs",
+      "bytes": 13849,
+      "sha256": "e931b50c423ceb5be492a148c8c43e6a8c0444be8a6f2cdbe2295c0608213930"
     },
     {
       "component": "project-build-sources",
@@ -154564,8 +154642,8 @@
     {
       "component": "project-build-sources",
       "path": "test/demo-cursor.test.mjs",
-      "bytes": 15919,
-      "sha256": "0e44b7a86c3a39b1194e4d7ca14bae3fc3f0620219fe5fdacea44d7f366ca375"
+      "bytes": 22728,
+      "sha256": "f70f297cfde1227439fda1a893444c18755f6c55dc5a12abd203b45e57eb8cbd"
     },
     {
       "component": "project-build-sources",
@@ -154731,6 +154809,24 @@
     },
     {
       "component": "project-build-sources",
+      "path": "test/original-streaming-fs.test.mjs",
+      "bytes": 5256,
+      "sha256": "a7e8de8f84ace24214375ed1ff7891138849285784096a90d2bf2816234eb968"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/original-streaming-state.test.mjs",
+      "bytes": 2608,
+      "sha256": "bb9767089a300c583bd2f2b5593be9b5d12330c45d6375640932dfe9ebc7224b"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/original-streaming-worker.test.mjs",
+      "bytes": 15256,
+      "sha256": "a75fcd2566792cee1be8860d761c5f244e9d48c54464596f3116d1507426e5f2"
+    },
+    {
+      "component": "project-build-sources",
       "path": "test/private-assets.test.mjs",
       "bytes": 1704,
       "sha256": "7413abfc391467b717bb1ccf32f8a6fad55cf4135c107872f65a30c06e8850e3"
@@ -154773,9 +154869,27 @@
     },
     {
       "component": "project-build-sources",
+      "path": "test/room-streaming-graph.test.mjs",
+      "bytes": 11573,
+      "sha256": "243312fbe299356a1b018b924738636e19e8f8d9d0328c888a097d35448a2b48"
+    },
+    {
+      "component": "project-build-sources",
       "path": "test/server.test.mjs",
       "bytes": 3808,
       "sha256": "749ebd0dc16db121b8584cf82783ea2b8bf37888be0d2ba02f98a674e8d31d3b"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/streamed-room-pack.test.mjs",
+      "bytes": 13631,
+      "sha256": "b5555ab0262beeec002da02e3bee71a0181471452575cd6ca5d1a9be0b4343d3"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/streaming-release.test.mjs",
+      "bytes": 24210,
+      "sha256": "25ff5a550af7ea2d2fda63c00e77d5bcb25d356f2af5a1f71a883cad708bde19"
     },
     {
       "component": "project-build-sources",
@@ -154842,6 +154956,24 @@
       "path": "test/upscaling-static.test.py",
       "bytes": 12794,
       "sha256": "0d145f386dff6b98a2940478f6f2b17818be5a9cf6200ff4bfe363e549fdd98b"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/visual-demo-assembly.test.mjs",
+      "bytes": 1693,
+      "sha256": "6ab784aca8d3243d1e7d23a6b2532dd6e1c6752569a34e3758e9f45abcc7d9ee"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/window-coverage.test.mjs",
+      "bytes": 5846,
+      "sha256": "18bf91e523abc121a486b026d91a945b834e4cd1cd757a586971c330c0fdb7a2"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/window-overlay.test.mjs",
+      "bytes": 1847,
+      "sha256": "a593318f3a1c904f7c06848ae54a633cb535b1cebb76b050e5f392661c5ab1de"
     },
     {
       "component": "project-build-sources",
@@ -155752,8 +155884,8 @@
     {
       "component": "project-build-sources",
       "path": "vercel.json",
-      "bytes": 1130,
-      "sha256": "eceeb392d98e42aa5a2a1dd281b53696bbbd68ee08aa6da1a6934c10f75cece5"
+      "bytes": 944,
+      "sha256": "3c0733eb3add6f28d48da49bc2d3b66ecb8ea775dd44f2874dd94acca5220ca8"
     },
     {
       "component": "project-build-sources",
@@ -155794,26 +155926,26 @@
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/config.json",
-      "bytes": 113,
-      "sha256": "639fa03de7532b48367fe4077513506c99bb740253d763b98ccb16fcf4f0b811"
+      "bytes": 109,
+      "sha256": "f871c850a6712e0c6e88448c2606b0177f45f17fbb5193e6cb00a412eb317621"
     },
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/demo.css",
-      "bytes": 12167,
-      "sha256": "884824de18e2ce025ccc4f2ba5baf08d180d091bc3a81130e2a6a44b2a7c7d03"
+      "bytes": 12462,
+      "sha256": "0e7bf949f18284c1cdd1ef2b95a14fd65a1cc5f41b0631cf57a5e2d5614d9688"
     },
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/demo.js",
-      "bytes": 8594,
-      "sha256": "20d8bfef0a8c6e733b9ad46173bba1f3b281c5c041e934fa5095026d85b4fd8f"
+      "bytes": 9837,
+      "sha256": "1a2cf9bb761cbc74b7d6930d96b45217aae0d4b0c686d9d2e779bf9318937510"
     },
     {
       "component": "project-build-sources",
       "path": "web/hd-demo/index.html",
-      "bytes": 8865,
-      "sha256": "4380623cae6cc6b5af05afac3b612819c33285ebc8d9b4745f6009a2937cd721"
+      "bytes": 11781,
+      "sha256": "2f2d1a52b396187777227092fcc44b7e71657ca43de9a1b595a132c5710eec0d"
     },
     {
       "component": "project-build-sources",
@@ -155853,9 +155985,27 @@
     },
     {
       "component": "project-build-sources",
+      "path": "web/lib/original-streaming-fs.js",
+      "bytes": 5119,
+      "sha256": "f5b0bff105e579f7d9110b04f7bd57464df1c5762a97d14fdc60d03883588752"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "web/lib/original-streaming-state.js",
+      "bytes": 3141,
+      "sha256": "e016dd1f1a5b7f2b52d147b87c3cf2a8c07d5469c22c5a240d181943889ed101"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "web/lib/original-streaming.js",
+      "bytes": 12477,
+      "sha256": "e8dd3c8291ed4eb4d842a38b76c4f3411681b58942ddb112854d04f0b54d93e6"
+    },
+    {
+      "component": "project-build-sources",
       "path": "web/lib/runtime.js",
-      "bytes": 6749,
-      "sha256": "54f756baa2bc7cd9f39aec587e0e62b47e00d3dbb97066025bd93ec391f072da"
+      "bytes": 6834,
+      "sha256": "c01c2f1b5e6b4596488800524c837b3b9b2207f7520ba68b00c45abcbdf2c548"
     },
     {
       "component": "project-build-sources",
@@ -155932,8 +156082,8 @@
     {
       "component": "project-build-sources",
       "path": "web/player.js",
-      "bytes": 14394,
-      "sha256": "64a93a2d99f262fdb142daa0de4ff11ebd149e46fb48a30906938109996b4606"
+      "bytes": 16874,
+      "sha256": "2ea3c423fe2003870cfaa67a662baf29e1ed201ce52df424e562d7a754e6ae5b"
     },
     {
       "component": "project-build-sources",
@@ -155944,8 +156094,8 @@
     {
       "component": "project-build-sources",
       "path": "web/prototype/demo-cursor.js",
-      "bytes": 3645,
-      "sha256": "96cccbc9d6b765ad01aaa4f774157e37149acd04c4433897a4a6f53ff8878c96"
+      "bytes": 7996,
+      "sha256": "1195aac52f7d56ef93c47916b54756a097f06900fa4a5a99b73136546fba1957"
     },
     {
       "component": "project-build-sources",
@@ -155980,8 +156130,14 @@
     {
       "component": "project-build-sources",
       "path": "web/prototype/room1.js",
-      "bytes": 43736,
-      "sha256": "14a059ad1a488d2f058b3a41a27ba23ac5da198daf2eda97bd4f4f39eef2dcd6"
+      "bytes": 46052,
+      "sha256": "0eda23ca40836e48937f9314997b520e1d072aaa4ba2cac0047e8abb6d161342"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "web/prototype/streamed-room-pack.js",
+      "bytes": 10668,
+      "sha256": "7733f15e0a09e23012f0bb631ac67c2a108ab867eb218e1d95927b7c6dcaedb5"
     },
     {
       "component": "project-build-sources",
@@ -156010,8 +156166,8 @@
     {
       "component": "project-build-sources",
       "path": "web/test/storage.test.mjs",
-      "bytes": 6393,
-      "sha256": "3e8b48e5defcccb1d96f0a5746a0217c68879b4156e365cc4d1b062c906ab473"
+      "bytes": 8328,
+      "sha256": "62cc0fd903b908a9e2cf3542715b62b957ccdaa4f32b2e25a08e1919b3b20dee"
     },
     {
       "component": "project-build-sources",

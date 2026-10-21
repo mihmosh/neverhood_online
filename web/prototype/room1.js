@@ -2,7 +2,7 @@ import { RenderFrameReader } from './read-frame.js';
 import { composeIndexed, indicesToRGBA, paintFrame } from './compositor.js';
 import { updateCRC32 } from '../lib/zip-validation.js';
 import { loadReplacementPack, loadReplacementPackURL, validPackRoom, paletteProofMatches } from './replacement-pack.js';
-import { loadDemoCursor, demoCursorOrdinal } from './demo-cursor.js';
+import { loadDemoCursor, demoCursorMatch } from './demo-cursor.js';
 import { demoAddress, fetchDemoBytes } from '../lib/demo-data.js';
 
 const crc = bytes => ((updateCRC32(0xffffffff, bytes) ^ 0xffffffff) >>> 0).toString(16).padStart(8, '0');
@@ -251,14 +251,16 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     const rect = canvasRect;
     const rgba = cursorImage.data;
     const rasterHash = crc(source.pixels);
-    const ordinal = demoCursor ? demoCursorOrdinal(demoCursor, frame, { allRooms: demo?.fullGame === true }) : -1;
+    const match = demoCursor ? demoCursorMatch(demoCursor, frame, { allRooms: demo?.fullGame === true })
+      : { ordinal: -1, reason: 'hd-cursor-unavailable' };
+    const ordinal = match.ordinal;
     const pixelsKey = `${rasterHash}:${crc(frame.palette)}:${ordinal}`;
     if (pixelsKey !== cursorPixelsKey) {
       const size = ordinal >= 0 ? 128 : 32;
       if (cursorCanvas.width !== size) { cursorCanvas.width = size; cursorCanvas.height = size; }
       if (ordinal >= 0) {
         cursorContext.clearRect(0, 0, 128, 128);
-        cursorContext.drawImage(demoCursor.image, ordinal * 128, 0, 128, 128, 0, 0, 128, 128);
+        cursorContext.drawImage(demoCursor.image, (ordinal % 3) * 128, Math.floor(ordinal / 3) * 128, 128, 128, 0, 0, 128, 128);
       } else {
         for (let row = 0; row < 32; row++) for (let col = 0; col < 32; col++) {
           const index = source.pixels[row * source.pitch + col];
@@ -279,7 +281,10 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     const displayed = visible && pointerInside && document.hasFocus();
     cursorCanvas.hidden = !displayed;
     cursorViewport.hidden = !displayed;
-    cursorState = { visible: displayed, engineVisible: visible, x, y, hotspotX, hotspotY, rasterHash, rgbaHash: ordinal < 0 ? crc(rgba) : null, hd: ordinal >= 0, ordinal };
+    cursorState = { visible: displayed, engineVisible: visible, x, y, hotspotX, hotspotY, resourceHash: frame.cursor.resourceHash,
+      rasterHash, rgbaHash: ordinal < 0 ? crc(rgba) : null, hd: ordinal >= 0, ordinal,
+      row: ordinal < 0 ? null : demoCursor.manifest.version === 2 ? Math.floor(ordinal / 3) : 4,
+      pose: ordinal < 0 ? null : ordinal % 3, fallbackReason: match.reason };
   };
 
   const update = () => {
@@ -311,6 +316,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
           previous?.controller?.abort(); previous?.pack?.dispose(); roomPacks.delete(activeRoom);
         }
         activeRoom = room;
+        demo?.onRoom?.(room, frame.room);
         parityRequired = true;
         const state = roomPacks.get(room);
         pack = state?.pack; packController = state?.controller;
@@ -334,13 +340,23 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
       }
       if (demo && backgroundStarted && pack) {
         const state = pack.stats();
-        if (state.cacheError || Object.keys(state.errors).length) {
+        if (state.streaming && (state.cacheError || Object.keys(state.errors).length)) {
+          const partial = Object.keys(state.errors).length;
+          if (stats.partialAssets !== partial || stats.cacheWarning !== state.cacheError) {
+            demo.onStatus?.(partial ? 'Some HD images are unavailable. Original graphics remain active for those layers.'
+              : 'The HD disk cache is unavailable. Verified network and memory assets remain active.', undefined, 'background');
+          }
+          stats.partialAssets = partial; stats.cacheWarning = state.cacheError;
+          finishRoomLoading();
+        } else if (state.cacheError || Object.keys(state.errors).length) {
           const failed = roomPacks.get(activeRoom);
           failed.controller.abort(); pack.dispose(); failed.pack = undefined;
           pack = undefined; packEnabled = false; packLoading = false;
           demo.onStatus?.('HD room assets could not be read. Original graphics remain available; re-enter the room to retry.', undefined, 'background');
           finishRoomLoading();
           syncControls();
+        } else {
+          stats.partialAssets = 0; stats.cacheWarning = null;
         }
       }
       if (frame.available && mode === 'proxy' && packEnabled && parityRequired && !frame.reference) frame = reader.read({ reference: true });
@@ -510,8 +526,9 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
     find('proxy-pack-status').textContent = 'Validating private pack hashes and PNG dimensions locally...';
     state.promise = (async () => {
     try {
-      const load = demo ? (await import('./replacement-pack.js')).loadDemoReplacementPackURL : automatic ? loadReplacementPackURL : loadReplacementPack;
       const archive = demo && typeof files === 'object' ? files : undefined;
+      const load = archive?.streaming ? (await import('./streamed-room-pack.js')).loadStreamedDemoReplacementPackURL
+        : demo ? (await import('./replacement-pack.js')).loadDemoReplacementPackURL : automatic ? loadReplacementPackURL : loadReplacementPack;
       const loaded = await load(archive ? archive.url : files, { runtimeSHA256: demo?.sourceRuntimeSHA256 ?? wasmSHA256, signal: controller.signal,
         room: demo ? room : undefined, archive,
         onProgress: (loaded, total, phase) => {
@@ -731,6 +748,28 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
   return {
     ready,
     startBackgroundLoading,
+    async prefetchRooms(rooms, { wait = false } = {}) {
+      if (!demo?.fullGame || disposed || signal?.aborted) return;
+      for (const room of new Set(rooms)) {
+        if (!demo.packs[room]) continue;
+        const existing = roomPacks.get(room);
+        if (!existing?.pack || existing.controller.signal.aborted) await installPack(demo.packs[room], true, room);
+        if (room === activeRoom && !wait) continue;
+        const candidate = roomPacks.get(room)?.pack;
+        const background = candidate?.backgrounds.get(candidate.background);
+        if (!background) continue;
+        let draws = candidate.observe([background.key]);
+        if (!wait) continue;
+        const deadline = performance.now() + 30000;
+        while (!draws.has(background.key)) {
+          if (disposed || signal?.aborted) return;
+          const state = candidate.stats();
+          if (Object.keys(state.errors).length || performance.now() > deadline) throw new Error(`HD background is not ready: ${room}`);
+          await new Promise(requestAnimationFrame);
+          draws = candidate.observe([background.key]);
+        }
+      }
+    },
     preferNativeResolution: () => !debug && mode === 'proxy' && packEnabled && reader.inRoom,
     dispose() {
     disposed = true; cancelAnimationFrame(frameRequest);

@@ -160,6 +160,48 @@ Neither check uploads user files, runs models or provisions cloud resources.
 
 ## Private Assets And Mapping
 
+### Local Cursor And Static Window
+
+These checks use the unchanged shipped runtime and ignored private artwork. They
+do not rebuild the engine or upload media. Keep the stable reference origin 4191
+running; use isolated origins for experiments.
+
+```sh
+node scripts/build-demo-cursor.mjs private-assets/demo-cursor-seven-v1 --all-gestures
+node --test test/demo-cursor.test.mjs test/window-overlay.test.mjs test/visual-demo-assembly.test.mjs
+TEST_ORIGIN=http://127.0.0.1:4201 node test/browser-demo-cursor.mjs
+node scripts/prove-window-runtime.mjs --origin http://127.0.0.1:4204 --direct --output /tmp/kilo/window-direct-repeat
+TEST_ORIGIN=http://127.0.0.1:4204 DIRECT=1 node test/browser-demo-cursor.mjs
+TEST_ORIGIN=http://127.0.0.1:4204 MOBILE=1 node test/browser-demo-full-game.mjs
+python3 test/gemini-release-selection.test.py
+python3 test/gemini-prepare-runtime.test.py
+python3 test/gemini-all-review.test.py
+```
+
+The cursor browser fixture routes only config/cursor assets on an isolated legacy
+release, then uses native input to enter Scene1002. It checks DPR-2 edge placement,
+exact resource/hotspot, HD/Original switching and indexed native parity. It does not
+inject scenes or mutate native state. The direct window fixture uses real config,
+manifest, cursor and ZIP responses from the assembled local release, not Playwright
+asset interception. It exercises the button/window, Original/HD, backtracking and
+the lever/door exit. The window overlay fixture can separately compare the baseline
+to `--overlay PRIVATE_OVERLAY_DIR` without touching legacy assets.
+
+The combined local release also passed the existing emulated-mobile touch route
+Scene1001 -> Scene1002 -> Scene1004: three on-entry HD ZIPs, then a fresh launch
+with a persistent room-cache hit and zero ZIP downloads. This still uses complete
+original BLBs at startup and does not establish original streaming or performance
+on physical mobile devices.
+
+Private cursor tests cover all 63 prepared resource/row/pose rasters, including
+pitched input, used-color changes, colors used only in a different pose, and
+rejection of an unapproved self-consistent manifest. Identical native poses cannot
+prove which distinct HD pose is on screen; those bindings explicitly report
+`pose-ambiguous` and stay native rather than invent an animation clock. Private
+tests skip when exports are absent. Synthetic schema/matching tests still run in a
+clean checkout. None of these tests proves every gameplay gesture context, another
+module's natural route, a complete playthrough or physical-device performance.
+
 ```sh
 npm run assets:extract -- --init-private --input "/path/to/your/DATA"
 npm run assets:extract -- --input "/path/to/your/DATA"

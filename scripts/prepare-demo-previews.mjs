@@ -28,7 +28,7 @@ export async function prepareDemoPreviews({ input, output, crop }) {
   const temporary = await mkdtemp(join(output, '.preview-build-'));
   const result = [];
   try {
-    for (const [id, source] of [['original', 'room1_original.png'], ['hd', 'room1_hd.png']]) {
+    for (const [id, source] of [['original', 'neverhood old screenshot.png'], ['hd', 'neverhood hd screenshot.png']]) {
       const sourcePath = join(input, source);
       if (await realpath(sourcePath) !== sourcePath) throw new Error('Preview sources must not be symlinks.');
       const probe = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'json', sourcePath], { encoding: 'utf8' }));
@@ -39,7 +39,7 @@ export async function prepareDemoPreviews({ input, output, crop }) {
         crop = findGameCrop(rgb, frame);
       }
       if (!frame || crop.x + crop.width > frame.width || crop.y + crop.height > frame.height) throw new Error('Preview crop exceeds its source screenshot.');
-      const file = `room1-${id}-preview-v2.webp`, destination = join(temporary, file);
+      const file = `room1-${id}-preview-v3.webp`, destination = join(temporary, file);
       execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', sourcePath, '-vf', `crop=${crop.width}:${crop.height}:${crop.x}:${crop.y},scale=1416:1062:flags=lanczos`, '-frames:v', '1', '-c:v', 'libwebp', '-quality', '88', destination], { stdio: 'pipe' });
       const bytes = await readFile(destination);
       if (bytes.length > 2 * 1024 ** 2) throw new Error('Preview exceeds its 2 MiB delivery budget.');

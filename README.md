@@ -175,8 +175,8 @@ node scripts/verify-demo-videos.mjs \
 ```
 
 The comparison on `/hd-demo/` uses two small, cropped screenshot previews hosted
-beside the demo manifest: `room1-original-preview-v2.webp` and
-`room1-hd-preview-v2.webp`. Prepare them outside Git with `prepare:demo-previews`.
+beside the demo manifest: `room1-original-preview-v3.webp` and
+`room1-hd-preview-v3.webp`. Prepare them outside Git with `prepare:demo-previews`.
 Missing previews do not block the game. Mouse, touch and keyboard reveal the
 captures; their character poses differ. The page also records the Gemini,
 RealESRNet, Blender and separate Topaz video experiments and their limitations.

@@ -49,8 +49,8 @@ async function checkAvailability() {
     }
     comparisonCleanup?.();
     comparisonCleanup = initComparison({
-      originalURL: demoAssetURL('room1-original-preview-v2.webp', new URL(manifestURL, location.href)),
-      hdURL: demoAssetURL('room1-hd-preview-v2.webp', new URL(manifestURL, location.href)),
+      originalURL: demoAssetURL('room1-original-preview-v3.webp', new URL(manifestURL, location.href)),
+      hdURL: demoAssetURL('room1-hd-preview-v3.webp', new URL(manifestURL, location.href)),
     });
     runtime = await discoverDemoRuntime({ manifestURL });
     if (!runtime.available) {

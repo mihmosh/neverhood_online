@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { REQUIRED_FILES, ENGLISH_HD_SIZE, editionWarning } from '../lib/validation.js';
-import { importLibrary, getLibrary, openArchive, deleteLibrary, storageSupported, describeStorageError } from '../lib/storage.js';
+import { importLibrary, getLibrary, openArchive, deleteLibrary, storageSupported, describeStorageError, withStorageLock } from '../lib/storage.js';
 
 // Models async writable atomic-close semantics, including failed commits.
 class Directory {
@@ -135,4 +135,45 @@ test('OPFS transaction survives stream/commit failures, reloads, cleans staging 
 test('storage errors do not imply a complete integrity check', () => {
   assert.match(describeStorageError(new DOMException('', 'QuotaExceededError')), /previous library has not been replaced/);
   assert.match(describeStorageError(new DOMException('', 'SecurityError')), /denied/);
+});
+
+test('shared save/library lock retains the complete asynchronous operation and rejects unavailable locks', async t => {
+  const previousNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  t.after(() => {
+    if (previousNavigator) Object.defineProperty(globalThis, 'navigator', previousNavigator);
+    else delete globalThis.navigator;
+  });
+  const controller = new AbortController();
+  let release, callbackPromise;
+  const runtime = new Promise(resolve => { release = resolve; });
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: {
+    locks: { request(name, options, operation) {
+      assert.equal(name, 'neverhood-library-write-v1');
+      assert.deepEqual(options, { mode: 'exclusive', signal: controller.signal, ifAvailable: false });
+      callbackPromise = operation({ name });
+      return callbackPromise;
+    } },
+  } });
+  let settled = false;
+  const operation = withStorageLock(() => runtime, { signal: controller.signal }).then(result => {
+    settled = true;
+    return result;
+  });
+  assert.equal(callbackPromise, runtime, 'Web Locks must receive the runtime promise, not just its startup result');
+  await Promise.resolve();
+  assert.equal(settled, false);
+  release('flushed and closed');
+  assert.equal(await operation, 'flushed and closed');
+
+  let entered = false;
+  navigator.locks.request = async (name, options, callback) => {
+    assert.equal(name, 'neverhood-library-write-v1');
+    assert.equal(options.ifAvailable, true);
+    return callback(null);
+  };
+  await assert.rejects(withStorageLock(() => { entered = true; }, { ifAvailable: true }), /Close the game/);
+  assert.equal(entered, false, 'A busy game must prevent save-management operations');
+  navigator.locks = undefined;
+  await assert.rejects(withStorageLock(() => { entered = true; }), /Web Locks/);
+  assert.equal(entered, false, 'Missing Web Locks must fail closed');
 });

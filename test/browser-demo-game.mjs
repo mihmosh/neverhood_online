@@ -36,7 +36,9 @@ try {
   page.on('pageerror', error => report.errors.push(error.message));
   page.on('response', response => { if (response.status() >= 400) report.httpErrors.push({ status: response.status(), url: response.url() }); });
   await page.goto(`${origin}/hd-demo/`);
-  assert.equal(await page.locator('input[type=file]').count(), 0);
+  assert.equal(await page.locator('input[type=file]:not(#save-files)').count(), 0, 'Game resources are not imported through the HD page');
+  assert.equal(await page.locator('#save-files').count(), 1);
+  assert.equal(await page.locator('#demo-exit').count(), 0);
   await page.waitForFunction(() => !document.getElementById('demo-play').disabled, null, { timeout: 30000 });
   await page.locator('#comparison-stage[data-state="ready"]').waitFor({ timeout: 30000 });
   await page.locator('#demo-play').click();
@@ -72,8 +74,8 @@ try {
   assert.equal(report.wakingParity.differingPixels, 0);
   // Inject only native scene-completion results. C++ performs transitions/guards;
   // this is boundary coverage, not a claim of a complete puzzle walkthrough.
-  const transition = async (result, expectedScene) => {
-    await frame.evaluate(async result => {
+  const transition = async (result, expectedScene, activeFrame = frame) => {
+    await activeFrame.evaluate(async result => {
       const abi = await (await fetch('/demo-runtime/render-abi.json')).json();
       const field = (type, name) => abi.records[`Neverhood::${type}`].fields[name].offset;
       const ptr = address => Module.getValue(address, '*');
@@ -82,7 +84,7 @@ try {
       Module.setValue(module + field('Module', '_moduleResult'), result, 'i32');
       Module.setValue(module + field('Module', '_done'), 1, 'i8');
     }, result);
-    if (expectedScene) await frame.waitForFunction(room => window.roomRendererPrototype.stats().activeRoom === room && window.roomRendererPrototype.stats().hdDraws > 0, expectedScene, { timeout: 60000 });
+    if (expectedScene) await activeFrame.waitForFunction(room => window.roomRendererPrototype.stats().activeRoom === room && window.roomRendererPrototype.stats().hdDraws > 0, expectedScene, { timeout: 60000 });
   };
   await transition(0);
   await page.locator('#demo-loading').waitFor({ state: 'visible', timeout: 30000 });
@@ -117,15 +119,19 @@ try {
   await page.locator('#demo-play').click();
   await page.locator('#playframe').waitFor();
   await page.locator('#demo-loading').waitFor({ state: 'hidden', timeout: 180000 });
+  const warmFrame = page.frames().find(frame => frame.url().includes('/player.html?'));
+  assert.equal(await page.locator('#demo-cancel').isHidden(), true, 'Loading cancellation must not become an in-game exit');
   if (archiveMode) {
-    const warmFrame = page.frames().find(frame => frame.url().includes('/player.html?'));
     report.warmRoom1 = await warmFrame.evaluate(() => window.roomRendererPrototype.stats());
     assert.equal(report.warmRoom1.pack.persistentCacheHit, true);
     assert.equal(report.warmRoom1.pack.archiveRequests, 0);
     assert.equal(archives.length, 2, 'Reload must read extracted cache without downloading ZIPs');
     report.archiveDownloads = archives.length; report.looseRoomImageRequests = looseRoomImages.length;
   }
-  await page.locator('#demo-exit').click();
+  // This historical bounded runtime has no Quit menu. Complete its native
+  // boundary on replay rather than relying on the removed site-level exit.
+  await transition(0, 'Scene1002', warmFrame);
+  await transition(2, undefined, warmFrame);
   await page.locator('#demo-session').waitFor({ state: 'hidden', timeout: 30000 });
   assert.deepEqual(report.errors, []);
   assert.deepEqual(report.httpErrors, []);

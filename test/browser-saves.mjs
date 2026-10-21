@@ -10,6 +10,14 @@ import { waitForGameFrame } from './browser-game.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+// HD_SAVES=1 reuses the exact transfer and real-game roundtrip against the HD
+// launcher. Serve a full-game release; bounded historical demo saves are disabled.
+const hd = process.env.HD_SAVES === '1';
+const origin = process.env.TEST_ORIGIN || 'http://127.0.0.1:4173';
+const launcher = hd ? `${origin}/hd-demo/` : origin;
+const playButton = hd ? '#demo-play' : '#play';
+const loadingPanel = hd ? '#demo-loading' : '#game-loading';
+const sessionPanel = hd ? '#demo-session' : '#game';
 if (!process.env.NATIVE_SAVE_DIR) throw new Error('Set NATIVE_SAVE_DIR to your ScummVM save folder. Native files are read only.');
 const names = Array.from({ length: 6 }, (_, slot) => `neverhood.${String(slot).padStart(3, '0')}`);
 const native = await Promise.all(names.map(async name => ({ name, bytes: await readFile(join(process.env.NATIVE_SAVE_DIR, name)) })));
@@ -114,9 +122,21 @@ async function gameClick(frame, x, y) {
 }
 
 try {
-  await page.goto(process.env.TEST_ORIGIN || 'http://127.0.0.1:4173');
-  await page.locator('#library-panel[data-state="empty"]').waitFor();
-  await page.locator('details.advanced > summary').click();
+  // The HD page embeds a third-party video. Isolate it from this local-only
+  // save test while retaining the strict assertion against every upload.
+  if (hd) await page.route('https://www.youtube-nocookie.com/embed/**', route => route.fulfill({
+    contentType: 'text/html', body: '<!doctype html><title>Video fixture</title>',
+  }));
+  if (hd && process.env.DEMO_MANIFEST_URL) await page.route('**/hd-demo/config.json', route => route.fulfill({
+    json: { version: 1, manifestURL: process.env.DEMO_MANIFEST_URL },
+  }));
+  await page.goto(launcher);
+  if (hd) assert.equal(await page.locator('#demo-exit').count(), 0);
+  else {
+    await page.locator('#library-panel[data-state="empty"]').waitFor();
+    await page.locator('details.advanced > summary').click();
+  }
+  if (await page.locator('#save-files').isHidden()) await page.locator(hd ? 'details.demo-saves > summary' : 'details.advanced > summary').click();
   await page.locator('#save-status').filter({ hasText: 'No saved games' }).waitFor();
   await review(paths);
   assert.equal(await page.locator('#save-import-files li').count(), 6);
@@ -181,7 +201,7 @@ try {
   console.log('A stale overwrite confirmation cannot replace newer saves');
 
   const other = await context.newPage();
-  await other.goto(process.env.TEST_ORIGIN || 'http://127.0.0.1:4173');
+  await other.goto(hd ? origin : `${origin}/hd-demo/`);
   await other.evaluate(() => new Promise(resolve => {
     window.held = navigator.locks.request('neverhood-library-write-v1', () => new Promise(release => { window.releaseSaveLock = release; resolve(); }));
   }));
@@ -205,20 +225,35 @@ try {
   await confirm(true);
   assert.deepEqual(await hashes(), expected);
   await page.reload();
-  await page.locator('details.advanced > summary').click();
+  if (await page.locator('#save-files').isHidden()) await page.locator(hd ? 'details.demo-saves > summary' : 'details.advanced > summary').click();
   await page.locator('#save-status').filter({ hasText: '6 saved games' }).waitFor();
   assert.deepEqual(await hashes(), expected);
   console.log('Cross-tab lock, three-backup retention and persistence after reload passed');
 
-  if (process.env.GAME_DATA_DIR) {
-    await page.locator('#game-folder').setInputFiles(process.env.GAME_DATA_DIR);
-    await page.locator('#prepare').click();
-    await page.locator('#library-panel[data-state="ready"]').waitFor({ timeout: 180000 });
-    await page.waitForFunction(() => !document.getElementById('play').disabled);
-    await page.locator('#play').click();
-    await page.locator('#game-loading').waitFor({ state: 'hidden', timeout: 180000 });
+  if (hd || process.env.GAME_DATA_DIR) {
+    if (!hd) {
+      await page.locator('#game-folder').setInputFiles(process.env.GAME_DATA_DIR);
+      await page.locator('#prepare').click();
+      await page.locator('#library-panel[data-state="ready"]').waitFor({ timeout: 180000 });
+    }
+    await page.locator(playButton).waitFor();
+    await page.waitForFunction(selector => !document.querySelector(selector).disabled, playButton);
+    await page.locator(playButton).click();
+    await page.locator(loadingPanel).waitFor({ state: 'hidden', timeout: 240000 });
     const frame = page.frames().find(frame => frame.url().includes('/player.html?'));
     await waitForGameFrame(frame, 'room');
+    if (hd) {
+      assert.equal(await page.locator('#demo-cancel').isHidden(), true);
+      assert.equal(await frame.locator('#game-menu').isVisible(), true, 'HD must use the full game with its native menu');
+      const other = await context.newPage();
+      await other.goto(origin);
+      const blocked = await other.evaluate(async () => {
+        try { await (await import('/lib/save-store.js')).exportSaves(); return ''; }
+        catch (error) { return error.message; }
+      });
+      assert.match(blocked, /Close the game/, 'HD runtime must hold the same lock as the main save manager');
+      await other.close();
+    }
     const importedFiles = await frame.evaluate(() => {
       const fs = window.Module.FS;
       return Array.from({ length: 6 }, (_, slot) => fs.readFile(`/saves/neverhood.${String(slot).padStart(3, '0')}`).length);
@@ -245,8 +280,9 @@ try {
     await frame.waitForFunction(() => window.Module.FS.readdir('/saves').filter(name => /^neverhood\.\d{3}$/.test(name)).length === 7, null, { timeout: 15000 });
     await waitForGameFrame(frame, 'menu');
     await click(95, 400);
-    await page.locator('#game').waitFor({ state: 'hidden', timeout: 15000 });
+    await page.locator(sessionPanel).waitFor({ state: 'hidden', timeout: 15000 });
     await page.waitForFunction(() => !document.getElementById('export-saves').disabled);
+    await page.locator('#save-status').filter({ hasText: '7 saved games' }).waitFor();
     console.log('Actual WASM player populated imported saves and loaded native slot 000 through the original game menu');
     const roundtrip = await download('#export-saves');
     const records = await readSaveFiles([new File([roundtrip.bytes], roundtrip.name)]);
@@ -257,9 +293,9 @@ try {
     assert.ok(created?.description.length);
     console.log('Created and exported an in-game web save; original Quit may update browser autosave slot 000');
     await page.reload();
-    await page.waitForFunction(() => !document.getElementById('play').disabled);
-    await page.locator('#play').click();
-    await page.locator('#game-loading').waitFor({ state: 'hidden', timeout: 180000 });
+    await page.waitForFunction(selector => !document.querySelector(selector).disabled, playButton);
+    await page.locator(playButton).click();
+    await page.locator(loadingPanel).waitFor({ state: 'hidden', timeout: 240000 });
     const reopened = page.frames().find(frame => frame.url().includes('/player.html?'));
     await waitForGameFrame(reopened, 'room');
     await reopened.locator('#canvas').press('Escape');
@@ -273,18 +309,26 @@ try {
     await reopened.locator('#canvas').press('Escape');
     await waitForGameFrame(reopened, 'menu');
     await gameClick(reopened, 95, 400);
-    await page.locator('#game').waitFor({ state: 'hidden', timeout: 15000 });
+    await page.locator(sessionPanel).waitFor({ state: 'hidden', timeout: 15000 });
     await page.waitForFunction(() => !document.getElementById('export-saves').disabled);
     const afterReplay = await hashes();
     console.log('Real in-game save -> exit -> page reload -> new player -> load cycle passed');
-    await page.locator('#delete').click();
-    await page.locator('#delete-dialog button[value="delete"]').click();
-    await page.locator('#library-panel[data-state="empty"]').waitFor();
-    assert.equal((await state()).files.length, 7);
-    if (!await page.locator('details.advanced').evaluate(details => details.open)) await page.locator('details.advanced > summary').click();
-    const afterRemoval = await readSaveFiles([new File([(await download('#export-saves')).bytes], 'saves.zip')]);
-    assert.deepEqual(afterRemoval.map(({ name, sha256 }) => ({ name, sha256 })), afterReplay);
-    console.log('Removing game resources preserves progress and keeps save export available');
+    if (hd) {
+      await page.goto(origin);
+      await page.locator('details.advanced > summary').click();
+      await page.locator('#save-status').filter({ hasText: '7 saved games' }).waitFor();
+      assert.deepEqual(await hashes(), afterReplay, 'The main launcher exports progress made in HD');
+      console.log('HD native load -> in-game save -> Quit -> refresh/export -> reload -> load passed; main launcher sees identical saves');
+    } else {
+      await page.locator('#delete').click();
+      await page.locator('#delete-dialog button[value="delete"]').click();
+      await page.locator('#library-panel[data-state="empty"]').waitFor();
+      assert.equal((await state()).files.length, 7);
+      if (!await page.locator('details.advanced').evaluate(details => details.open)) await page.locator('details.advanced > summary').click();
+      const afterRemoval = await readSaveFiles([new File([(await download('#export-saves')).bytes], 'saves.zip')]);
+      assert.deepEqual(afterRemoval.map(({ name, sha256 }) => ({ name, sha256 })), afterReplay);
+      console.log('Removing game resources preserves progress and keeps save export available');
+    }
   }
   assert.deepEqual(errors, []);
   assert.deepEqual(uploads, []);

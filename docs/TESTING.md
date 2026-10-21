@@ -218,6 +218,28 @@ the test additionally loads native slot 000 through the original menu, creates a
 new in-game save, exports it, exits, reloads the page and loads that new slot.
 It checks that removing resources preserves progress and save export access.
 
+For the HD launcher, serve a full-game release with `NEVERHOOD_DEMO_DIR` and run
+the same regression with `HD_SAVES=1` (no BYO resource import is needed):
+
+```sh
+HD_SAVES=1 \
+PLAYWRIGHT_MODULE="$(npm root -g)/playwright" \
+NATIVE_SAVE_DIR="/path/to/your/six-slot-native-fixture" \
+DEMO_MANIFEST_URL=/__private-demo/manifest.json \
+node test/browser-saves.mjs
+```
+
+The HD path checks the native load/save/Quit/reload/load cycle, post-Quit list
+refresh, byte-exact transfer, overwrite protection, backups and the shared lock
+against the main launcher. It then verifies that the main page sees the same
+progress. The embedded third-party video is isolated with a test route; save and
+game code run normally, and source save files remain read-only.
+
+`PLAYWRIGHT_MODULE="$(npm root -g)/playwright" node test/browser-hd-demo.mjs`
+requires no game data. It uses a mocked runtime with real browser IndexedDB and
+Web Locks to cover the HD save manager, queued-start cancellation, lock retention
+through final flush, loading-only cancellation, replay and responsive layout.
+
 Other checks include byte-exact native/ZIP roundtrips, explicit overwrite consent,
 cancelled reviews, pre-import restoration, three-backup retention, quota-induced
 transaction rollback, stale-plan rejection, cross-tab locking and reload persistence.

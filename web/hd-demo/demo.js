@@ -1,6 +1,8 @@
 import { discoverDemoRuntime } from '../lib/runtime.js';
 import { demoAssetURL } from '../lib/demo-data.js';
 import { initComparison } from './comparison.js';
+import { createSaveControls } from '../lib/save-controls.js';
+import { withStorageLock } from '../lib/storage.js';
 
 const element = id => document.getElementById(id);
 const page = element('demo-page');
@@ -15,13 +17,25 @@ const loading = element('demo-loading');
 const loadingStatus = element('demo-loading-status');
 const progress = element('demo-progress');
 const cancel = element('demo-cancel');
-const exit = element('demo-exit');
 const fullscreen = element('demo-fullscreen');
 const notice = element('demo-session-notice');
 let runtime;
 let controller;
 let stopping = false;
+let gameStarted = false;
+let saveBusy = false;
+let checking = false;
 let comparisonCleanup = initComparison({});
+const saveControls = createSaveControls({
+  onBusy(value) { saveBusy = value; updateControls(); },
+  isBlocked: () => Boolean(controller),
+});
+
+function updateControls() {
+  play.disabled = checking || saveBusy || Boolean(controller) || !runtime?.available;
+  recheck.disabled = checking || saveBusy || Boolean(controller);
+  saveControls.update();
+}
 
 function setStatus(text, error = false) {
   status.textContent = text;
@@ -29,7 +43,8 @@ function setStatus(text, error = false) {
 }
 
 async function checkAvailability() {
-  play.disabled = true;
+  checking = true;
+  updateControls();
   recheck.hidden = true;
   actions.setAttribute('aria-busy', 'true');
   setStatus('Checking the demo...');
@@ -58,46 +73,46 @@ async function checkAvailability() {
       recheck.hidden = false;
       return;
     }
-    play.disabled = false;
     const size = Number.isSafeInteger(runtime.downloadBytes) && runtime.downloadBytes > 0 && runtime.downloadBytes < 1024 ** 3
       ? ` Up to ${Math.ceil(runtime.downloadBytes / 1024 ** 2)} MiB of game assets.` : '';
-    setStatus(`Start in room 1; room 2 prepares in the background.${size}`);
+    setStatus(`Start a new game or load your progress from the game menu. Room packs prepare as you explore.${size}`);
   } catch (error) {
     runtime = null;
     setStatus(error.message || 'The demo could not be checked. Please try again.', true);
     recheck.hidden = false;
   } finally {
+    checking = false;
+    updateControls();
     actions.setAttribute('aria-busy', 'false');
   }
 }
 
 function stop() {
-  if (!controller || stopping) return;
+  if (!controller || stopping || gameStarted) return;
   stopping = true;
-  exit.disabled = true;
   cancel.disabled = true;
   loading.hidden = false;
-  element('demo-loading-title').textContent = 'Closing the demo';
+  element('demo-loading-title').textContent = 'Cancelling loading';
   loadingStatus.textContent = 'Returning to the page...';
   progress.removeAttribute('value');
   controller.abort();
 }
 
 async function start() {
-  if (controller || !runtime?.available) return;
+  if (controller || checking || saveBusy || !runtime?.available) return;
   element('demo-video-frame')?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), 'https://www.youtube-nocookie.com');
   controller = new AbortController();
   const activeController = controller;
-  let hasPlayed = false, waitingForRoom = false, startupProgress = 0;
+  let waitingForRoom = false, startupProgress = 0;
   stopping = false;
-  play.disabled = true;
+  gameStarted = false;
+  updateControls();
   cancel.disabled = false;
   cancel.hidden = false;
-  exit.disabled = false;
   loading.hidden = false;
   notice.hidden = true;
-  element('demo-loading-title').textContent = 'Opening the first room';
-  loadingStatus.textContent = 'Starting the demo...';
+  element('demo-loading-title').textContent = 'Opening your world';
+  loadingStatus.textContent = 'Waiting for other game or save operations to finish...';
   progress.value = 0;
   const backgroundStatus = element('demo-background-status');
   backgroundStatus.textContent = '';
@@ -105,57 +120,60 @@ async function start() {
   session.hidden = false;
   page.inert = true;
   document.body.classList.add('demo-is-playing');
-  exit.focus();
+  cancel.focus();
   try {
-    await runtime.start({
-      container: host,
-      signal: controller.signal,
-      onStatus(text, value, phase) {
-        if (controller !== activeController || activeController.signal.aborted || stopping) return;
-        const percent = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : undefined;
-        if (phase === 'background') {
-          backgroundStatus.hidden = false;
-          backgroundStatus.textContent = `${text}${percent !== undefined && percent < 100 ? ` ${Math.floor(percent)}%` : ''}`;
-          return;
-        }
-        if (phase === 'playing') {
-          hasPlayed = true;
-          waitingForRoom = false;
-          progress.value = 100;
-          loading.hidden = true;
-          return;
-        }
-        if (phase === 'stopping') {
+    await withStorageLock(async () => {
+      activeController.signal.throwIfAborted();
+      await runtime.start({
+        container: host,
+        signal: activeController.signal,
+        onStatus(text, value, phase) {
+          if (controller !== activeController || activeController.signal.aborted || stopping) return;
+          const percent = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : undefined;
+          if (phase === 'background') {
+            backgroundStatus.hidden = false;
+            backgroundStatus.textContent = `${text}${percent !== undefined && percent < 100 ? ` ${Math.floor(percent)}%` : ''}`;
+            return;
+          }
+          if (phase === 'playing') {
+            gameStarted = true;
+            cancel.hidden = true;
+            cancel.disabled = true;
+            waitingForRoom = false;
+            progress.value = 100;
+            loading.hidden = true;
+            return;
+          }
+          if (phase === 'stopping') {
+            loading.hidden = false;
+            loadingStatus.textContent = text;
+            progress.removeAttribute('value');
+            cancel.hidden = true;
+            element('demo-loading-title').textContent = 'Saving your progress';
+            return;
+          }
+          if (phase === 'room-loading') {
+            if (!waitingForRoom) progress.value = 0;
+            waitingForRoom = true;
+            element('demo-loading-title').textContent = 'Preparing the next room';
+            if (percent !== undefined) progress.value = Math.max(progress.value, percent);
+          } else {
+            if (gameStarted) return;
+            if (percent !== undefined) startupProgress = Math.max(startupProgress, percent);
+            progress.value = startupProgress;
+          }
           loading.hidden = false;
           loadingStatus.textContent = text;
-          progress.removeAttribute('value');
-          cancel.hidden = true;
-          element('demo-loading-title').textContent = 'Closing the demo';
-          exit.disabled = true;
-          return;
-        }
-        if (phase === 'room-loading') {
-          if (!waitingForRoom) progress.value = 0;
-          waitingForRoom = true;
-          element('demo-loading-title').textContent = 'Preparing the next room';
-          cancel.textContent = 'Exit demo';
-          if (percent !== undefined) progress.value = Math.max(progress.value, percent);
-        } else {
-          if (hasPlayed) return;
-          if (percent !== undefined) startupProgress = Math.max(startupProgress, percent);
-          progress.value = startupProgress;
-        }
-        loading.hidden = false;
-        loadingStatus.textContent = text;
-        cancel.hidden = false;
-      },
-    });
-    playLabel.textContent = 'Restart demo';
-    setStatus(stopping ? 'Demo closed. You can start again whenever you like.' : 'Your little visit is over. Step inside again?');
+          cancel.hidden = gameStarted;
+        },
+      });
+    }, { signal: activeController.signal });
+    playLabel.textContent = 'Play demo';
+    setStatus(stopping ? 'Loading cancelled. Your saved games are unchanged.' : 'Game closed. Play again to start a new game or load your progress.');
   } catch (error) {
-    if (controller.signal.aborted && error.name === 'AbortError') {
+    if (activeController.signal.aborted && error.name === 'AbortError') {
       playLabel.textContent = 'Play demo';
-      setStatus('Demo cancelled. You can try again whenever you like.');
+      setStatus('Loading cancelled. Your saved games are unchanged.');
     } else {
       playLabel.textContent = 'Retry demo';
       setStatus(error.message || 'The demo could not start. Please try again.', true);
@@ -171,7 +189,9 @@ async function start() {
     page.inert = false;
     document.body.classList.remove('demo-is-playing');
     controller = null;
-    play.disabled = false;
+    gameStarted = false;
+    updateControls();
+    await saveControls.refresh();
     play.focus();
   }
 }
@@ -179,7 +199,6 @@ async function start() {
 play.addEventListener('click', start);
 recheck.addEventListener('click', checkAvailability);
 cancel.addEventListener('click', stop);
-exit.addEventListener('click', stop);
 fullscreen.hidden = !session.requestFullscreen;
 fullscreen.addEventListener('click', async () => {
   try {
@@ -210,4 +229,12 @@ session.addEventListener('keydown', event => {
   }
 });
 
+window.addEventListener('beforeunload', event => {
+  if (controller || saveBusy) { event.preventDefault(); event.returnValue = ''; }
+});
+window.addEventListener('focus', () => {
+  if (!controller && !saveBusy) void saveControls.refresh();
+});
+
 checkAvailability();
+saveControls.refresh();

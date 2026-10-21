@@ -114,6 +114,13 @@ save storage are enabled; Original/HD switching does not restart gameplay. The
 historical bounded runtime remains packaged only for old releases and regression
 fixtures, not as the current full-game engine.
 
+Use Menu / Esc to save, load or quit. The HD page and BYO launcher share saved
+games on the same browser origin, with the same import/export and before-import
+backup controls. Game sessions hold the shared storage lock until the player
+finishes syncing saves; cancel is available only during initial loading. Export
+important progress: clearing site data removes saves, and browser storage is not
+a substitute for a separate backup.
+
 The current release has 134 room/state packs, not 134 unique rooms. A single
 private original-to-HD table binds source resources/frames, raster geometry,
 palette evidence and replacement PNG hashes. It preserves the two previously

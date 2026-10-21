@@ -33,10 +33,27 @@
           <p id="demo-status" class="demo-status" role="status" aria-live="polite">Checking the demo...</p>
           <button id="demo-recheck" class="text-button" type="button" hidden>Retry check</button>
         </div>
-        <p class="demo-small">No import needed. Game downloads begin only when you press Play. For the full game, <a href="../">bring your own copy</a>.</p>
+        <p class="demo-small">No import needed. Game downloads begin only when you press Play. Save, load or quit through Menu / Esc. You can also <a href="../">bring your own copy</a>.</p>
         <noscript><p class="message">JavaScript is needed to check and play the demo.</p></noscript>
       </div>
       </section>
+      <details class="demo-saves">
+        <summary>Saved games / Import &amp; export</summary>
+        <section class="save-controls" aria-labelledby="saves-title">
+          <h3 id="saves-title">Saved games</h3>
+          <p class="fine">Shared with the main page in this browser. Use Menu / Esc during play to save or load. Clearing site data removes saves; export important progress to keep another copy.</p>
+          <p class="fine">Import ScummVM saves such as <code>neverhood.000</code>, or a ZIP exported here. Original Windows <code>.sav</code> files are not supported.</p>
+          <p id="save-status" class="fine" role="status" aria-live="polite">Checking saved games...</p>
+          <ul id="save-list" class="save-list" aria-label="Saved games"></ul>
+          <div class="file-picker"><label for="save-files">Choose save files or an exported ZIP</label><input type="file" id="save-files" multiple aria-describedby="save-selection" disabled></div>
+          <p id="save-selection" class="selection">No save files selected.</p>
+          <div class="save-actions"><button id="import-saves" class="secondary" disabled>Import saves</button><button id="export-saves" class="secondary" disabled>Export saves</button></div>
+          <label class="backup-label" for="save-backups">Before-import backups</label>
+          <select id="save-backups" disabled><option value="">No backups yet</option></select>
+          <button id="export-save-backup" class="text-button" disabled>Download backup</button>
+          <p class="fine">Before an import changes your saves, a backup is kept in this browser. The latest three backups are retained. Download important backups to keep them elsewhere. To use an exported ZIP in native ScummVM, extract it into your ScummVM save folder. Back up that folder first and review any filename conflicts.</p>
+        </section>
+      </details>
       <section class="demo-comparison" aria-labelledby="comparison-title">
         <div class="demo-section-heading"><div><p class="demo-kicker">01 / Look a little closer</p><h2 id="comparison-title">Old world. New texture.</h2></div><p id="comparison-help">Move your mouse across the image, drag on touch,<br>or use the slider below.</p></div>
         <figure class="comparison-figure">
@@ -76,13 +93,13 @@
     <div class="demo-toolbar">
       <span class="demo-player-title">HD Demo</span>
       <span id="demo-background-status" class="demo-background-status" role="status" hidden></span>
-      <div class="demo-player-actions"><button id="demo-fullscreen" type="button" aria-pressed="false">Full screen</button><button id="demo-exit" type="button">Exit demo</button></div>
+      <div class="demo-player-actions"><button id="demo-fullscreen" type="button" aria-pressed="false">Full screen</button></div>
     </div>
     <div id="demo-player-host" class="demo-player-host"></div>
     <div id="demo-loading" class="demo-loading">
       <div class="loading-card">
         <p class="eyebrow">A little patience...</p>
-        <h2 id="demo-loading-title">Opening the first room</h2>
+        <h2 id="demo-loading-title">Opening your world</h2>
         <p id="demo-loading-status" role="status" aria-live="polite">Starting the demo...</p>
         <progress id="demo-progress" max="100" aria-labelledby="demo-loading-status"></progress>
         <button id="demo-cancel" type="button">Cancel loading</button>
@@ -90,5 +107,18 @@
     </div>
     <p class="demo-session-notice" id="demo-session-notice" role="status" hidden></p>
   </section>
+  <dialog id="save-import-dialog" aria-labelledby="save-import-title">
+    <h2 id="save-import-title">Review saved games</h2>
+    <p class="fine">These saves will be imported into this browser. Your selected files will not change.</p>
+    <ul id="save-import-files" class="save-list" aria-label="Incoming saves"></ul>
+    <div id="save-overwrite-review" hidden>
+      <h3>Slots that will be replaced</h3>
+      <ul id="save-import-conflicts" class="save-list" aria-label="Existing saves to replace"></ul>
+      <p class="fine">A backup of your current saves will be kept before replacing these slots.</p>
+      <label class="overwrite-confirmation"><input type="checkbox" id="allow-save-overwrite"> <span>I confirm that the existing saves listed above may be replaced.</span></label>
+    </div>
+    <p id="save-dialog-status" class="fine" role="status" aria-live="polite"></p>
+    <div class="save-dialog-actions"><button id="cancel-save-import" class="secondary">Cancel</button><button id="confirm-save-import">Import saves</button></div>
+  </dialog>
 </body>
 </html>

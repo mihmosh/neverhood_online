@@ -455,7 +455,7 @@ export async function createRoomPrototype({ module, canvas, wasmSHA256, signal, 
               stats.hdDraws = count;
               if (count) stats.hdFrames++;
                const pending = pack?.stats();
-               if (waitingRoom === activeRoom && !parityRequired && count && (demo?.fullGame ? !pending?.pendingLoads && !pending?.queuedLoads : pending?.missKeys.length === 0)) finishRoomLoading();
+                if (waitingRoom === activeRoom && !parityRequired && (demo?.fullGame ? !pending?.pendingLoads && !pending?.queuedLoads : pending?.missKeys.length === 0)) finishRoomLoading();
               output.hidden = false;
               canvas.style.opacity = '0';
             } else { pack?.observe([]); original(`${activeRoom} / original selected`); }

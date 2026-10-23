@@ -2,6 +2,7 @@ import { validateOriginalFiles } from '../lib/original-streaming-fs.js';
 
 let index, address, cache, cacheError;
 let active = 0;
+let speculative = 0;
 let writes = Promise.resolve();
 let protectedHashes = new Set(), cacheKeys = [], storedKeys = new Set();
 const queue = [], pending = new Map();
@@ -110,21 +111,35 @@ async function block(name, number) {
 }
 
 async function run(job) {
+  if (job.type === 'demand-prefetch') {
+    try { await groupBlock(job.group, job.index); }
+    catch {}
+    finally { active--; speculative--; drain(); }
+    return;
+  }
   const header = job.sab && new Int32Array(job.sab, 0, 8);
   if (header && job.wait) { job.showAfter = performance.now() + 180; waits.set(job.sab, job); drawLoading(); }
   try {
     let bytes, attempts = 0;
+    const deadline = performance.now() + 20000;
     for (;;) {
-      try { bytes = job.group ? await demandBlocks(job) : await block(job.name, job.index); break; }
+      let timer;
+      try {
+        bytes = await Promise.race([
+          job.group ? demandBlocks(job) : block(job.name, job.index),
+          new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Original data download timed out.')), Math.max(0, deadline - performance.now())); }),
+        ]);
+        break;
+      }
       catch (error) {
-        if (!job.wait) throw error;
-        attempts++;
+        if (!job.wait || ++attempts >= 3 || performance.now() >= deadline) throw error;
         job.error = String(error.message || error); drawLoading();
         postMessage({ event: 'waiting', id: job.id, name: job.name, index: job.index,
           attempts, error: String(error.message || error), stats, cacheError });
         if (header) Atomics.store(header, 2, attempts);
         await new Promise(resolve => setTimeout(resolve, Math.min(5000, 250 * 2 ** Math.min(attempts, 4))));
       }
+      finally { clearTimeout(timer); }
     }
     if (header) {
       if (job.shownAt) await new Promise(resolve => setTimeout(resolve, Math.max(0, job.shownAt + 300 - performance.now())));
@@ -148,34 +163,46 @@ async function demandBlocks(job) {
   const { first, last, name } = job.group, file = index.files[name];
   if (name !== job.name || !file || !Number.isSafeInteger(first) || !Number.isSafeInteger(last) ||
       first < 0 || last >= file.hashes.length || first > job.index || last < job.index || last - first >= 512) throw new Error('Invalid demand resource window.');
-  const key = `${name}/${first}/${last}`;
+  const key = `${name}/${first}/${last}/${job.room}`;
   let group = demandGroup;
   if (!group || group.key !== key) {
-    group = { key, bytes: new Map(), delivered: new Set() }; demandGroup = group;
-    group.ready = (async () => {
-      let at = first;
-      const fill = async () => {
-        while (at <= last && !group.failed) { const number = at++; group.bytes.set(number, await block(name, number)); }
-      };
-      await Promise.all([fill(), fill()]);
-      return group.bytes;
-    })().catch(error => { group.failed = true; if (demandGroup === group) demandGroup = undefined; throw error; });
-  }
-  const bytes = await group.ready;
-  if (!group.delivered.has(job.room)) {
-    group.delivered.add(job.room);
-    for (const [number, data] of bytes) {
-      if (number === job.index) continue;
-      const copy = data.slice();
-      postMessage({ event: 'demand-block', name, index: number, room: job.room, bytes: copy.buffer, stats }, [copy.buffer]);
+    if (group) group.blocks.clear();
+    group = { key, name, room: job.room, blocks: new Map(), bytes: 0 }; demandGroup = group;
+    for (let number = first; number <= last; number++) if (number !== job.index) {
+      queue.push({ type: 'demand-prefetch', group, index: number });
     }
   }
-  stats.demandResourceBytes = [...bytes.values()].reduce((sum, block) => sum + block.length, 0);
-  return bytes.get(job.index);
+  const requested = groupBlock(group, job.index);
+  drain();
+  try { return await requested; }
+  catch (error) { if (demandGroup === group) demandGroup = undefined; throw error; }
+}
+
+function groupBlock(group, number) {
+  if (group.blocks.has(number)) return group.blocks.get(number);
+  const promise = block(group.name, number).then(bytes => {
+    if (demandGroup === group) {
+      group.bytes += bytes.length; stats.demandResourceBytes = group.bytes;
+      const copy = bytes.slice();
+      postMessage({ event: 'demand-block', name: group.name, index: number, room: group.room, bytes: copy.buffer, stats }, [copy.buffer]);
+    }
+    return bytes;
+  });
+  group.blocks.set(number, promise);
+  return promise;
 }
 
 function drain() {
-  while (active < 4 && queue.length) { active++; run(queue.shift()); }
+  while (active < 4 && queue.length) {
+    // Leave a slot for a required read even when speculative neighbors stall.
+    const next = queue.findIndex(job => job.type !== 'demand-prefetch' || job.group !== demandGroup || speculative < 3);
+    if (next < 0) break;
+    const [job] = queue.splice(next, 1);
+    if (job.type === 'demand-prefetch' && job.group !== demandGroup) continue;
+    active++;
+    if (job.type === 'demand-prefetch') speculative++;
+    run(job);
+  }
 }
 
 self.onmessage = async ({ data }) => {

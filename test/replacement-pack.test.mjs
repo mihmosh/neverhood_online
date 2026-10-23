@@ -582,6 +582,45 @@ function urlFixture(t, value = fixture()) {
   return { value, requests, decoded, bodies, load: options => loadReplacementPackURL(manifestURL, { runtimeSHA256, ...options }) };
 }
 
+for (const stage of ['headers', 'body']) for (const cancellation of ['timeout', 'caller']) {
+  test(`URL pack cancels stalled ${stage} on ${cancellation}`, { timeout: 2000 }, async t => {
+    const setup = urlFixture(t), caller = new AbortController();
+    let underlying;
+    t.mock.method(globalThis, 'fetch', (url, { signal }) => {
+      underlying = signal;
+      if (cancellation === 'caller') setTimeout(() => caller.abort(), 5);
+      if (stage === 'headers') return new Promise(() => {});
+      return Promise.resolve(new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(new Uint8Array([1]));
+        signal.addEventListener('abort', () => controller.error(signal.reason), { once: true });
+      } })));
+    });
+    await assert.rejects(setup.load({ signal: caller.signal, timeoutMs: cancellation === 'timeout' ? 20 : 1000 }),
+      { name: cancellation === 'timeout' ? 'TimeoutError' : 'AbortError' });
+    assert.equal(underlying.aborted, true);
+  });
+}
+
+test('URL download deadlines are per request, not pack lifetime, and release lazy workers', { timeout: 2000 }, async t => {
+  const setup = urlFixture(t), original = globalThis.fetch;
+  let stalled;
+  t.mock.method(globalThis, 'fetch', (url, opts) => {
+    if (!String(url).endsWith('/1.png')) return original(url, opts);
+    stalled = opts.signal;
+    return new Promise(() => {});
+  });
+  const pack = await setup.load({ timeoutMs: 30 });
+  t.after(() => pack.dispose());
+  await new Promise(resolve => setTimeout(resolve, 50));
+  pack.observe([key(1)]); await settle(pack);
+  assert.equal(stalled.aborted, true);
+  assert.match(pack.stats().errors['sprites/1.png'], /timed out/);
+  assert.equal(pack.stats().pendingLoads, 0);
+  assert.equal(pack.stats().loaded, true);
+  pack.observe([key(2)]); await settle(pack);
+  assert.equal(pack.observe([key(2)]).size, 1);
+});
+
 test('URL pack fetches only manifest at startup, verifies on demand and uses bounded LRU', async t => {
   const value = fixture(3); value.manifest.entries[0].sourceResources = ['alias-one', 'alias-two'];
   const setup = urlFixture(t, value), pack = await setup.load({ cacheBytes: 128 });

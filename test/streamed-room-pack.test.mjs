@@ -93,7 +93,54 @@ test('loader requests only pinned index and manifest before lazy image decode, r
   assert.equal(pack.observe([key]).size, 1); assert.equal(pack.stats().fullArchiveVerified, false);
   assert.equal(pack.stats().archiveBytes, 0); assert.equal(pack.stats().rangeRequests, 2);
   pack.dispose(); assert.equal(closed, 1); assert.equal(pack.stats().encodedCacheBytes, 0);
-  assert.equal(requests[2].options.signal.aborted, true);
+  assert.equal(requests[2].options.signal.aborted, false, 'completed downloads detach from pack cancellation');
+});
+
+for (const stage of ['headers', 'body']) for (const cancellation of ['timeout', 'caller']) {
+  test(`range download cancels stalled ${stage} on ${cancellation}`, { timeout: 2000 }, async t => {
+    const f = await prepared(t), caller = new AbortController();
+    const requests = serve(t, f), original = globalThis.fetch;
+    let underlying;
+    t.mock.method(globalThis, 'fetch', (url, opts) => {
+      if (!opts.headers?.Range) return original(url, opts);
+      underlying = opts.signal;
+      if (cancellation === 'caller') setTimeout(() => caller.abort(), 5);
+      if (stage === 'headers') return new Promise(() => {});
+      const meta = f.index.manifest, end = meta.offset + meta.bytes - 1;
+      return Promise.resolve(new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(new Uint8Array([1]));
+        opts.signal.addEventListener('abort', () => controller.error(opts.signal.reason), { once: true });
+      } }), { status: 206, headers: {
+        'content-range': `bytes ${meta.offset}-${end}/${f.bytes.length}`, 'content-length': String(meta.bytes),
+      } }));
+    });
+    await assert.rejects(loadStreamedDemoReplacementPackURL('https://cdn.example/rooms/Scene1001.zip', {
+      ...options(f), signal: caller.signal, timeoutMs: cancellation === 'timeout' ? 20 : 1000,
+    }), { name: cancellation === 'timeout' ? 'TimeoutError' : 'AbortError' });
+    assert.equal(underlying.aborted, true);
+    assert.equal(requests.length, 1, 'no whole archive fallback');
+  });
+}
+
+test('lazy range timeout leaves the pack alive and settles its worker after an idle lifetime', { timeout: 2000 }, async t => {
+  const f = await prepared(t), requests = serve(t, f), original = globalThis.fetch;
+  let stalled;
+  t.mock.method(globalThis, 'fetch', (url, opts) => {
+    if (opts.headers?.Range !== `bytes=${f.index.members['images/a.png'].offset}-${f.index.members['images/a.png'].offset + f.image.length - 1}`)
+      return original(url, opts);
+    stalled = opts.signal;
+    return new Promise(() => {});
+  });
+  const pack = await loadStreamedDemoReplacementPackURL('https://cdn.example/rooms/Scene1001.zip', { ...options(f), timeoutMs: 30 });
+  t.after(() => pack.dispose());
+  await new Promise(resolve => setTimeout(resolve, 50));
+  pack.observe([key]); await Promise.all(pack.pending.values());
+  assert.equal(stalled.aborted, true);
+  assert.match(pack.stats().errors['images/a.png'], /timed out/);
+  assert.equal(pack.stats().pendingLoads, 0);
+  assert.equal(pack.stats().encodedCacheBytes, 0);
+  assert.equal(pack.stats().loaded, true);
+  assert.equal(requests.length, 2);
 });
 
 test('strict 206 response, Content-Range, length, SHA and CRC fail closed without full ZIP fallback', async t => {

@@ -1,4 +1,4 @@
-import { demoAddress, demoAssetURL, fetchDemoBytes, demoPath } from '../lib/demo-data.js';
+import { demoAddress, demoAssetURL, fetchDemoBytes, demoPath, withDownloadTimeout } from '../lib/demo-data.js';
 import { updateCRC32 } from '../lib/zip-validation.js';
 import { ReplacementPack, PACK_LIMITS, validPackRoom, validateReplacementManifest, validateImageHeader } from './replacement-pack.js';
 import { ROOM_ARCHIVE_LIMITS } from './room-archive.js';
@@ -51,7 +51,7 @@ function archiveAddress(value, base, room) {
 }
 
 export async function loadStreamedDemoReplacementPackURL(url, { runtimeSHA256, room, archive, signal,
-  onChange = () => {}, cacheBytes = PACK_LIMITS.cacheBytes, onProgress = () => {} } = {}) {
+  onChange = () => {}, cacheBytes = PACK_LIMITS.cacheBytes, onProgress = () => {}, timeoutMs } = {}) {
   signal?.throwIfAborted();
   if (!validPackRoom(room) || !hashPattern.test(runtimeSHA256) || !pin(archive, ROOM_ARCHIVE_LIMITS.bytes) ||
       !pin(archive.streaming?.index, PACK_LIMITS.manifest)) fail('requires pinned archive and index');
@@ -121,7 +121,7 @@ export async function loadStreamedDemoReplacementPackURL(url, { runtimeSHA256, r
     };
     const indexBytes = await cached(descriptor, async () => {
       const bytes = await fetchDemoBytes(indexURL.href, { signal: active, expectedBytes: descriptor.bytes,
-        limit: PACK_LIMITS.manifest, sha256: descriptor.sha256 });
+        limit: PACK_LIMITS.manifest, sha256: descriptor.sha256, timeoutMs });
       fetchedBytes += bytes.length; return bytes;
     });
     const index = json(indexBytes);
@@ -138,20 +138,20 @@ export async function loadStreamedDemoReplacementPackURL(url, { runtimeSHA256, r
     }
     const sorted = [...ranges].sort((a, b) => a.offset - b.offset);
     for (let i = 1; i < sorted.length; i++) if (sorted[i].offset < sorted[i - 1].offset + sorted[i - 1].bytes) fail('overlapping member ranges');
-    const range = meta => cached(meta, async () => {
+    const range = meta => cached(meta, () => withDownloadTimeout(active, timeoutMs, async signal => {
       check(); rangeRequests++;
       const end = meta.offset + meta.bytes - 1;
-      const response = await fetch(source.href, { signal: active, credentials: 'omit', mode: 'cors', redirect: 'error',
+      const response = await fetch(source.href, { signal, credentials: 'omit', mode: 'cors', redirect: 'error',
         headers: { Range: `bytes=${meta.offset}-${end}` } });
       if (response.status !== 206 || response.headers.get('content-range') !== `bytes ${meta.offset}-${end}/${archive.bytes}` ||
           response.headers.get('content-length') !== String(meta.bytes) ||
           ![null, 'identity'].includes(response.headers.get('content-encoding')) || !response.body) {
         await response.body?.cancel(); fail('requires exact uncompressed 206 Content-Range and length');
       }
-      return boundedBody(response, meta.bytes, active, (length, offset) => {
+      return boundedBody(response, meta.bytes, signal, (length, offset) => {
         fetchedBytes += length; onProgress(offset, meta.bytes, 'range');
       });
-    });
+    }));
     const manifest = json(await range(index.manifest));
     const validated = validateReplacementManifest(manifest, runtimeSHA256);
     if (manifest.room !== room || manifest.version !== 2 || manifest.lossless !== true) fail('lossless source room mismatch');

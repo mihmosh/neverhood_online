@@ -92,6 +92,27 @@ test('demo download bounds responses and verifies SHA256 before mounting', async
   await assert.rejects(fetchDemoBytes('https://assets.example.test/a.blb', { signal: controller.signal }), /abort/i);
 });
 
+for (const stage of ['headers', 'body']) for (const cancellation of ['timeout', 'caller']) {
+  test(`demo download cancels stalled ${stage} on ${cancellation}`, { timeout: 2000 }, async t => {
+    const caller = new AbortController();
+    let underlying;
+    t.mock.method(globalThis, 'fetch', (url, { signal }) => {
+      underlying = signal;
+      if (cancellation === 'caller') setTimeout(() => caller.abort(), 5);
+      if (stage === 'headers') return new Promise(() => {});
+      return Promise.resolve(new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(new Uint8Array([1]));
+        signal.addEventListener('abort', () => controller.error(signal.reason), { once: true });
+      } })));
+    });
+    await assert.rejects(fetchDemoBytes('https://assets.example.test/a.blb', {
+      signal: caller.signal, timeoutMs: cancellation === 'timeout' ? 20 : 1000,
+    }), { name: cancellation === 'timeout' ? 'TimeoutError' : 'AbortError' });
+    assert.equal(underlying.aborted, true);
+    assert.equal(caller.signal.aborted, cancellation === 'caller');
+  });
+}
+
 function png(width, height) {
   const bytes = Buffer.alloc(33);
   [0x89504e47, 0x0d0a1a0a, 13, 0x49484452, width, height].forEach((value, index) => bytes.writeUInt32BE(value, index * 4));

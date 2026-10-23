@@ -18,6 +18,8 @@ async function fixture(t) {
   for (const name of ['app.js', 'styles.css', 'player.html', 'player.js', 'lib/app.js', 'data/index.json', 'hd-demo/index.html', 'hd-demo/demo.css', 'hd-demo/demo.js', 'hd-demo/comparison.js', 'hd-demo/config.json', 'vendor/fflate-0.8.2.js', 'vendor/fflate-LICENSE', 'vendor/fflate-provenance.json', 'assets/fonts/Mansalva-Regular.ttf', 'assets/fonts/OFL.txt', 'assets/fonts/provenance.json']) await file(`web/${name}`);
   await file('web/index.html', '<html><aside><a data-source-link href="https://github.com/mihmosh/neverhood_online">Source &amp; licenses</a></aside><footer>Local game client</footer></html>');
   for (const name of ['compositor.js', 'read-frame.js', 'room1.js', 'replacement-pack.js', 'render-abi.json', 'demo-cursor.js', 'room-archive.js', 'room-archive-cache.js']) await file(`web/prototype/${name}`);
+  await file('web/prototype/streamed-room-pack.js');
+  await file('web/workers/original-bytes.js');
   await file('web/public/runtime/runtime.json', JSON.stringify({ available: true, api: 'emscripten-global-module', engine: 'neverhood', module: 'scummvm.js', wasm: 'scummvm.wasm', engineData: ['neverhood.dat'], sourceRevision: 'a'.repeat(40) }));
   for (const name of ['scummvm.js', 'neverhood.dat', 'COPYING', 'COPYRIGHT', 'AUTHORS', ...RUNTIME_LICENSES.map(name => `LICENSES/${name}`)]) await file(`web/public/runtime/${name}`);
   const wasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]);
@@ -51,6 +53,8 @@ test('static packaging flattens artifact URLs and excludes private and developme
   await walk(out);
   assert.ok(names.includes('runtime/scummvm.wasm'));
   assert.ok(names.includes('prototype/replacement-pack.js'));
+  assert.ok(names.includes('prototype/streamed-room-pack.js'));
+  assert.ok(names.includes('workers/original-bytes.js'));
   assert.ok(names.includes('hd-demo/index.html'));
   assert.ok(names.includes('prototype/demo-cursor.js'));
   assert.ok(names.includes('extractor/innoextract.wasm'));
@@ -159,16 +163,13 @@ test('packaged output serves as static files without exposing the Node server or
 test('Vercel uses the static output directory and sets worker isolation headers', async () => {
   const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
   assert.equal(config.framework, null);
-  assert.equal(config.buildCommand, 'npm run build');
+  const demo = JSON.parse(await readFile(new URL('../web/hd-demo/config.json', import.meta.url), 'utf8'));
+  assert.equal(config.buildCommand, `NEVERHOOD_DEMO_MANIFEST_URL=${demo.manifestURL} npm run build`);
   assert.equal(config.outputDirectory, 'dist');
   assert.equal(config.functions, undefined);
   assert.equal(config.rewrites, undefined);
   const headers = config.headers.find(rule => rule.source === '/(.*)').headers;
   assert.ok(headers.some(header => header.key === 'Cross-Origin-Opener-Policy' && header.value === 'same-origin'));
-  assert.equal(headers.some(header => header.key === 'Cross-Origin-Embedder-Policy'), false, 'No global COEP rule may override the YouTube page');
-  const isolated = config.headers.find(rule => rule.source.startsWith('/((?!'));
-  const pattern = new RegExp(`^${isolated.source}$`);
-  for (const path of ['/', '/index.html', '/runtime/scummvm.js']) assert.equal(pattern.test(path), true);
-  for (const path of ['/hd-demo', '/hd-demo/', '/hd-demo/index.html', '/player.html']) assert.equal(pattern.test(path), false);
-  assert.deepEqual(config.headers.find(rule => rule.source === '/player.html').missing, [{ type: 'query', key: 'demo', value: '1' }]);
+  assert.ok(headers.some(header => header.key === 'Cross-Origin-Embedder-Policy' && header.value === 'require-corp'),
+    'Streaming needs SharedArrayBuffer isolation on the parent, player and byte worker');
 });

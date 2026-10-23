@@ -140,6 +140,22 @@ void GameModule::unrelated() { load(0x99999999); }
   assert.deepEqual(room.evidence.resourceArrays.map(item => item.name), ['musicHashes']);
 });
 
+test('pointer-returning scoped helpers resolve multiline named hashes and preserve evidence lines', () => {
+  const input = fixture();
+  input.tables['a.blb'].entries.push({ hash: 0x0002486a, type: 5, compression: 1, timestamp: 1, offset: 190100, diskSize: 582 });
+  input.sources = [...input.sources, source('font.cpp', `
+Font *Factory::createFont() { load(calcHash(
+  "asRecFont"
+)); }
+void Factory::unused() { load(0x99999999); }
+`)];
+  input.sources[0] = { ...input.sources[0], text: input.sources[0].text.replace('load(0x33333333);', 'load(0x33333333); Factory::createFont();') };
+  const room = deriveRoomGraphFromSources(input).rooms['1000:0'];
+  assert(room.resources.some(resource => resource.hash === '0002486a'));
+  assert.deepEqual(room.evidence.sharedHelpers.map(helper => [helper.member, helper.line]), [['Factory::createFont', 2]]);
+  assert(!room.resources.some(resource => resource.hash === '99999999'));
+});
+
 test('HD state IDs require an actual class/background state, not an arbitrary prefix', () => {
   const input = fixture();
   input.sources = input.sources.map(item => ({ ...item, text: item.text.replace('setMessageList(0x00400001);',
@@ -237,4 +253,21 @@ test('Scene2803 actual shared radio selector closes both physical resources cros
   for (let index = 387; index <= 428; index++) assert(room.blocks.some(block => block.name === 'a.blb' && block.index === index));
   assert.equal(room.hdRoom, null);
   assert.deepEqual(room.hdRooms, ['Scene2803-29800A01-b1f53112', 'Scene2803-412A423E-ecd4da1e']);
+});
+
+test('notes below room two include both font variants and text as lower-room neighbor dependencies', async () => {
+  const graph = await deriveRoomGraph({
+    files: { 'i.blb': { bytes: 196608, hashes: Array(3).fill('a'.repeat(64)) } },
+    tables: { 'i.blb': { entries: [
+      { hash: 0xc6604282, type: 2, compression: 1, timestamp: 1, offset: 100, diskSize: 100 },
+      { hash: 0x283ce401, type: 2, compression: 1, timestamp: 1, offset: 65530, diskSize: 100 },
+      { hash: 0x80283101, type: 6, compression: 1, timestamp: 1, offset: 131100, diskSize: 100 },
+      { hash: 0x0002486a, type: 5, compression: 1, timestamp: 1, offset: 65560, diskSize: 582 },
+    ] } }, manifest: { packs: {} },
+  });
+  assert(graph.rooms['1000:3'].neighbors.includes('1000:4'));
+  assert.deepEqual(graph.rooms['1000:4'].sceneClasses, ['Scene1005']);
+  assert.deepEqual(graph.rooms['1000:4'].resources.map(resource => resource.hash), ['0002486a', '283ce401', '80283101', 'c6604282']);
+  assert(graph.rooms['1000:4'].evidence.sharedHelpers.some(helper => helper.member === 'FontSurface::createFontSurface'));
+  assert.deepEqual(graph.rooms['1000:4'].blocks, [0, 1, 2].map(index => ({ name: 'i.blb', index })));
 });

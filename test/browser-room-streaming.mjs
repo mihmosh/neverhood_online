@@ -45,7 +45,7 @@ async function capture(name) {
   const stage = { name, ...state, originalBytes: network.original.bytes - baseline.original.bytes,
     hdBytes: network.hd.bytes - baseline.hd.bytes, elapsed: performance.now() - report.started };
   report.stages.push(stage);
-  await page.screenshot({ path: `/tmp/kilo/neverhood-integrated-stream-${name}.png` });
+  await page.screenshot({ path: `/tmp/kilo/neverhood-integrated-stream-${name}.png`, timeout: 10000 });
   console.log(JSON.stringify({ name, room: state.renderer.activeRoom, hd: state.renderer.hdDraws, ...state.originals,
     originalBytes: stage.originalBytes, hdBytes: stage.hdBytes }));
   await writeFile('/tmp/kilo/neverhood-integrated-stream-report.json', JSON.stringify(report, null, 2));
@@ -101,6 +101,38 @@ try {
   await frame.waitForFunction(() => roomRendererPrototype.stats().activeRoom === 'Scene1004', null, { timeout: 60000 });
   await frame.waitForFunction(() => roomRendererPrototype.stats().hdDraws > 0 && !originalStreaming.stats().preparing, null, { timeout: 60000 });
   await capture('room3');
+  if (process.env.NOTES === '1') {
+    await ticks(240);
+    const fontRequests = () => report.requests.filter(request => request.url.endsWith('/i.blb') && request.range === 'bytes=17432576-17498111').length;
+    const preparedFontRequests = fontRequests();
+    if (process.env.VERIFY_NOTES_FONT === '1') assert(preparedFontRequests > 0, 'asRecFont must be prepared before opening notes');
+    await click(350, 240);
+    // Legacy indexes omit Scene1005, so native state is authoritative here.
+    await frame.waitForFunction(() => {
+      const state = originalStreaming.stats();
+      return state.native?.module === 1000 && state.native.scene === 4;
+    }, null, { timeout: 30000 });
+    await frame.waitForFunction(() => {
+      const state = originalStreaming.stats();
+      return !state.waiting && !state.preparing;
+    }, null, { timeout: 30000 });
+    const notes = await capture('notes');
+    await ticks(30);
+    const running = await capture('notes-running');
+    assert(running.renderer.engineFrames >= notes.renderer.engineFrames + 30, 'Engine frames must advance while reading notes');
+    assert.equal(running.originals.native.module, 1000);
+    assert.equal(running.originals.native.scene, 4);
+    assert.equal(running.originals.terminal, false);
+    if (process.env.VERIFY_NOTES_FONT === '1') assert.equal(fontRequests(), preparedFontRequests, 'Opening notes must not download asRecFont synchronously');
+    await click(10, 240);
+    await frame.waitForFunction(() => {
+      const state = originalStreaming.stats();
+      return state.native?.module === 1000 && state.native.scene === 3 && !state.waiting && !state.preparing;
+    }, null, { timeout: 30000 });
+    await ticks(60);
+    const returnedFromNotes = await capture('notes-return');
+    assert.equal(returnedFromNotes.originals.terminal, false);
+  } else {
   await context.setOffline(true);
   const beforeReturn = await serverStats();
   await click(230, 120); await ticks(240);
@@ -110,13 +142,14 @@ try {
   assert.equal(afterReturn.original.bytes, beforeReturn.original.bytes);
   assert.equal(afterReturn.hd.bytes, beforeReturn.hd.bytes);
   assert.equal(returned.originals.terminal, false);
+  }
   assert(report.stages.every(stage => stage.renderer.errors === 0 && stage.renderer.mismatches === 0));
   assert(report.requests.every(request => request.range), 'No complete BLB or HD ZIP download is permitted');
   assert.deepEqual(report.errors, []);
   }
 } catch (error) {
   report.failure = error.stack;
-  await page.screenshot({ path: '/tmp/kilo/neverhood-integrated-stream-error.png' }).catch(() => {});
+  await page.screenshot({ path: '/tmp/kilo/neverhood-integrated-stream-error.png', timeout: 10000 }).catch(() => {});
   report.finalState = await frame?.evaluate(() => ({ renderer: window.roomRendererPrototype?.stats(), originals: window.originalStreaming?.stats() })).catch(() => null);
   console.error(report.logs.join('\n'));
   throw error;

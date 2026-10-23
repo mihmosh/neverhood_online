@@ -4,6 +4,28 @@ export const ORIGINAL_BLOCK_BYTES = 65536;
 export const STOCK_RUNTIME_SHA256 = '31bdb5fa1afcdf80a6895e2fe5c87a5a999a245af85de7326df20f0756e0d83c';
 const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 
+export function waitForOriginalBlock(header, deadline, now = () => performance.now()) {
+  let state;
+  // Main-thread timers and worker.onerror cannot run inside a synchronous native read.
+  while ((state = Atomics.load(header, 0)) === 0) {
+    if (now() >= deadline) throw new Error('Original data worker timed out.');
+  }
+  return state;
+}
+
+export function originalFontBlocks(index) {
+  const refs = [];
+  // Published indexes omit the named asRecFont dependency of FontSurface::createFontSurface.
+  for (const [name, file] of Object.entries(index.files)) for (const resource of file.resources ?? []) {
+    if (resource.hash !== '0002486a') continue;
+    if (!Number.isSafeInteger(resource.offset) || resource.offset < 0 || !Number.isSafeInteger(resource.bytes) ||
+        resource.bytes <= 0 || resource.offset + resource.bytes > file.bytes) throw new Error('Invalid original font metadata span.');
+    const last = Math.floor(Math.min(file.bytes - 1, resource.offset + resource.bytes + 4095) / index.blockSize);
+    for (let number = Math.floor(resource.offset / index.blockSize); number <= last; number++) refs.push({ name, index: number });
+  }
+  return validateBlockRefs(index, refs);
+}
+
 export function validateOriginalFiles(index, address, files) {
   if (index?.version !== 1 || index.blockSize !== ORIGINAL_BLOCK_BYTES || index.runtimeSHA256 !== STOCK_RUNTIME_SHA256 ||
       !index.files || Object.keys(index.files).length !== REQUIRED_FILES.length) throw new Error('Invalid original streaming index.');

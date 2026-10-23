@@ -65,38 +65,63 @@ export function validateDemoManifest(manifest, sourceRuntimeSHA256) {
   return { ...manifest, totalBytes: total };
 }
 
-export async function fetchDemoBytes(url, { signal, limit = DEMO_LIMITS.manifest, expectedBytes, sha256, onProgress = () => {}, cache = 'default' } = {}) {
+// One deadline covers headers and body, never the lifetime of a lazy pack.
+export async function withDownloadTimeout(signal, timeoutMs = 20000, load) {
   signal?.throwIfAborted();
-  const response = await fetch(url, { signal, credentials: 'omit', mode: 'cors', redirect: 'error', cache });
-  if (!response.ok || !response.body) throw new Error(`Demo download failed (HTTP ${response.status}).`);
-  const header = response.headers.get('content-length');
-  // Content-Length can describe compressed transfer bytes, not Fetch's decoded stream.
-  if (header !== null && !/^\d+$/.test(header)) {
-    await response.body.cancel(); throw new Error('Demo download has an invalid size.');
-  }
-  const reader = response.body.getReader(), chunks = [];
-  let length = 0;
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 20000) throw new Error('Invalid download timeout.');
+  const controller = new AbortController();
+  const abort = () => controller.abort(signal.reason);
+  signal?.addEventListener('abort', abort, { once: true });
+  const timer = setTimeout(() => controller.abort(new DOMException('Download timed out.', 'TimeoutError')), timeoutMs);
+  let rejectAbort;
+  const cancelled = new Promise((_, reject) => { rejectAbort = () => reject(controller.signal.reason); });
+  controller.signal.addEventListener('abort', rejectAbort, { once: true });
   try {
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      length += value.byteLength;
-      if (length > limit || expectedBytes !== undefined && length > expectedBytes) throw new Error('Demo download exceeds its declared size.');
-      chunks.push(value); onProgress(length);
-    }
-  } catch (error) { await reader.cancel().catch(() => {}); throw error; }
-  finally { reader.releaseLock(); }
-  signal?.throwIfAborted();
-  if (!length || expectedBytes !== undefined && length !== expectedBytes) throw new Error('Incomplete demo download.');
-  const bytes = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
-  if (sha256) {
-    const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(value => value.toString(16).padStart(2, '0')).join('');
-    if (digest !== sha256) throw new Error('Demo SHA256 verification failed.');
+    return await Promise.race([load(controller.signal), cancelled]);
+  } catch (error) {
+    controller.abort(error);
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
+    controller.signal.removeEventListener('abort', rejectAbort);
   }
-  signal?.throwIfAborted();
-  return bytes;
+}
+
+export async function fetchDemoBytes(url, { signal, timeoutMs, limit = DEMO_LIMITS.manifest, expectedBytes, sha256, onProgress = () => {}, cache = 'default' } = {}) {
+  return withDownloadTimeout(signal, timeoutMs, async signal => {
+    signal.throwIfAborted();
+    const response = await fetch(url, { signal, credentials: 'omit', mode: 'cors', redirect: 'error', cache });
+    if (!response.ok || !response.body) throw new Error(`Demo download failed (HTTP ${response.status}).`);
+    const header = response.headers.get('content-length');
+    // Content-Length can describe compressed transfer bytes, not Fetch's decoded stream.
+    if (header !== null && !/^\d+$/.test(header)) {
+      await response.body.cancel(); throw new Error('Demo download has an invalid size.');
+    }
+    const reader = response.body.getReader(), chunks = [];
+    let length = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        length += value.byteLength;
+        if (length > limit || expectedBytes !== undefined && length > expectedBytes) throw new Error('Demo download exceeds its declared size.');
+        chunks.push(value); onProgress(length);
+      }
+    } catch (error) { await reader.cancel().catch(() => {}); throw error; }
+    finally { reader.releaseLock(); }
+    signal.throwIfAborted();
+    if (!length || expectedBytes !== undefined && length !== expectedBytes) throw new Error('Incomplete demo download.');
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+    if (sha256) {
+      const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(value => value.toString(16).padStart(2, '0')).join('');
+      if (digest !== sha256) throw new Error('Demo SHA256 verification failed.');
+    }
+    signal.throwIfAborted();
+    return bytes;
+  });
 }
 
 export async function fetchDemoManifest(url, sourceRuntimeSHA256, signal) {

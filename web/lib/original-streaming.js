@@ -1,5 +1,5 @@
 import { fetchDemoBytes, demoAssetURL } from './demo-data.js';
-import { ORIGINAL_BLOCK_BYTES, validateOriginalIndex, installOriginalFiles } from './original-streaming-fs.js';
+import { ORIGINAL_BLOCK_BYTES, validateOriginalIndex, installOriginalFiles, waitForOriginalBlock, originalFontBlocks } from './original-streaming-fs.js';
 import { createNativeRoomReader } from './original-streaming-state.js';
 import { demandWindow } from './original-streaming-demand.js';
 
@@ -11,6 +11,7 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
   const address = demoAssetURL(source.file, manifest.manifestURL);
   const bytes = await fetchDemoBytes(address, { signal, limit: 16 * 1024 ** 2, expectedBytes: source.bytes, sha256: source.sha256 });
   const index = validateOriginalIndex(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)), address, manifest.files);
+  const fontBlocks = originalFontBlocks(index);
   const abiResponse = await fetch(new URL('../prototype/render-abi.json', import.meta.url), { signal });
   if (!abiResponse.ok) throw new Error('Native streaming observer ABI is unavailable.');
   const nativeRoom = createNativeRoomReader(module, await abiResponse.json());
@@ -140,12 +141,13 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
     stats.lastDemandResource = { ...group, room: owner };
     worker.postMessage({ type: 'read', id: readID, name, index: number, sab, wait: true, group, room: owner });
     let state;
-    while ((state = Atomics.load(header, 0)) === 0) { /* Preserve this native call until verified bytes arrive. */ }
+    try { state = waitForOriginalBlock(header, started + 25000); }
+    catch { return fail(new Error(`Original data timed out: ${name}, block ${number + 1}.`)); }
     stats.maxWaitMs = Math.max(stats.maxWaitMs, performance.now() - started);
     stats.waiting = false; stats.waitFinishedAt = performance.now(); stats.completedReadID = readID;
     stats.loadingFrames = (stats.loadingFrames ?? 0) + Atomics.load(header, 3);
     stats.waitingAttempts = Atomics.load(header, 2); stats.waitingError = undefined;
-    if (state !== 1) return fail(new Error(new TextDecoder().decode(new Uint8Array(sab, 32, header[1]))));
+    if (state !== 1) return fail(new Error(new TextDecoder().decode(new Uint8Array(sab, 32, header[1]).slice())));
     const bytes = new Uint8Array(sab, 32, header[1]).slice();
     try { retain(hash, bytes); } catch { stats.uncachedDemandBlocks = (stats.uncachedDemandBlocks ?? 0) + 1; }
     return bytes;
@@ -158,44 +160,46 @@ export async function createOriginalStreaming({ module, manifest, signal, onProg
     stats.loadingBoundary = 'input-gate-and-prefetched-neighbors';
     currentRoom = id; stats.currentRoom = id; stats.preparing = true; stats.prefetchError = undefined;
     stats.readyRooms = [];
-    const videoBlocks = hashes => (hashes ?? []).flatMap(hash => index.videos[hash].blocks);
-    const nativeRefs = [...index.bootstrap, ...(index.common ?? []), ...room.blocks, ...videoBlocks(room.videoHashes)];
-    const refs = [...nativeRefs, ...(learned.get(id)?.values() ?? [])];
-    const neighbors = room.neighbors.flatMap(id => {
-      const target = index.rooms[id];
-      const entries = (room.neighborEntries ?? []).filter(entry => entry.room === id).flatMap(entry => entry.entryVideoHashes ?? []);
-      return [...target.blocks, ...videoBlocks(entries.length ? entries : target.entryVideoHashes ?? target.videoHashes)];
-    });
-    const needed = new Map([...refs, ...neighbors].map(ref => [hashFor(ref), ref]));
-    const neededBytes = [...needed.values()].reduce((sum, ref) => sum + Math.min(index.blockSize,
-      index.files[ref.name].bytes - ref.index * index.blockSize), 0);
-    if (neededBytes > memoryBytes) throw new Error('Current room and its entry barriers exceed the original memory budget.');
-    if (initial && neededBytes > 32 * 1024 ** 2) throw new Error('The original startup bundle exceeds the 32 MiB fast-start budget.');
-    baseProtectedHashes = new Set([...nativeRefs, ...neighbors].map(hashFor));
-    protectedHashes = new Set(needed.keys());
-    worker.postMessage({ type: 'protect', hashes: [...protectedHashes] });
-    const isCurrent = () => ticket === generation;
-    await prefetch(refs, id, isCurrent);
-    if (ticket !== generation || disposed) return;
-    stats.readyRooms = [id];
-    if (!initial) stats.preparing = false;
-    await prefetch(neighbors, 'neighbor', isCurrent);
-    if (ticket === generation) {
-      stats.readyRooms = [...new Set([id, ...room.neighbors])].filter(id => index.rooms[id].blocks.every(ref => memory.has(hashFor(ref))));
-      stats.readyVideos = Object.entries(index.videos ?? {}).filter(([, video]) => video.blocks.every(ref => memory.has(hashFor(ref)))).map(([hash]) => hash);
-      stats.preparing = false;
-      const predictedVideos = [...new Set(room.neighbors.flatMap(id => index.rooms[id].videoHashes ?? []))];
-      const speculative = videoBlocks(predictedVideos).filter(ref => !memory.has(hashFor(ref)));
-      stats.backgroundVideoPrefetch = speculative.length > 0;
-      if (speculative.length) prefetch(speculative, 'neighbor video', isCurrent).then(() => {
-        if (!isCurrent() || disposed) return;
-        stats.backgroundVideoPrefetch = false;
-        stats.readyVideos = Object.entries(index.videos ?? {}).filter(([, video]) => video.blocks.every(ref => memory.has(hashFor(ref)))).map(([hash]) => hash);
-      }).catch(error => {
-        if (!isCurrent() || disposed) return;
-        stats.backgroundVideoPrefetch = false; stats.speculativeVideoError = error.message;
+    try {
+      const videoBlocks = hashes => (hashes ?? []).flatMap(hash => index.videos[hash].blocks);
+      const nativeRefs = [...index.bootstrap, ...(index.common ?? []), ...fontBlocks, ...room.blocks, ...videoBlocks(room.videoHashes)];
+      const refs = [...nativeRefs, ...(learned.get(id)?.values() ?? [])];
+      const neighbors = room.neighbors.flatMap(id => {
+        const target = index.rooms[id];
+        const entries = (room.neighborEntries ?? []).filter(entry => entry.room === id).flatMap(entry => entry.entryVideoHashes ?? []);
+        return [...target.blocks, ...videoBlocks(entries.length ? entries : target.entryVideoHashes ?? target.videoHashes)];
       });
-    }
+      const needed = new Map([...refs, ...neighbors].map(ref => [hashFor(ref), ref]));
+      const neededBytes = [...needed.values()].reduce((sum, ref) => sum + Math.min(index.blockSize,
+        index.files[ref.name].bytes - ref.index * index.blockSize), 0);
+      if (neededBytes > memoryBytes) throw new Error('Current room and its entry barriers exceed the original memory budget.');
+      if (initial && neededBytes > 32 * 1024 ** 2) throw new Error('The original startup bundle exceeds the 32 MiB fast-start budget.');
+      baseProtectedHashes = new Set([...nativeRefs, ...neighbors].map(hashFor));
+      protectedHashes = new Set(needed.keys());
+      worker.postMessage({ type: 'protect', hashes: [...protectedHashes] });
+      const isCurrent = () => ticket === generation;
+      await prefetch(refs, id, isCurrent);
+      if (ticket !== generation || disposed) return;
+      stats.readyRooms = [id];
+      if (!initial) stats.preparing = false;
+      await prefetch(neighbors, 'neighbor', isCurrent);
+      if (ticket === generation) {
+        stats.readyRooms = [...new Set([id, ...room.neighbors])].filter(id => index.rooms[id].blocks.every(ref => memory.has(hashFor(ref))));
+        stats.readyVideos = Object.entries(index.videos ?? {}).filter(([, video]) => video.blocks.every(ref => memory.has(hashFor(ref)))).map(([hash]) => hash);
+        stats.preparing = false;
+        const predictedVideos = [...new Set(room.neighbors.flatMap(id => index.rooms[id].videoHashes ?? []))];
+        const speculative = videoBlocks(predictedVideos).filter(ref => !memory.has(hashFor(ref)));
+        stats.backgroundVideoPrefetch = speculative.length > 0;
+        if (speculative.length) prefetch(speculative, 'neighbor video', isCurrent).then(() => {
+          if (!isCurrent() || disposed) return;
+          stats.backgroundVideoPrefetch = false;
+          stats.readyVideos = Object.entries(index.videos ?? {}).filter(([, video]) => video.blocks.every(ref => memory.has(hashFor(ref)))).map(([hash]) => hash);
+        }).catch(error => {
+          if (!isCurrent() || disposed) return;
+          stats.backgroundVideoPrefetch = false; stats.speculativeVideoError = error.message;
+        });
+      }
+    } finally { if (ticket === generation) stats.preparing = false; }
   };
   try {
     if (typeof globalThis.abort !== 'function' || typeof module.pauseMainLoop !== 'function') throw new Error('The stock runtime loading boundary is unavailable.');

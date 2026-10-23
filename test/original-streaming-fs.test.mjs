@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { REQUIRED_FILES } from '../web/lib/validation.js';
-import { ORIGINAL_BLOCK_BYTES, STOCK_RUNTIME_SHA256, validateOriginalIndex, installOriginalFiles } from '../web/lib/original-streaming-fs.js';
+import { ORIGINAL_BLOCK_BYTES, STOCK_RUNTIME_SHA256, validateOriginalIndex, installOriginalFiles, waitForOriginalBlock, originalFontBlocks } from '../web/lib/original-streaming-fs.js';
 
 function fixture() {
   const index = { version: 1, runtimeSHA256: STOCK_RUNTIME_SHA256, blockSize: ORIGINAL_BLOCK_BYTES,
@@ -20,6 +20,32 @@ function fixture() {
   const block = (name, number) => source.get(name).slice(number * ORIGINAL_BLOCK_BYTES, (number + 1) * ORIGINAL_BLOCK_BYTES);
   return { index, source, nodes, FS, block, shared };
 }
+
+test('synchronous original reads stop waiting even when the worker never responds', () => {
+  const header = new Int32Array(new SharedArrayBuffer(32));
+  let clock = 0;
+  assert.throws(() => waitForOriginalBlock(header, 3, () => ++clock), /timed out/);
+  assert.equal(clock, 3);
+  clock = 0;
+  assert.equal(waitForOriginalBlock(header, 3, () => {
+    if (++clock === 2) Atomics.store(header, 0, 1);
+    return clock;
+  }), 1);
+  Atomics.store(header, 0, -1);
+  assert.equal(waitForOriginalBlock(header, 3, () => { throw new Error('must not wait'); }), -1);
+});
+
+test('published indexes prepare the named note font metadata including native read-ahead', () => {
+  const { index } = fixture();
+  assert.deepEqual(originalFontBlocks(index), []);
+  index.files['i.blb'].resources = [
+    { hash: '0002486a', offset: ORIGINAL_BLOCK_BYTES * 2 - 1000, bytes: 582 },
+    { hash: '12345678', offset: 0, bytes: 100 },
+  ];
+  assert.deepEqual(originalFontBlocks(index), [{ name: 'i.blb', index: 1 }, { name: 'i.blb', index: 2 }]);
+  index.files['i.blb'].resources[0].bytes = index.files['i.blb'].bytes;
+  assert.throws(() => originalFontBlocks(index), /font metadata/);
+});
 
 test('original streaming index binds all seven real-size files and references to one release origin', () => {
   const { index } = fixture();

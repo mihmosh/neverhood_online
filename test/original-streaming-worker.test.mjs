@@ -126,10 +126,84 @@ test('consecutive demand reads reuse a complete verified resource window', async
     assert.deepEqual(new Uint8Array(sab, 32, header[1]), w.block('i.blb', number));
   };
   await read(0);
+  await until(() => w.requests.length === 3);
   assert.equal(w.requests.length, 3);
   w.storage.cache.match = () => { throw new Error('a consecutive demand must not read disk again'); };
   await read(1); await read(2);
   assert.equal(w.requests.length, 3, 'no repeat network fetches for the same resource');
+});
+
+test('a stalled speculative neighbor cannot block the requested verified block', async t => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const w = await worker(t, { fetchResponse: async request => {
+    if (request.start === ORIGINAL_BLOCK_BYTES) await gate;
+    return response(request);
+  } });
+  await w.init();
+  const sab = new SharedArrayBuffer(32 + ORIGINAL_BLOCK_BYTES), header = new Int32Array(sab, 0, 8);
+  try {
+    await w.send({ type: 'read', id: 951, name: 'i.blb', index: 0, sab, wait: true,
+      group: { name: 'i.blb', first: 0, last: 2 }, room: '1000:4' });
+    await until(() => header[0] !== 0);
+    assert.equal(header[0], 1);
+    assert.deepEqual(new Uint8Array(sab, 32, header[1]), w.block('i.blb', 0));
+  } finally { release(); }
+  await until(() => w.requests.length === 3);
+});
+
+test('successive demand windows share the worker limit and drop obsolete speculative jobs', async t => {
+  let release, inflight = 0, maximum = 0;
+  const gate = new Promise(resolve => { release = resolve; });
+  const w = await worker(t, { fetchResponse: async request => {
+    inflight++; maximum = Math.max(maximum, inflight);
+    if (request.start > 0) await gate;
+    inflight--; return response(request);
+  } });
+  await w.init();
+  const headers = [];
+  try {
+    for (const [i, name] of REQUIRED_FILES.entries()) {
+      const sab = new SharedArrayBuffer(32 + ORIGINAL_BLOCK_BYTES);
+      headers.push(new Int32Array(sab, 0, 8));
+      await w.send({ type: 'read', id: 1000 + i, name, index: 0, sab, wait: true,
+        group: { name, first: 0, last: 2 }, room: '1000:4' });
+      await until(() => headers.at(-1)[0] === 1);
+    }
+    await new Promise(resolve => setTimeout(resolve, 30));
+    assert(maximum <= 4, `demand prefetch escaped the worker limit: ${maximum}`);
+  } finally { release(); }
+  await until(() => headers.every(header => header[0] === 1));
+  await until(() => w.requests.filter(request => request.name === REQUIRED_FILES.at(-1)).length === 3);
+  await until(() => inflight === 0);
+  assert(maximum <= 4);
+  assert(w.requests.length < REQUIRED_FILES.length * 3, 'obsolete queued neighbors must not be downloaded');
+});
+
+test('unavailable demanded data reports an error after bounded retries instead of waiting forever', async t => {
+  const w = await worker(t, { fetchResponse() { throw new Error('HTTP 404 missing original'); } });
+  await w.init();
+  const sab = new SharedArrayBuffer(32 + ORIGINAL_BLOCK_BYTES), header = new Int32Array(sab, 0, 8);
+  await w.send({ type: 'read', id: 952, name: 'i.blb', index: 0, sab, wait: true });
+  await until(() => header[0] !== 0);
+  assert.equal(header[0], -1);
+  assert.equal(w.requests.length, 3);
+  assert.match(new TextDecoder().decode(new Uint8Array(sab, 32, header[1])), /HTTP 404/);
+});
+
+test('a stalled demanded download publishes a terminal SAB error at its overall deadline', async t => {
+  const w = await worker(t, { fetchResponse: () => new Promise(() => {}) });
+  await w.init();
+  let clock = 0;
+  t.mock.method(performance, 'now', () => clock);
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const sab = new SharedArrayBuffer(32 + ORIGINAL_BLOCK_BYTES), header = new Int32Array(sab, 0, 8);
+  await w.send({ type: 'read', id: 953, name: 'i.blb', index: 0, sab, wait: true });
+  clock = 20001;
+  t.mock.timers.tick(20000);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(header[0], -1);
+  assert.match(new TextDecoder().decode(new Uint8Array(sab, 32, header[1])), /timed out/);
 });
 
 test('loading stays transparent for short misses and appears only after the reveal delay', async t => {

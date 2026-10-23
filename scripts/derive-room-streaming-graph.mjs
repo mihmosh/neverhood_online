@@ -14,6 +14,17 @@ const literals = text => [...text.matchAll(/\b0x([\da-f]{8})\b/gi)].map(match =>
 
 // Keep offsets/line numbers stable while excluding comments and string contents.
 function codeOnly(text) {
+  text = text.replace(/\bcalcHash\s*\(\s*"([^"\\]*)"\s*\)/g, (call, name) => {
+    let hash = 0, shift = 0;
+    for (const character of name.toUpperCase()) {
+      if (!/[A-Z0-9]/.test(character)) continue;
+      let code = character.charCodeAt(0);
+      if (code >= 48 && code <= 57) code += 22;
+      shift = (shift + code - 64) % 32;
+      hash ^= 1 << shift;
+    }
+    return (`0x${hex(hash >>> 0)}` + call.replace(/[^\n]/g, '')).padEnd(call.length);
+  });
   return text.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g,
     token => token.replace(/[^\n]/g, ' '));
 }
@@ -29,7 +40,7 @@ function closingBrace(text, start) {
 
 function members(source) {
   const result = [];
-  const pattern = /^[ \t]*(?:[\w:*&<>]+[ \t]+)*(\w+)::(~?\w+)\([^;{}]*?\)\s*(?::[^{}]*?)?\{/gm;
+  const pattern = /^[ \t]*(?:[\w:*&<>]+[ \t]+)*[*&]*(\w+)::(~?\w+)\([^;{}]*?\)\s*(?::[^{}]*?)?\{/gm;
   for (const match of source.code.matchAll(pattern)) {
     const start = match.index + match[0].lastIndexOf('{');
     const end = closingBrace(source.code, start);
@@ -314,6 +325,13 @@ export function deriveRoomGraphFromSources({ files, tables, manifest, engineData
           if (helper.name !== match[2] || helperSeen.has(helper)) continue;
           helperSeen.add(helper); dependencyTexts.push(helper); texts.push(helper.text);
           sharedHelpers.push({ file: helper.file, line: helper.line, member: `${owner}::${helper.name}` });
+        }
+      }
+      for (const match of dependency.text.matchAll(/\b(\w+)::(\w+)\s*\(/g)) {
+        for (const helper of native.classes.get(match[1]) ?? []) {
+          if (helper.name !== match[2] || helperSeen.has(helper)) continue;
+          helperSeen.add(helper); dependencyTexts.push(helper); texts.push(helper.text);
+          sharedHelpers.push({ file: helper.file, line: helper.line, member: `${match[1]}::${helper.name}` });
         }
       }
       for (const array of native.arrays) {

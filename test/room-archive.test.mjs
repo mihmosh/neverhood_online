@@ -116,7 +116,7 @@ test('archive loader makes one pinned download, decodes shared images on demand,
   pack.dispose();
   assert.equal(pack.stats().encodedBytes, 0); assert.equal(pack.stats().encodedCacheBytes, 0);
   assert.equal(pack.files.size, 0); assert.equal(pack.pending.size, 0);
-  assert.equal(requests[0].options.signal.aborted, true);
+  assert.equal(requests[0].options.signal.aborted, false, 'completed download detaches from pack cancellation');
   let closed = 0; resolveDecode({ width: 4, height: 4, close() { closed++; } });
   await Promise.all(pending); assert.equal(closed, 1); assert.equal(requests.length, 1);
 });

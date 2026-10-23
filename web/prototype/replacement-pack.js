@@ -1,4 +1,4 @@
-import { demoAddress, fetchDemoBytes, validPaletteProof as proofShape } from '../lib/demo-data.js';
+import { demoAddress, fetchDemoBytes, validPaletteProof as proofShape, withDownloadTimeout } from '../lib/demo-data.js';
 
 // Private candidates retain their local-only loader; demo delivery is explicit.
 export const PACK_LIMITS = Object.freeze({ files: 8192, entries: 8192, manifest: 16 * 1024 ** 2,
@@ -193,39 +193,41 @@ export function validateReplacementManifest(manifest, runtimeSHA256) {
 
 export const validPackRoom = room => typeof room === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,95}$/.test(room);
 
-async function fetchBytes(url, limit, signal, remote = false) {
-  checkAbort(signal);
-  const response = await fetch(url, { signal, credentials: 'omit', cache: remote ? 'default' : 'no-store', redirect: 'error', mode: remote ? 'cors' : 'same-origin' });
-  if (!response.ok) fail(`HTTP ${response.status}`);
-  const declared = response.headers.get('content-length');
-  if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > limit)) {
-    await response.body?.cancel();
-    fail('encoded file size limit');
-  }
-  if (!response.body) fail('missing response body');
-  const reader = response.body.getReader(), chunks = [];
-  let length = 0;
-  try {
-    while (true) {
-      checkAbort(signal);
-      const { done, value } = await reader.read();
-      if (done) break;
-      length += value.byteLength;
-      if (length > limit) fail('encoded file size limit');
-      chunks.push(value);
+async function fetchBytes(url, limit, signal, remote = false, timeoutMs) {
+  return withDownloadTimeout(signal, timeoutMs, async signal => {
+    checkAbort(signal);
+    const response = await fetch(url, { signal, credentials: 'omit', cache: remote ? 'default' : 'no-store', redirect: 'error', mode: remote ? 'cors' : 'same-origin' });
+    if (!response.ok) fail(`HTTP ${response.status}`);
+    const declared = response.headers.get('content-length');
+    if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > limit)) {
+      await response.body?.cancel();
+      fail('encoded file size limit');
     }
-  } catch (error) { await reader.cancel().catch(() => {}); throw error; }
-  finally { reader.releaseLock(); }
-  checkAbort(signal);
-  if (!length || declared !== null && Number(declared) !== length) fail('encoded file size mismatch');
-  const bytes = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
-  return bytes;
+    if (!response.body) fail('missing response body');
+    const reader = response.body.getReader(), chunks = [];
+    let length = 0;
+    try {
+      while (true) {
+        checkAbort(signal);
+        const { done, value } = await reader.read();
+        if (done) break;
+        length += value.byteLength;
+        if (length > limit) fail('encoded file size limit');
+        chunks.push(value);
+      }
+    } catch (error) { await reader.cancel().catch(() => {}); throw error; }
+    finally { reader.releaseLock(); }
+    checkAbort(signal);
+    if (!length || declared !== null && Number(declared) !== length) fail('encoded file size mismatch');
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    return bytes;
+  });
 }
 
 export async function loadReplacementPackURL(url, { runtimeSHA256, signal, onChange = () => {},
-  cacheBytes = PACK_LIMITS.cacheBytes } = {}) {
+  cacheBytes = PACK_LIMITS.cacheBytes, timeoutMs } = {}) {
   checkAbort(signal);
   const location = globalThis.location;
   const address = new URL(url, location?.href);
@@ -234,16 +236,16 @@ export async function loadReplacementPackURL(url, { runtimeSHA256, signal, onCha
       !['127.0.0.1', 'localhost'].includes(address.hostname) || address.username || address.password ||
       !['/__private-room-pack/room-pack.json', '/__private-room-pack/room2/room-pack.json'].includes(address.pathname) || address.search || address.hash ||
        ![address.href, address.pathname].includes(String(url))) fail('URL must be the same-origin loopback private pack manifest');
-  return loadURLPack(address, { runtimeSHA256, signal, onChange, cacheBytes,
+  return loadURLPack(address, { runtimeSHA256, signal, onChange, cacheBytes, timeoutMs,
     expectedRoom: address.pathname === '/__private-room-pack/room2/room-pack.json' ? 'Scene1002' : 'Scene1001' });
 }
 
 export async function loadDemoReplacementPackURL(url, { runtimeSHA256, signal, onChange = () => {},
-  cacheBytes = PACK_LIMITS.cacheBytes, room, archive, onProgress = () => {} } = {}) {
+  cacheBytes = PACK_LIMITS.cacheBytes, room, archive, onProgress = () => {}, timeoutMs } = {}) {
   checkAbort(signal);
   const address = demoAddress(url);
   if (archive !== undefined) return loadArchivePack(address, { runtimeSHA256, signal, onChange, cacheBytes, room, archive, onProgress });
-  return loadURLPack(address, { runtimeSHA256, signal, onChange, cacheBytes, expectedRoom: room, remote: true });
+  return loadURLPack(address, { runtimeSHA256, signal, onChange, cacheBytes, timeoutMs, expectedRoom: room, remote: true });
 }
 
 async function loadArchivePack(address, { runtimeSHA256, signal, onChange, cacheBytes, room, archive, onProgress }) {
@@ -303,12 +305,12 @@ async function loadArchivePack(address, { runtimeSHA256, signal, onChange, cache
   }
 }
 
-async function loadURLPack(address, { runtimeSHA256, signal, onChange, cacheBytes, expectedRoom, remote = false }) {
+async function loadURLPack(address, { runtimeSHA256, signal, onChange, cacheBytes, expectedRoom, remote = false, timeoutMs }) {
   const controller = new AbortController();
   const abort = () => controller.abort();
   signal?.addEventListener('abort', abort, { once: true });
   try {
-    const bytes = await fetchBytes(address.href, PACK_LIMITS.manifest, controller.signal, remote);
+    const bytes = await fetchBytes(address.href, PACK_LIMITS.manifest, controller.signal, remote, timeoutMs);
     let manifest;
     try { manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
     catch { fail('invalid manifest JSON'); }
@@ -323,7 +325,7 @@ async function loadURLPack(address, { runtimeSHA256, signal, onChange, cacheByte
       let bytes = encoded.get(entry.file);
       if (bytes) { encoded.delete(entry.file); encoded.set(entry.file, bytes); }
       else {
-        bytes = await fetchBytes(new URL(entry.file, address).href, PACK_LIMITS.fileBytes, controller.signal, remote);
+        bytes = await fetchBytes(new URL(entry.file, address).href, PACK_LIMITS.fileBytes, controller.signal, remote, timeoutMs);
         fetchedBytes += bytes.byteLength; imageRequests++;
         validateImageHeader(bytes, entry);
         if (await hash(bytes) !== entry.sha256) fail(`SHA256 mismatch: ${entry.file}`);

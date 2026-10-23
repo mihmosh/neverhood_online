@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { once } from 'node:events';
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { createStaticServer } from '../server.mjs';
@@ -142,7 +143,7 @@ test('CDN pack delivery is explicit and does not weaken the original private loa
 });
 
 test('private local demo serves only release-listed resources to same-origin loopback clients', async t => {
-  const directory = await mkdtemp('/tmp/kilo/demo-delivery-test-');
+  const directory = await mkdtemp(join(tmpdir(), 'demo-delivery-test-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const webRoot = join(directory, 'web'), release = join(directory, 'release');
   await mkdir(webRoot); await mkdir(release);

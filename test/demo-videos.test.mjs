@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { verifyDemoVideos } from '../scripts/verify-demo-videos.mjs';
 import { REQUIRED_FILES } from '../web/lib/validation.js';
@@ -10,7 +11,7 @@ const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const runtime = '31bdb5fa1afcdf80a6895e2fe5c87a5a999a245af85de7326df20f0756e0d83c';
 
 async function fixture(t) {
-  const root = await mkdtemp('/tmp/kilo/original-video-audit-');
+  const root = await mkdtemp(join(tmpdir(), 'original-video-audit-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const source = [], remote = new Map();
   for (const name of REQUIRED_FILES) {

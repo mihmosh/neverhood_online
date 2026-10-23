@@ -193,9 +193,7 @@ export function validatePilotJobs(jobs) {
         job.referenceMode !== 'none' || job.promptVariant !== 'preservation')) throw Error('Pilot budget/deduplication invariant failed');
 }
 
-export async function buildOpaquePlan(selection, previousJobs = []) {
-  const templatePath = path.join(root, 'private-assets/upscaling/gemini-experiments/static-pilot-v1-2096d1751ccd/jobs/Scene1001-gemini-nano-banana-2.1-preservation-none-7cbaffb18ab8/request.json');
-  const template = JSON.parse(await readFile(templatePath, 'utf8'));
+export async function buildOpaquePlan(selection, previousJobs = [], { assetRoot = path.join(root, 'private-assets') } = {}) {
   if (selection.schemaVersion !== 1 || selection.rooms?.length !== 10) throw Error('Exactly 10 verified sources required');
   const seen = new Set();
   const rooms = selection.rooms.map(room => ({ ...room, sourcePath: path.resolve(root, room.sourcePath),
@@ -205,13 +203,15 @@ export async function buildOpaquePlan(selection, previousJobs = []) {
     if (['Scene1001', 'Scene1002'].includes(room.id) || seen.has(room.id) || seen.has(source?.sha256)) throw Error('Duplicate or control source');
     seen.add(room.id); seen.add(source?.sha256);
     if (!room.provenance || !room.resourceId || !room.regions?.length || !source?.dimensions || source.dimensions[0] * 3 !== source.dimensions[1] * 4) throw Error(`Missing verified 4:3 provenance/profile: ${room.id}`);
-    if (!path.resolve(source.path).startsWith(path.join(root, 'private-assets') + path.sep) || room.sourcePath !== source.path) throw Error('Sources must be private original images');
+    if (!path.resolve(source.path).startsWith(path.resolve(assetRoot) + path.sep) || room.sourcePath !== source.path) throw Error('Sources must be private original images');
     if (source.role !== 'source-composition' || source.mimeType !== 'image/png' || sha(await readFile(source.path)) !== source.sha256) throw Error('Source hash or type mismatch');
   }
+  const templatePath = path.join(assetRoot, 'upscaling/gemini-experiments/static-pilot-v1-2096d1751ccd/jobs/Scene1001-gemini-nano-banana-2.1-preservation-none-7cbaffb18ab8/request.json');
+  const template = JSON.parse(await readFile(templatePath, 'utf8'));
   const jobs = makeJobs(rooms, { preservation }, [], template.settings, ['none']).filter(job => job.model === template.model);
   validatePilotJobs(jobs);
   if (jobs.some(job => job.prompt !== template.prompt || previousJobs.some(old => old.requestHash === job.requestHash))) throw Error('Prompt mismatch or already processed request');
-  const capabilityPath = path.join(root, 'private-assets/upscaling/gemini-capabilities/capability.json');
+  const capabilityPath = path.join(assetRoot, 'upscaling/gemini-capabilities/capability.json');
   const capabilityBytes = await readFile(capabilityPath);
   const capability = JSON.parse(capabilityBytes);
   if (capability.model !== template.model || capability.capabilities?.batch?.unsupportedOutputResolutions?.includes('2K') !== true) throw Error('Pilot transport decision requires selected-model 2K batch capability evidence');

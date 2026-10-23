@@ -24,6 +24,27 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Install image test dependency
+        run: python -m pip install --disable-pip-version-check Pillow==12.1.1
+      - name: Restore pinned native sources for tests
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { createHash } from 'node:crypto';
+          import { readFile } from 'node:fs/promises';
+          const manifest = JSON.parse(await readFile('web/public/sources/manifest.json', 'utf8'));
+          const name = 'scummvm-neverhood.tar.xz';
+          const entry = manifest.files.find(file => file.name === name);
+          assert(entry, 'Missing pinned native source archive');
+          const bytes = await readFile(`web/public/sources/${name}`);
+          assert.equal(bytes.length, entry.bytes);
+          assert.equal(createHash('sha256').update(bytes).digest('hex'), entry.sha256);
+          NODE
+          tar -xJf web/public/sources/scummvm-neverhood.tar.xz --no-same-owner --no-same-permissions ./scummvm
       - name: Run tests
         run: npm test
       - name: Check private asset boundaries

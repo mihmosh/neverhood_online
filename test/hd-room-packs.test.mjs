@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, writeFile, rm, readdir, symlink } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { deflateSync } from 'node:zlib';
 import { DatabaseSync } from 'node:sqlite';
 import { bitmap, crc32, png, raster } from '../tools/assets/formats.mjs';
@@ -27,7 +28,7 @@ function rgbaPNG(width, height, pixel) {
 }
 
 async function fixture(t, { height = 2, width = 4, room = 'SceneFixture-state_1', mismatchedPalette = false, unknownCapacity = false, badAlpha = false, override = false } = {}) {
-  const root = await mkdtemp('/tmp/kilo/hd-room-packs-');
+  const root = await mkdtemp(join(tmpdir(), 'hd-room-packs-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const privateDir = resolve(root, 'private-assets'); await mkdir(privateDir);
   const release = resolve(privateDir, 'upscaling/full-game-release'); await mkdir(release, { recursive: true });

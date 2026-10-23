@@ -4,8 +4,9 @@ import { mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { runJob, finalImage, freezeManifest, buildOpaquePlan, validatePilotJobs } from '../tools/upscaling/gemini/experiment.mjs';
+import { runJob, finalImage, freezeManifest, buildOpaquePlan, validatePilotJobs, makeJobs } from '../tools/upscaling/gemini/experiment.mjs';
 import { summarize } from '../tools/upscaling/gemini/pilot-summary.mjs';
+import { png as encodePng } from '../tools/assets/formats.mjs';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 // Synthetic 1x1 PNG; no private game data and no credentials/network.
@@ -21,6 +22,50 @@ test('manifest is immutable and deterministic, and pilot requires exactly ten or
     await assert.rejects(buildOpaquePlan({ schemaVersion: 1, rooms: [] }), /Exactly 10/);
     const source = { path: '/private/none', sha256: 'same' };
     await assert.rejects(buildOpaquePlan({ schemaVersion: 1, rooms: Array.from({ length: 10 }, () => ({ id: 'Scene1001', sourcePath: source.path, source })) }), /Duplicate or control/);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('opaque pilot builds from isolated synthetic sources and frozen evidence', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'opaque-plan-'));
+  try {
+    const assetRoot = path.join(dir, 'private-assets');
+    await mkdir(assetRoot);
+    const sources = Array.from({ length: 10 }, (_, i) => encodePng(Buffer.alloc(12), 4, 3, Buffer.alloc(1024, i)));
+    const rooms = await Promise.all(Array.from({ length: 10 }, async (_, i) => {
+      const bytes = sources[i];
+      const sourcePath = path.join(assetRoot, `source-${i}.png`);
+      await writeFile(sourcePath, bytes);
+      return { id: `SyntheticRoom-${i}`, sourcePath, provenance: 'generated test fixture', resourceId: `synthetic-${i}`,
+        regions: [{ id: 'whole-image' }], source: { path: sourcePath, sha256: sha(bytes), mimeType: 'image/png', role: 'source-composition', dimensions: [4, 3] } };
+    }));
+    const preservation = 'Conservatively reconstruct the original stop-motion miniature at higher resolution. Preserve every silhouette, irregular edge, wall junction, doorway opening, button, ladder rung, ceiling feature and puzzle mark at the same normalized coordinates. Keep the original palette, illumination, shadow boundaries and dark areas. Preserve intentional asymmetry and handmade dents. Resolve compression and pixelation with plausible restrained clay texture only where supported by SOURCE; do not invent cracks, fingerprints, dust, fibers, props or markings. Do not beautify, straighten, smooth away original sculpting, relight or redesign. Retain negative space exactly. Fidelity takes priority over photographic detail.';
+    const settings = { responseModalities: ['TEXT', 'IMAGE'], imageConfig: { aspectRatio: '4:3', imageSize: '2K' } };
+    const template = makeJobs([rooms[0]], { preservation }, [], settings, ['none'])[0];
+    const templatePath = path.join(assetRoot, 'upscaling/gemini-experiments/static-pilot-v1-2096d1751ccd/jobs/Scene1001-gemini-nano-banana-2.1-preservation-none-7cbaffb18ab8/request.json');
+    await mkdir(path.dirname(templatePath), { recursive: true });
+    await writeFile(templatePath, JSON.stringify(template));
+    const capabilityPath = path.join(assetRoot, 'upscaling/gemini-capabilities/capability.json');
+    await mkdir(path.dirname(capabilityPath), { recursive: true });
+    const capabilityBytes = JSON.stringify({ model: template.model, capabilities: { batch: { unsupportedOutputResolutions: ['2K'] } } });
+    await writeFile(capabilityPath, capabilityBytes);
+    const selection = { schemaVersion: 1, rooms, annotationsFrozenBeforeCandidates: true };
+    const options = { assetRoot };
+    const plan = await buildOpaquePlan(selection, [], options);
+    assert.deepEqual(await buildOpaquePlan(selection, [], options), plan);
+    assert.equal(plan.jobs.length, 10);
+    assert.equal(plan.maximumRequests, 10);
+    assert.equal(plan.concurrency, 2);
+    assert(plan.jobs.every(job => job.prompt === template.prompt && job.attachments.length === 1));
+    assert.deepEqual(plan.capabilityEvidence, { path: capabilityPath, sha256: sha(capabilityBytes) });
+    assert.equal(plan.selectionSha256, sha(JSON.stringify(selection)));
+    await assert.rejects(buildOpaquePlan(selection, [plan.jobs[0]], options), /already processed/);
+    await assert.rejects(buildOpaquePlan({ ...selection, rooms: rooms.map((room, i) => i === 1 ? { ...room, source: rooms[0].source } : room) }, [], options), /Duplicate/);
+    await assert.rejects(buildOpaquePlan({ ...selection, rooms: rooms.map((room, i) => i === 0 ? { ...room, sourcePath: '/outside/source.png', source: { ...room.source, path: '/outside/source.png' } } : room) }, [], options), /private original/);
+    await writeFile(rooms[0].sourcePath, 'changed source');
+    await assert.rejects(buildOpaquePlan(selection, [], options), /hash or type mismatch/);
+    await writeFile(rooms[0].sourcePath, sources[0]);
+    await writeFile(capabilityPath, JSON.stringify({ model: template.model, capabilities: {} }));
+    await assert.rejects(buildOpaquePlan(selection, [], options), /capability evidence/);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 

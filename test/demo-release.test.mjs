@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { prepareDemoRelease } from '../scripts/prepare-demo-release.mjs';
 import { validateRoomArchive } from '../web/prototype/room-archive.js';
@@ -18,7 +19,7 @@ function webp() {
 }
 
 test('release emits deterministic single-room ZIPs, no loose HD images, and a pinned v2 delivery manifest', async t => {
-  const root = await mkdtemp('/tmp/kilo/demo-release-');
+  const root = await mkdtemp(join(tmpdir(), 'demo-release-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const put = async (file, bytes) => { await mkdir(join(root, file, '..'), { recursive: true }); await writeFile(join(root, file), bytes); };
   const gameFiles = REQUIRED_FILES.map(name => ({ name, file: name, bytes: 16, sha256: hash(Buffer.alloc(16)) }));
@@ -55,7 +56,7 @@ test('release emits deterministic single-room ZIPs, no loose HD images, and a pi
 });
 
 test('full-game release reuses pinned room ZIPs and copies original videos without changing the runtime', async t => {
-  const root = await mkdtemp('/tmp/kilo/full-demo-release-');
+  const root = await mkdtemp(join(tmpdir(), 'full-demo-release-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const put = async (file, bytes) => { await mkdir(join(root, file, '..'), { recursive: true }); await writeFile(join(root, file), bytes); };
   const wasm = Buffer.from('unchanged-runtime'), runtimeHash = hash(wasm), native = Buffer.alloc(32, 123);

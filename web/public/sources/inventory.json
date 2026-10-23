@@ -154120,8 +154120,8 @@
     {
       "component": "project-build-sources",
       "path": ".github/workflows/ci.yml",
-      "bytes": 769,
-      "sha256": "61d1b79b33b4b406297572e2e762e344c3a58f03498ef9731ce9ed1be84ecc6b"
+      "bytes": 1941,
+      "sha256": "3a70354bc52581da82129ea9c730468dffdea046de959bc3a5b37a424610733a"
     },
     {
       "component": "project-build-sources",
@@ -154348,8 +154348,8 @@
     {
       "component": "project-build-sources",
       "path": "scripts/derive-room-streaming-graph.mjs",
-      "bytes": 28051,
-      "sha256": "ca0d88e84764052f3f70e40f6a3b2a37bfb551fa414f3e978d3d0272ba31387b"
+      "bytes": 28956,
+      "sha256": "dc14cafdf4404ba734bcbf79f04eca878f541b1ca424bebe83ae8e2ae3c7c3f8"
     },
     {
       "component": "project-build-sources",
@@ -154576,8 +154576,8 @@
     {
       "component": "project-build-sources",
       "path": "test/browser-room-streaming.mjs",
-      "bytes": 8570,
-      "sha256": "a2f2d20d12c33a9ee7d0a14931a5bae5d13a3a904b044f261545f9f04ffa61aa"
+      "bytes": 10441,
+      "sha256": "ecef0d0f78f39458305f3baf9c1343199a650344ae277e71863d4a1c66df6ed7"
     },
     {
       "component": "project-build-sources",
@@ -154624,8 +154624,8 @@
     {
       "component": "project-build-sources",
       "path": "test/build-site.test.mjs",
-      "bytes": 12357,
-      "sha256": "cb49d1357df048750be9631e3f9030179e552ddce2b226ce32b804cbc21a66b1"
+      "bytes": 12291,
+      "sha256": "dc8f98455376afbc39c14a9e634e3da1f61ad6ad99a01a05239739a6a0d52429"
     },
     {
       "component": "project-build-sources",
@@ -154654,8 +154654,8 @@
     {
       "component": "project-build-sources",
       "path": "test/demo-delivery.test.mjs",
-      "bytes": 12224,
-      "sha256": "a2dd187bacef3854537b6efe65cc3180b15e1b092c93744ea386878e33c0a24a"
+      "bytes": 13353,
+      "sha256": "6c4c3db3d3fbd27e17a11d3c8f817c2f969f3b311d97e714d9262953251c7503"
     },
     {
       "component": "project-build-sources",
@@ -154678,8 +154678,8 @@
     {
       "component": "project-build-sources",
       "path": "test/demo-release.test.mjs",
-      "bytes": 6921,
-      "sha256": "024a064d91318b138b5dd4042a60533eb6bcb0bbae616f6adf3c99461e5effbd"
+      "bytes": 6967,
+      "sha256": "e0c30856628272545b9dd2f0c9afd990582808ae0035d42ba74050697e75818e"
     },
     {
       "component": "project-build-sources",
@@ -154696,8 +154696,8 @@
     {
       "component": "project-build-sources",
       "path": "test/demo-videos.test.mjs",
-      "bytes": 3922,
-      "sha256": "381e4cc38c3321f132f230847468e792c1013aba24258ca787c28616bb9034b7"
+      "bytes": 3962,
+      "sha256": "b1ec53e2fd724cac40e34f27ce24f0ae9993824f3066d6efb19de60bf8970a09"
     },
     {
       "component": "project-build-sources",
@@ -154774,8 +154774,8 @@
     {
       "component": "project-build-sources",
       "path": "test/gemini-opaque-pilot.test.mjs",
-      "bytes": 7177,
-      "sha256": "4b228d0a1ce2deb8d074b09c25d41b93462c431be595f3c951be3c90a3b363b7"
+      "bytes": 11407,
+      "sha256": "6f3aa85c6a16637ca96dd6828d8cb421324fa18897f706491cf9ea23ac7c78f3"
     },
     {
       "component": "project-build-sources",
@@ -154798,8 +154798,8 @@
     {
       "component": "project-build-sources",
       "path": "test/hd-room-packs.test.mjs",
-      "bytes": 19506,
-      "sha256": "635d0a8f46243edbf466e1930084a07e56fd36922c74e38441b365f57c92fe79"
+      "bytes": 19552,
+      "sha256": "36d13123e44f4977c8f9e8dfaea05ca46243cd4cb8b34689ce7654e4c62dc828"
     },
     {
       "component": "project-build-sources",
@@ -154816,8 +154816,8 @@
     {
       "component": "project-build-sources",
       "path": "test/original-streaming-fs.test.mjs",
-      "bytes": 5256,
-      "sha256": "a7e8de8f84ace24214375ed1ff7891138849285784096a90d2bf2816234eb968"
+      "bytes": 6462,
+      "sha256": "fc112630d7e4ec2c8d41a119e72db1f9e4ff7b9a1c000af76a41a10e9cc06290"
     },
     {
       "component": "project-build-sources",
@@ -154828,8 +154828,14 @@
     {
       "component": "project-build-sources",
       "path": "test/original-streaming-worker.test.mjs",
-      "bytes": 17485,
-      "sha256": "fd1e391466194550ed8d68df36326534b4e5211d328717f278a6f3bbdafd4757"
+      "bytes": 21069,
+      "sha256": "e0edce9f9005772d2113119e05c8fbbc908c34677366643e5b7121559ba02e53"
+    },
+    {
+      "component": "project-build-sources",
+      "path": "test/original-streaming.test.mjs",
+      "bytes": 4959,
+      "sha256": "b7cf629d95af2f881f508cf8a6a67acecd41abdb7c458c210d73ec12e5756153"
     },
     {
       "component": "project-build-sources",
@@ -154864,20 +154870,20 @@
     {
       "component": "project-build-sources",
       "path": "test/replacement-pack.test.mjs",
-      "bytes": 53389,
-      "sha256": "77c9d3bed79d0436eaf100706c2e2ce3f9118ba7ba0abbd24c1c37a34b9ad728"
+      "bytes": 55253,
+      "sha256": "97bb0013fd1cb8dd6e7e7bd8cf569abe7e31478a590d2bfcb58f6d68a6401e33"
     },
     {
       "component": "project-build-sources",
       "path": "test/room-archive.test.mjs",
-      "bytes": 23851,
-      "sha256": "f84ab54796584008cec37fef7c8d8f74ab1239122d02599eccd81f934242af59"
+      "bytes": 23906,
+      "sha256": "ef7b573426bfd2de8c96b3f15d694f5570fc71454e82bb6d97519c937c0f8006"
     },
     {
       "component": "project-build-sources",
       "path": "test/room-streaming-graph.test.mjs",
-      "bytes": 13969,
-      "sha256": "13e7ffef29fae84465698f277e1f8491afaa5382e41674e8f4444d3f54fcb236"
+      "bytes": 16095,
+      "sha256": "47fbb916dd14cc01c8e333afa633769143aab34ce9f40523092aef9c7278cb85"
     },
     {
       "component": "project-build-sources",
@@ -154888,8 +154894,8 @@
     {
       "component": "project-build-sources",
       "path": "test/streamed-room-pack.test.mjs",
-      "bytes": 13631,
-      "sha256": "b5555ab0262beeec002da02e3bee71a0181471452575cd6ca5d1a9be0b4343d3"
+      "bytes": 16294,
+      "sha256": "df5efb12596571ebfefecb5c4c9a1a04371dda7190dc05b9d80f84776cd8a992"
     },
     {
       "component": "project-build-sources",
@@ -155230,8 +155236,8 @@
     {
       "component": "project-build-sources",
       "path": "tools/upscaling/gemini/experiment.mjs",
-      "bytes": 25372,
-      "sha256": "9cf8798010ff8e40c15d3a023216c13226204c6bc3d3cef2c0359e964d2b626a"
+      "bytes": 25398,
+      "sha256": "153ca5865499476291272dc2ba8be24ec7f67e0b4ca91e4c11c3483a5f75ecef"
     },
     {
       "component": "project-build-sources",
@@ -155962,8 +155968,8 @@
     {
       "component": "project-build-sources",
       "path": "web/lib/demo-data.js",
-      "bytes": 7294,
-      "sha256": "f0e5d619483004130c7ce7e2999a41cedba0dc7ad05469ffdc4defb1b1f5643a"
+      "bytes": 8525,
+      "sha256": "771d0c298d64d24a11defd344901227040bca095f2dc57fc3eab7b3fa818d4b8"
     },
     {
       "component": "project-build-sources",
@@ -155998,8 +156004,8 @@
     {
       "component": "project-build-sources",
       "path": "web/lib/original-streaming-fs.js",
-      "bytes": 5148,
-      "sha256": "21ef86427c0d617215c9a7af0a8be3a431af9ea85f331db977ba629428895d22"
+      "bytes": 6343,
+      "sha256": "af74da768261e3805b9fbd3d539003c6643a1f8f8d5840872d85b5594ae57ab9"
     },
     {
       "component": "project-build-sources",
@@ -156010,8 +156016,8 @@
     {
       "component": "project-build-sources",
       "path": "web/lib/original-streaming.js",
-      "bytes": 16162,
-      "sha256": "f8bef145454f30009412d40108d45f681444983e3f0824f3538567d2016943a6"
+      "bytes": 16477,
+      "sha256": "8663ea14c870ca1f0d40188c4072d678e1a80184656f7c42ab93229e83ecef10"
     },
     {
       "component": "project-build-sources",
@@ -156124,8 +156130,8 @@
     {
       "component": "project-build-sources",
       "path": "web/prototype/replacement-pack.js",
-      "bytes": 30696,
-      "sha256": "1e4f32c3055d4d45c6c5dd6517c74e8e7bd5fb727108d358d1dfcb3282bb27fa"
+      "bytes": 30933,
+      "sha256": "95c4bc6c374114ab188b1a33446e71f6901aace3b955f252b5753ce786cf464f"
     },
     {
       "component": "project-build-sources",
@@ -156142,14 +156148,14 @@
     {
       "component": "project-build-sources",
       "path": "web/prototype/room1.js",
-      "bytes": 46052,
-      "sha256": "0eda23ca40836e48937f9314997b520e1d072aaa4ba2cac0047e8abb6d161342"
+      "bytes": 46044,
+      "sha256": "904049074e26711c918d33edd5924ffaacb9c447281e91cbbf4d1fefb0970369"
     },
     {
       "component": "project-build-sources",
       "path": "web/prototype/streamed-room-pack.js",
-      "bytes": 10668,
-      "sha256": "7733f15e0a09e23012f0bb631ac67c2a108ab867eb218e1d95927b7c6dcaedb5"
+      "bytes": 10753,
+      "sha256": "3ff0ef540c600cd11284275c6610d50d0eeb8303f3fa83bcee304339f76f9364"
     },
     {
       "component": "project-build-sources",

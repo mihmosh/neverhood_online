@@ -58,14 +58,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 3428224,
-      "sha256": "fa0def0a42010b986ba950d1796f26a1d37c82edda3e58f4257dd9fdc7942596",
+      "bytes": 3432596,
+      "sha256": "ebdb8b7b9c5d1131c1e197ac4e78223e1f4560f90cacd9d39f0fa753e404b1a8",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 3428224,
-      "archiveSha256": "fa0def0a42010b986ba950d1796f26a1d37c82edda3e58f4257dd9fdc7942596"
+      "archiveBytes": 3432596,
+      "archiveSha256": "ebdb8b7b9c5d1131c1e197ac4e78223e1f4560f90cacd9d39f0fa753e404b1a8"
     }
   ],
   "files": [
@@ -126,14 +126,14 @@
     },
     {
       "name": "project-build-sources.tar.xz",
-      "bytes": 3428224,
-      "sha256": "fa0def0a42010b986ba950d1796f26a1d37c82edda3e58f4257dd9fdc7942596",
+      "bytes": 3432596,
+      "sha256": "ebdb8b7b9c5d1131c1e197ac4e78223e1f4560f90cacd9d39f0fa753e404b1a8",
       "component": "project-build-sources",
       "archive": "project-build-sources.tar.xz",
       "part": 1,
       "parts": 1,
-      "archiveBytes": 3428224,
-      "archiveSha256": "fa0def0a42010b986ba950d1796f26a1d37c82edda3e58f4257dd9fdc7942596"
+      "archiveBytes": 3432596,
+      "archiveSha256": "ebdb8b7b9c5d1131c1e197ac4e78223e1f4560f90cacd9d39f0fa753e404b1a8"
     },
     {
       "name": "REBUILD.sh",
@@ -142,8 +142,8 @@
     },
     {
       "name": "inventory.json",
-      "bytes": 6558805,
-      "sha256": "932bab35e8b325ee737c3d1160c42f61f0a4c598d12c449e517adb41aece4d39"
+      "bytes": 6559019,
+      "sha256": "933c56e7ef9f09a94ff59c733532d848fbae57f7999741044a49d6128765e57a"
     },
     {
       "name": "README.txt",
@@ -151,7 +151,7 @@
       "sha256": "c5d73cbd4bbdf5c8b598adea963cb4607c6269b450d3c5fb9e4fabc8cb298488"
     }
   ],
-  "totalBytes": 41187525,
+  "totalBytes": 41192111,
   "chunkMaximumBytes": 16777216,
   "runtimeRevision": "c546a4c80d2daf3bb1d5a3652279e26f762c0204",
   "extractorVersion": "1.9",
